@@ -1,140 +1,137 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react'; // 🟢 Nhớ import useEffect nhé
 import Link from 'next/link';
-import { contactService } from '@/services/contactService';
-import toast from 'react-hot-toast';
-import { MdDelete, MdEmail, MdPhone, MdHourglassEmpty, MdSearch } from 'react-icons/md';
+import { useContacts } from '@/hooks/useContacts';
+import { CONTACT_STATUS } from '@/types';
+import { formatDate } from '@/lib/utils';
+
+import PageHeader from '@/components/admin/ui/PageHeader';
+import AdminTable from '@/components/admin/ui/AdminTable';
+import AdminModal from '@/components/admin/ui/AdminModal';
+
+import { MdDelete, MdEmail, MdPhone, MdHourglassEmpty, MdSearch, MdVisibility } from 'react-icons/md';
 
 export default function ContactListPage() {
-    const [contacts, setContacts] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [keyword, setKeyword] = useState(''); // State lưu từ khóa tìm kiếm
+    // 🟢 1. State để gõ phím (phải cực nhanh)
+    const [searchTerm, setSearchTerm] = useState('');
+    // 🟢 2. State để search (đã delay 500ms)
+    const [query, setQuery] = useState('');
+    
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [itemToDelete, setItemToDelete] = useState(null);
 
-    const fetchContacts = async () => {
-        setLoading(true);
-        try {
-
-            const res = await contactService.getAll({ keyword });
-            setContacts(res.data || []);
-        } catch (error) {
-            toast.error('LỖI KẾT NỐI HỆ THỐNG');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-
+    // 🟢 3. CƠ CHẾ GIẢM GIẬT (DEBOUNCE)
     useEffect(() => {
-        const delayDebounceFn = setTimeout(() => {
-            fetchContacts();
-        }, 500); // Đợi 500ms sau khi ngừng gõ mới gọi API
+        const handler = setTimeout(() => {
+            setQuery(searchTerm);
+        }, 500);
+        return () => clearTimeout(handler);
+    }, [searchTerm]);
 
-        return () => clearTimeout(delayDebounceFn);
-    }, [keyword]);
+    // 🟢 4. DÙNG 'query' ĐỂ GỌI API (Chỉ gọi khi query thay đổi)
+    const { contacts, loading, deleteContact } = useContacts({ keyword: query });
 
-    const handleDelete = async (id, name) => {
-        if (!confirm(`XOÁ YÊU CẦU CỦA KHÁCH: ${name.toUpperCase()}?`)) return;
-        try {
-            await contactService.delete(id);
-            toast.success('ĐÃ XOÁ');
-            fetchContacts();
-        } catch (error) {
-            toast.error('XOÁ THẤT BẠI');
+    const columns = [
+        {
+            header: 'KHÁCH HÀNG',
+            render: (row) => (
+                <span className="font-black text-2xl tracking-tighter block text-black group-hover:text-orange-600 transition-colors">
+                    {row.name}
+                </span>
+            )
+        },
+        {
+            header: 'LIÊN LẠC',
+            render: (row) => (
+                <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-xs font-black"><MdPhone className="text-orange-600" /> {row.phone}</div>
+                    <div className="flex items-center gap-2 text-[10px] text-gray-400 italic lowercase"><MdEmail /> {row.email}</div>
+                </div>
+            )
+        },
+        {
+            header: 'THỜI GIAN',
+            render: (row) => (
+                <div className="text-[10px] font-black text-gray-400 italic">
+                    {formatDate(row.created_at)}
+                </div>
+            )
+        },
+        {
+            header: 'TRẠNG THÁI',
+            className: 'text-center',
+            cellClassName: 'text-center',
+            render: (row) => (
+                row.status === 0 ? (
+                    <span className="inline-flex items-center gap-1 px-3 py-1 bg-orange-600 text-white text-[9px] font-black italic shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+                        <MdHourglassEmpty /> NEW REQUEST
+                    </span>
+                ) : (
+                    <span className="px-3 py-1 bg-gray-100 text-gray-400 text-[9px] font-black italic border border-black/5">
+                        {CONTACT_STATUS[row.status] || 'PROCESSED'}
+                    </span>
+                )
+            )
+        },
+        {
+            header: 'QUẢN LÝ',
+            className: 'text-right',
+            render: (row) => (
+                <div className="flex justify-end gap-6 text-black">
+                    <Link href={`/admin/contacts/${row.id}/show`} className="hover:text-orange-600 transition-transform hover:scale-125">
+                        <MdVisibility size={22} />
+                    </Link>
+                    <button
+                        onClick={() => {
+                            setItemToDelete(row);
+                            setIsModalOpen(true);
+                        }}
+                        className="hover:text-red-600 transition-transform hover:scale-125"
+                    >
+                        <MdDelete size={22} />
+                    </button>
+                </div>
+            )
         }
-    };
+    ];
 
     return (
-        <div className="space-y-12 font-archivo uppercase">
-            <header className="flex justify-between items-end border-b-4 border-black pb-8">
-                <div>
-                    <p className="text-[10px] font-black tracking-[0.4em] text-gray-400 italic mb-2">Customer Inquiry Line</p>
-                    <h1 className="text-7xl font-black tracking-tighter leading-none">LIÊN HỆ<span className="text-orange-600">.</span></h1>
-                </div>
-                <div className="text-right">
-                    <span className="text-5xl font-black italic">{contacts.length}</span>
-                    <p className="text-[10px] font-black text-gray-400 tracking-widest">KẾT QUẢ TÌM THẤY</p>
-                </div>
-            </header>
+        <div className="space-y-12 pb-20 font-archivo uppercase">
+            <PageHeader title="LIÊN HỆ" subTitle="Customer Inquiry Line" />
 
-            {/* 🔥 THANH TÌM KIẾM NICKELBRONX */}
+            {/* 🔴 THANH TÌM KIẾM NICKELBRONX */}
             <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none">
-                    <MdSearch size={24} className="text-black group-focus-within:text-orange-600 transition-colors" />
+                    <MdSearch size={28} className="text-black group-focus-within:text-orange-600 transition-colors" />
                 </div>
                 <input
                     type="text"
                     placeholder="TÌM THEO TÊN, EMAIL HOẶC SỐ ĐIỆN THOẠI KHÁCH HÀNG..."
-                    value={keyword}
-                    onChange={(e) => setKeyword(e.target.value)}
-                    className="w-full bg-white border-2 border-black p-6 pl-16 font-black text-sm tracking-widest outline-none focus:bg-orange-50 transition-all shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)] placeholder:text-gray-300"
+                    // 🟢 DÙNG searchTerm Ở ĐÂY ĐỂ GÕ CHO MƯỢT
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full bg-white border-4 border-black p-6 pl-16 font-black text-sm tracking-widest outline-none focus:bg-orange-50 transition-all shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] placeholder:text-gray-300"
                 />
+                {searchTerm && (
+                    <button
+                        onClick={() => setSearchTerm('')}
+                        className="absolute right-6 top-1/2 -translate-y-1/2 font-black text-[10px] hover:text-orange-600 underline decoration-2"
+                    >
+                        CLEAR SEARCH
+                    </button>
+                )}
             </div>
 
-            <div className="border-[1.5px] border-black bg-white shadow-[10px_10px_0px_0px_rgba(0,0,0,1)]">
-                <table className="w-full text-left border-collapse">
-                    <thead>
-                        <tr className="bg-black text-white">
-                            <th className="p-6 text-[10px] font-black tracking-widest">KHÁCH HÀNG</th>
-                            <th className="p-6 text-[10px] font-black tracking-widest">LIÊN LẠC</th>
-                            <th className="p-6 text-[10px] font-black tracking-widest">THỜI GIAN</th>
-                            <th className="p-6 text-[10px] font-black tracking-widest">TRẠNG THÁI</th>
-                            <th className="p-6 text-[10px] font-black tracking-widest text-right">QUẢN LÝ</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-black/10">
-                        {loading ? (
-                            <tr><td colSpan="5" className="p-20 text-center font-black italic animate-pulse">Scanning database...</td></tr>
-                        ) : contacts.length > 0 ? (
-                            contacts.map((item) => (
-                                <tr key={item.id} className="hover:bg-orange-50/50 transition-colors group">
-                                    <td className="p-6">
-                                        <span className="font-black text-2xl tracking-tighter block">{item.name}</span>
-                                    </td>
-                                    <td className="p-6">
-                                        <div className="flex items-center gap-2 text-xs font-bold"><MdPhone/> {item.phone}</div>
-                                        <div className="flex items-center gap-2 text-[10px] text-gray-400 italic lowercase"><MdEmail/> {item.email}</div>
-                                    </td>
-                                    <td className="p-6 text-[10px] font-black text-gray-400 italic">
-                                        {new Date(item.created_at).toLocaleString('vi-VN')}
-                                    </td>
-                                    <td className="p-6">
-                                        {item.status === 0 ? (
-                                            <span className="flex items-center gap-1 w-fit px-3 py-1 bg-orange-600 text-white text-[9px] font-black italic shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-                                                <MdHourglassEmpty/> NEW REQUEST
-                                            </span>
-                                        ) : (
-                                            <span className="px-3 py-1 bg-gray-100 text-gray-400 text-[9px] font-black italic">PROCESSED</span>
-                                        )}
-                                    </td>
-                                    <td className="p-6 text-right">
-                                        <div className="flex justify-end gap-6">
-                                            <Link 
-                                                href={`/admin/contacts/${item.id}/show`}
-                                                className="text-[10px] font-black underline hover:text-orange-600"
-                                            >
-                                                XEM CHI TIẾT →
-                                            </Link>
-                                            <button 
-                                                onClick={() => handleDelete(item.id, item.name)}
-                                                className="text-red-600 hover:scale-125 transition-transform"
-                                            >
-                                                <MdDelete size={18}/>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))
-                        ) : (
-                            <tr>
-                                <td colSpan="5" className="p-20 text-center font-black italic text-gray-400">
-                                    KHÔNG TÌM THẤY LIÊN HỆ NÀO KHỚP VỚI TỪ KHÓA.
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
-            </div>
+            <AdminTable columns={columns} data={contacts} loading={loading} />
+
+            <AdminModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onConfirm={() => deleteContact(itemToDelete.id, itemToDelete.name)}
+                title="XÓA YÊU CẦU"
+                message={`BẠN CÓ CHẮC CHẮN MUỐN LOẠI BỎ YÊU CẦU LIÊN HỆ CỦA: ${itemToDelete?.name}?`}
+            />
         </div>
     );
 }

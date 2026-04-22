@@ -1,45 +1,38 @@
-'use client';
-import { MdEdit, MdVisibility, MdDelete } from 'react-icons/md';
-import Link from 'next/link';
-
-export default function AdminTable({ columns, data, loading, onSearch, onDelete, slug }) {
+// components/admin/ui/AdminTable.js
+export default function AdminTable({ columns, data, loading, emptyText = "KHÔNG TÌM THẤY DỮ LIỆU" }) {
     return (
-        <div className="border-4 border-black shadow-[12px_12px_0_0_#000] overflow-hidden bg-white">
+        <div className="border-4 border-black bg-white shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] overflow-hidden font-archivo uppercase">
             <table className="w-full text-left border-collapse">
-                <thead className="bg-black text-white text-xs uppercase tracking-[0.2em]">
-                    <tr>
-                        {columns.map((col, index) => (
-                            <th key={index} className="p-4 border-r border-gray-800">{col.label}</th>
+                <thead>
+                    <tr className="bg-black text-white text-[10px] font-black tracking-widest uppercase">
+                        {columns.map((col, i) => (
+                            <th key={i} className={`p-6 border-r border-white/10 ${col.className || ''}`}>
+                                {col.header}
+                            </th>
                         ))}
-                        <th className="p-4 text-center">Thao tác</th>
                     </tr>
                 </thead>
-                <tbody className="divide-y-2 divide-black">
+                <tbody className="divide-y-2 divide-black text-sm uppercase">
                     {loading ? (
-                        <tr><td colSpan={columns.length + 1} className="p-10 text-center font-black italic">ĐANG TRUY XUẤT DỮ LIỆU...</td></tr>
-                    ) : (
-                        data.map((item) => (
-                            <tr key={item.id} className="hover:bg-orange-50 transition-colors">
-                                {columns.map((col, index) => (
-                                    <td key={index} className="p-4 border-r-2 border-black font-bold text-sm">
-                                        {col.render ? col.render(item) : item[col.key]}
+                        <tr>
+                            <td colSpan={columns.length} className="p-20 text-center font-black animate-pulse italic opacity-40">PROCESSING ASSETS...</td>
+                        </tr>
+                    ) : data.length > 0 ? (
+                        data.map((row, i) => (
+                            <tr key={i} className="hover:bg-orange-50 transition-colors group">
+                                {columns.map((col, j) => (
+                                    <td key={j} className={`p-6 border-r border-black/5 ${col.cellClassName || ''}`}>
+                                        {col.render ? col.render(row) : row[col.accessor]}
                                     </td>
                                 ))}
-                                <td className="p-4">
-                                    <div className="flex justify-center gap-2">
-                                        <Link href={`/admin/${slug}/${item.id}/show`} className="p-2 border-2 border-black hover:bg-blue-600 hover:text-white transition-all">
-                                            <MdVisibility size={16} />
-                                        </Link>
-                                        <Link href={`/admin/${slug}/${item.id}/edit`} className="p-2 border-2 border-black hover:bg-green-600 hover:text-white transition-all">
-                                            <MdEdit size={16} />
-                                        </Link>
-                                        <button onClick={() => onDelete(item.id)} className="p-2 border-2 border-black hover:bg-red-600 hover:text-white transition-all">
-                                            <MdDelete size={16} />
-                                        </button>
-                                    </div>
-                                </td>
                             </tr>
                         ))
+                    ) : (
+                        <tr>
+                            <td colSpan={columns.length} className="p-32 text-center font-black opacity-20 text-2xl italic uppercase tracking-widest">
+                                {emptyText}
+                            </td>
+                        </tr>
                     )}
                 </tbody>
             </table>

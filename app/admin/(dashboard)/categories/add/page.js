@@ -1,204 +1,161 @@
 'use client';
 
-import React, { useState, useEffect } from 'react'; // Phải có React để dùng Fragment
-import { useRouter } from 'next/navigation';
-import { categoryService } from '@/services/categoryService';
-import toast from 'react-hot-toast';
-import Image from 'next/image';
-import { MdCloudUpload, MdArrowBack, MdSave } from 'react-icons/md';
+import { useCategoryForm } from '@/hooks/useCategories'; // 🟢 Triệu hồi Hook "nội công"
+import { MdCloudUpload, MdSave, MdLayers, MdDescription, MdSettings, MdInfo } from 'react-icons/md';
+import PageHeader from '@/components/admin/ui/PageHeader';
 
 export default function AddCategoryPage() {
-  const router = useRouter();
-  const [formData, setFormData] = useState({
-    name: '',
-    parent_id: '0',
-    sort_order: 0,
-    description: '',
-    status: 1,
-  });
-  const [imageFile, setImageFile] = useState(null);
-  const [preview, setPreview] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [categories, setCategories] = useState([]);
+    // 1. DÙNG HOOK (Dọn sạch đống code logic thừa thãi)
+    const {
+        formData,
+        preview,
+        loading,
+        parentOptions,
+        handleChange,
+        handleImageChange,
+        handleSubmit,
+        renderParentOptions,
+    } = useCategoryForm(); // Không truyền ID = Chế độ THÊM MỚI
 
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const res = await categoryService.getAll({ tree: true });
-        setCategories(res.data || []);
-      } catch (error) {
-        console.error('Lỗi lấy danh sách danh mục');
-      }
-    };
-    fetchCategories();
-  }, []);
-
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setImageFile(file);
-      setPreview(URL.createObjectURL(file));
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!formData.name.trim()) {
-      toast.error('VUI LÒNG NHẬP TÊN DANH MỤC');
-      return;
-    }
-    setLoading(true);
-    try {
-      const data = new FormData();
-      if (imageFile) data.append('image', imageFile);
-      Object.keys(formData).forEach((key) => data.append(key, formData[key]));
-
-      await categoryService.create(data);
-      toast.success('THÊM DANH MỤC THÀNH CÔNG');
-      router.push('/admin/categories');
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'THÊM THẤT BẠI');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-
-  const renderOptions = (nodes, prefix = '') => {
-    return nodes.map((node) => (
-      <React.Fragment key={node.id}>
-        <option value={node.id}>
-          {prefix}{node.name.toUpperCase()}
-        </option>
-        {node.children?.length > 0 && renderOptions(node.children, prefix + '↳ ')}
-      </React.Fragment>
-    ));
-  };
-
-  return (
-    <div className="space-y-12 pb-20 font-archivo uppercase">
-      {/* HEADER NickelBronx */}
-      <header className="border-b-4 border-black pb-8 flex justify-between items-end">
-        <div className="space-y-2">
-          <p className="text-[10px] font-black tracking-[0.4em] text-gray-400 italic">New Taxonomy Entry</p>
-          <h1 className="text-7xl font-black tracking-tighter leading-none">
-            THÊM DANH MỤC<span className="text-orange-600">.</span>
-          </h1>
-        </div>
-        <button 
-          onClick={() => router.back()} 
-          className="flex items-center gap-2 border-2 border-black px-6 py-4 text-[10px] font-black hover:bg-gray-100 transition-colors"
-        >
-          <MdArrowBack size={18} /> QUAY LẠI
-        </button>
-      </header>
-
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-16">
-        {/* LEFT: MAIN FIELDS */}
-        <div className="lg:col-span-2 space-y-10">
-          <div className="space-y-2">
-            <label className="text-[10px] font-black tracking-widest text-gray-400">Tên danh mục thép mới</label>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              className="w-full border-2 border-black p-5 text-2xl font-black outline-none focus:bg-black focus:text-white transition-all shadow-[6px_6px_0px_0px_rgba(0,0,0,0.1)]"
-              placeholder="NHẬP TÊN DANH MỤC..."
-              required
+    return (
+        <div className="max-w-5xl mx-auto space-y-12 pb-20 font-archivo uppercase animate-in slide-in-from-right-8 duration-500">
+            {/* 🔴 HEADER NICKELBRONX */}
+            <PageHeader 
+                title="THÊM MỚI" 
+                subTitle="New Taxonomy Entry" 
+                isBack={true} 
+                backHref="/admin/categories"
             />
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-2">
-              <label className="text-[10px] font-black tracking-widest text-gray-400 italic">Cấp bậc cha (Parent)</label>
-              <select 
-                name="parent_id" 
-                value={formData.parent_id} 
-                onChange={handleChange} 
-                className="w-full border-2 border-black p-4 font-black text-sm outline-none bg-white appearance-none cursor-pointer hover:bg-gray-50"
-              >
-                <option value="0">-- DANH MỤC GỐC --</option>
-                {renderOptions(categories)}
-              </select>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black tracking-widest text-gray-400">Thứ tự</label>
-                <input
-                  type="number"
-                  name="sort_order"
-                  value={formData.sort_order}
-                  onChange={handleChange}
-                  className="w-full border-2 border-black p-4 font-black outline-none"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-black tracking-widest text-gray-400">Trạng thái</label>
-                <select 
-                  name="status" 
-                  value={formData.status} 
-                  onChange={handleChange} 
-                  className="w-full border-2 border-black p-4 font-black outline-none bg-white"
-                >
-                  <option value={1}>HIỂN THỊ</option>
-                  <option value={0}>TẠM ẨN</option>
-                </select>
-              </div>
-            </div>
-          </div>
+            <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+                
+                {/* 🔵 CỘT TRÁI: THÔNG TIN PHÂN LOẠI (2/3) */}
+                <div className="lg:col-span-2 space-y-12">
+                    <section className="bg-white border-[6px] border-black p-10 shadow-[15px_15px_0_0_#000] space-y-10">
+                        <h2 className="text-2xl font-black italic border-b-4 border-black pb-4 flex items-center gap-4">
+                            <MdLayers size={32} className="text-orange-600"/> CATEGORY IDENTITY
+                        </h2>
 
-          <div className="space-y-2">
-            <label className="text-[10px] font-black tracking-widest text-gray-400">Ghi chú / Mô tả hệ thống</label>
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              className="w-full border-2 border-black p-5 font-bold outline-none focus:bg-orange-50 min-h-[150px]"
-              placeholder="MÔ TẢ NGẮN GỌN VỀ PHÂN LOẠI NÀY..."
-            />
-          </div>
-        </div>
+                        {/* Tên Danh Mục */}
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-gray-400 italic tracking-widest">Tên danh mục thép / nội thất</label>
+                            <input 
+                                name="name" 
+                                type="text" 
+                                value={formData.name} 
+                                onChange={handleChange} 
+                                placeholder="NHẬP TÊN DANH MỤC..."
+                                className="w-full border-4 border-black p-5 font-black text-2xl outline-none focus:bg-orange-50 transition-all shadow-[6px_6px_0_0_rgba(0,0,0,0.05)]" 
+                                required 
+                            />
+                        </div>
 
-        {/* RIGHT: MEDIA SECTION */}
-        <div className="space-y-10">
-          <div className="bg-white border-[1.5px] border-black p-8 space-y-8 shadow-[10px_10px_0px_0px_rgba(0,0,0,1)]">
-            <div className="space-y-4">
-              <label className="text-[10px] font-black tracking-widest text-gray-400 underline block">Visual Identity</label>
-              <div className="relative border-4 border-dashed border-black p-10 hover:bg-black hover:text-white transition-all cursor-pointer group text-center">
-                <input type="file" accept="image/*" onChange={handleImageChange} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
-                <div className="relative z-0">
-                  <MdCloudUpload size={40} className="mx-auto mb-3 group-hover:scale-110 transition-transform" />
-                  <p className="text-[10px] font-black italic">UPLOAD CATEGORY IMAGE</p>
+                        {/* Danh Mục Cha */}
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-gray-400 italic tracking-widest">Cấp bậc hệ thống (Hierarchy)</label>
+                            <select 
+                                name="parent_id" 
+                                value={formData.parent_id} 
+                                onChange={handleChange} 
+                                className="w-full border-4 border-black p-5 font-black text-lg outline-none bg-white cursor-pointer hover:bg-gray-50 appearance-none"
+                            >
+                                <option value="0">-- THIẾT LẬP LÀ DANH MỤC GỐC --</option>
+                                {renderParentOptions(parentOptions)}
+                            </select>
+                        </div>
+
+                        {/* Mô Tả */}
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-gray-400 italic tracking-widest flex items-center gap-2">
+                                <MdDescription /> Mô tả chi tiết / Ghi chú
+                            </label>
+                            <textarea 
+                                name="description" 
+                                value={formData.description} 
+                                onChange={handleChange} 
+                                rows="6"
+                                placeholder="Mô tả ngắn gọn về nhóm sản phẩm này để hỗ trợ SEO..."
+                                className="w-full border-4 border-black p-5 font-bold outline-none focus:bg-orange-50 transition-all normal-case leading-relaxed" 
+                            />
+                        </div>
+                    </section>
                 </div>
-              </div>
-              {preview && (
-                <div className="mt-4 border-2 border-black p-1 bg-white grayscale hover:grayscale-0 transition-all duration-700">
-                  <div className="relative aspect-video w-full">
-                    <Image src={preview} alt="Preview" fill className="object-cover" />
-                  </div>
-                </div>
-              )}
-            </div>
 
-            <div className="space-y-4 pt-6">
-              <button 
-                type="submit" 
-                disabled={loading} 
-                className="w-full bg-black text-white py-6 text-xs font-black tracking-[0.3em] hover:bg-orange-600 transition-all shadow-[4px_4px_0px_0px_rgba(234,88,12,1)] active:scale-95 flex items-center justify-center gap-3"
-              >
-                <MdSave size={18} />
-                {loading ? 'STORING DATA...' : 'LƯU DANH MỤC →'}
-              </button>
-            </div>
-          </div>
+                {/* 🟠 CỘT PHẢI: MEDIA & ACTION (1/3) */}
+                <aside className="space-y-8">
+                    <div className="bg-white border-[6px] border-black p-8 shadow-[12px_12px_0_0_#ea580c] space-y-10 sticky top-10">
+                        
+                        {/* ẢNH ĐẠI DIỆN */}
+                        <div className="space-y-4">
+                            <label className="text-[10px] font-black text-gray-400 block tracking-widest uppercase italic border-b-2 border-black/5 pb-2">Visual Asset</label>
+                            <div className="relative aspect-square border-4 border-dashed border-black group overflow-hidden bg-gray-50">
+                                {preview ? (
+                                    <div className="relative h-full w-full">
+                                        <img src={preview} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" alt="Preview" />
+                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                            <p className="text-white font-black text-[10px] border-2 border-white p-2">THAY ĐỔI ẢNH</p>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="w-full h-full flex flex-col items-center justify-center text-gray-300 p-6 text-center group-hover:bg-orange-50 transition-colors">
+                                        <MdCloudUpload size={56} />
+                                        <span className="text-[9px] font-black uppercase mt-4">Drop Image or Click</span>
+                                    </div>
+                                )}
+                                <input type="file" accept="image/*" onChange={handleImageChange} className="absolute inset-0 opacity-0 cursor-pointer z-20" />
+                            </div>
+                        </div>
+
+                        {/* CẤU HÌNH THỨ TỰ & TRẠNG THÁI */}
+                        <div className="space-y-6 pt-6 border-t-2 border-black border-dashed">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 italic tracking-widest flex items-center gap-2">
+                                    <MdSettings /> Ưu tiên hiển thị
+                                </label>
+                                <input 
+                                    name="sort_order" 
+                                    type="number" 
+                                    value={formData.sort_order} 
+                                    onChange={handleChange} 
+                                    className="w-full border-4 border-black p-4 font-black text-xl outline-none focus:bg-black focus:text-white transition-all shadow-[4px_4px_0_0_rgba(0,0,0,0.1)]" 
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 italic tracking-widest">Tình trạng xuất bản</label>
+                                <select 
+                                    name="status" 
+                                    value={formData.status} 
+                                    onChange={handleChange} 
+                                    className="w-full border-4 border-black p-4 font-black bg-orange-50 outline-none cursor-pointer"
+                                >
+                                    <option value={1}>ACTIVE / PUBLISHED</option>
+                                    <option value={0}>DRAFT / HIDDEN</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        {/* NÚT LƯU */}
+                        <button 
+                            type="submit" 
+                            disabled={loading}
+                            className="group relative w-full bg-black text-white py-8 font-black text-xl uppercase tracking-[0.4em] transition-all hover:-translate-y-1 active:translate-x-1 active:translate-y-1 active:shadow-none shadow-[8px_8px_0_0_#ea580c] disabled:grayscale disabled:opacity-50"
+                        >
+                            <div className="flex items-center justify-center gap-4">
+                                <MdSave size={28} />
+                                {loading ? 'SAVING...' : 'COMMIT DATA →'}
+                            </div>
+                        </button>
+                    </div>
+
+                    {/* TIPBOX */}
+                    <div className="p-6 border-4 border-black border-dashed bg-yellow-50 flex gap-4 shadow-[8px_8px_0_0_#000]">
+                        <MdInfo size={28} className="shrink-0 text-black" />
+                        <p className="text-[9px] font-black leading-relaxed italic">
+                            HỆ THỐNG PHÂN CẤP TỰ ĐỘNG CẬP NHẬT TRÊN NAVBAR WEBSITE NGAY SAU KHI DỮ LIỆU ĐƯỢC LƯU.
+                        </p>
+                    </div>
+                </aside>
+            </form>
         </div>
-      </form>
-    </div>
-  );
+    );
 }

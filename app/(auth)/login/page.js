@@ -1,163 +1,121 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { configService } from '@/services/configService';
-import { MdLock, MdLanguage, MdVpnKey, MdPerson } from 'react-icons/md';
-import toast from 'react-hot-toast';
+import { useLogin } from '@/hooks/useAuth'; // 🟢 Triệu hồi Hook tổng hợp
+import { getImageUrl } from '@/lib/utils';
+import { MdVpnKey, MdPerson, MdLanguage, MdSecurity } from 'react-icons/md';
 import Link from 'next/link';
+
 export default function AdminLoginPage() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
-  const [language, setLanguage] = useState('vi'); // 🟢 'vi' hoặc 'en'
-  const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
-
-  const [configs, setConfigs] = useState({ site_name: 'TÂN NGỌC LỰC STEEL', logo: '' });
-
-  // 🔥 1. BỘ TỪ ĐIỂN ĐA NGÔN NGỮ
-  const trans = {
-    vi: {
-      gateway: "CỔNG TRUY CẬP BẢO MẬT",
-      user_label: "Tên định danh",
-      pass_label: "Mật mã truy cập",
-      user_placeholder: "NHẬP TÊN ĐĂNG NHẬP",
-      pass_placeholder: "NHẬP MẬT KHẨU",
-      remember: "Ghi nhớ",
-      forgot: "Quên mật khẩu?",
-      btn_login: "ĐĂNG NHẬP HỆ THỐNG →",
-      btn_loading: "ĐANG XÁC THỰC...",
-      footer: "Hệ thống quản trị nội bộ // v2.1.0",
-      error: "SAI TÊN ĐĂNG NHẬP HOẶC MẬT KHẨU",
-      success: "XÁC THỰC THÀNH CÔNG"
-    },
-    en: {
-      gateway: "SECURE ACCESS GATEWAY",
-      user_label: "Identity Name",
-      pass_label: "Access Password",
-      user_placeholder: "ENTER USERNAME",
-      pass_placeholder: "ENTER PASSWORD",
-      remember: "Remember me",
-      forgot: "Forgot password?",
-      btn_login: "SYSTEM LOGIN →",
-      btn_loading: "AUTHENTICATING...",
-      footer: "Internal Management Terminal // v2.1.0",
-      error: "INVALID USERNAME OR PASSWORD",
-      success: "AUTHENTICATION SUCCESS"
-    }
-  };
-
-  useEffect(() => {
-    const fetchConfigs = async () => {
-      try {
-        const res = await configService.getAll();
-        const data = Array.isArray(res.data) ? res.data[0] : res.data;
-        if (data) setConfigs({ site_name: data.site_name, logo: data.logo });
-      } catch (error) { console.warn("Using default configs"); }
-    };
-    fetchConfigs();
-  }, []);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      await login(username, password, rememberMe);
-      toast.success(trans[language].success);
-    } catch (error) {
-      toast.error(trans[language].error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // 🔴 BỐC TOÀN BỘ NỘI CÔNG TỪ HOOK
+  const {
+    username, setUsername,
+    password, setPassword,
+    rememberMe, setRememberMe,
+    loading,
+    language, setLanguage,
+    t,
+    configs,
+    handleSubmit
+  } = useLogin();
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0B1F4F] font-archivo p-6 relative overflow-hidden text-black">
-      <div className="absolute inset-0 opacity-5" style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '30px 30px' }}></div>
+    <div className="min-h-screen flex items-center justify-center bg-[#050505] font-archivo p-4 relative overflow-hidden text-black uppercase">
+      {/* INDUSTRIAL GRID BACKGROUND */}
+      <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'linear-gradient(#1a1a1a 1px, transparent 1px), linear-gradient(90deg, #1a1a1a 1px, transparent 1px)', backgroundSize: '30px 30px' }}></div>
+      <div className="absolute top-0 left-0 w-full h-1 bg-orange-600"></div>
 
-      <div className="relative z-10 w-full max-w-md">
-        <div className="bg-white border-[6px] border-black shadow-[16px_16px_0px_0px_#ea580c] p-10 space-y-8">
+      {/* 🟢 KHUNG LOGIN COMPACT (400px) */}
+      <div className="relative z-10 w-full max-w-[400px]">
+        <div className="bg-white border-[4px] border-black shadow-[12px_12px_0px_0px_#ea580c] p-8 space-y-8 animate-in zoom-in-95 duration-500">
 
+          {/* LOGO & BRANDING */}
           <div className="text-center space-y-4">
-            {configs.logo && <img src={`${process.env.NEXT_PUBLIC_IMAGE_URL}/${configs.logo}`} alt="Logo" className="h-16 mx-auto object-contain" />}
+            {configs.logo ? (
+              <img src={getImageUrl(configs.logo)} alt="Logo" className="h-12 mx-auto object-contain" />
+            ) : (
+              <MdSecurity size={40} className="mx-auto text-orange-600" />
+            )}
             <div className="space-y-1">
-              <p className="text-[10px] font-black tracking-[0.4em] text-gray-400 italic uppercase">
-                {trans[language].gateway}
+              <p className="text-[9px] font-black tracking-[0.4em] text-gray-400 italic lowercase">
+                                // {t.gateway} //
               </p>
-              <h2 className="text-3xl font-black tracking-tighter uppercase leading-none">
+              <h2 className="text-3xl font-black tracking-tighter uppercase leading-tight border-b-2 border-black pb-2">
                 {configs.site_name}<span className="text-orange-600">.</span>
               </h2>
             </div>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-1">
-              <label className="text-[10px] font-black text-gray-400 italic uppercase flex items-center gap-2">
-                <MdPerson /> {trans[language].user_label}
-              </label>
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder={trans[language].user_placeholder}
-                className="w-full border-2 border-black p-4 font-black text-sm outline-none focus:bg-black focus:text-white transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]"
-                required
-              />
+            <div className="space-y-4">
+              {/* IDENTITY INPUT */}
+              <div className="relative group">
+                <MdPerson className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-black transition-colors" size={20} />
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder={t.user_placeholder}
+                  className="w-full border-2 border-black p-3.5 pl-10 font-black text-sm outline-none focus:bg-orange-50 transition-all shadow-[4px_4px_0_0_rgba(0,0,0,0.05)]"
+                  required
+                />
+                <label className="absolute -top-2.5 left-3 bg-white px-1.5 text-[8px] font-black border border-black">{t.user_label}</label>
+              </div>
+
+              {/* AUTH KEY INPUT */}
+              <div className="relative group">
+                <MdVpnKey className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-black transition-colors" size={20} />
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder={t.pass_placeholder}
+                  className="w-full border-2 border-black p-3.5 pl-10 font-black text-sm outline-none focus:bg-black focus:text-white transition-all shadow-[4px_4px_0_0_rgba(0,0,0,0.05)]"
+                  required
+                />
+                <label className="absolute -top-2.5 left-3 bg-white px-1.5 text-[8px] font-black border border-black">{t.pass_label}</label>
+              </div>
             </div>
 
-            <div className="space-y-1">
-              <label className="text-[10px] font-black text-gray-400 italic uppercase flex items-center gap-2">
-                <MdVpnKey /> {trans[language].pass_label}
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder={trans[language].pass_placeholder}
-                className="w-full border-2 border-black p-4 font-black text-sm outline-none focus:bg-black focus:text-white transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]"
-                required
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
+            {/* SESSION OPTIONS */}
+            <div className="flex items-center justify-between font-black text-[9px] tracking-widest">
               <label className="flex items-center gap-2 cursor-pointer group">
                 <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} className="sr-only" />
-                <div className={`w-5 h-5 border-2 border-black transition-colors ${rememberMe ? 'bg-black text-white flex items-center justify-center' : 'bg-white'}`}>
-                  {rememberMe && "✓"}
+                <div className={`w-5 h-5 border-2 border-black transition-all ${rememberMe ? 'bg-orange-600' : 'bg-white'}`}>
+                  {rememberMe && <span className="text-white flex items-center justify-center text-[10px]">✓</span>}
                 </div>
-                <span className="text-[10px] font-black uppercase tracking-widest group-hover:text-orange-600">
-                  {trans[language].remember}
-                </span>
+                <span className="group-hover:text-orange-600 transition-colors uppercase">{t.remember}</span>
               </label>
-              <Link
-                href="/forgot-password"
-                className="text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-orange-600 transition-colors border-b border-transparent hover:border-orange-600"
-              >
-                {trans[language].forgot}
+
+              {/* 🟢 2. Sửa link: Bỏ chữ /admin/ vì nó nằm trong group (auth) */}
+              <Link href="/forgot-password" title={t.forgot} className="text-gray-400 hover:text-black underline underline-offset-4 decoration-1">
+                {t.forgot}
               </Link>
             </div>
-
-            <button disabled={loading} className="w-full bg-black text-white py-5 text-xs font-black uppercase tracking-[0.4em] hover:bg-orange-600 transition-all shadow-[6px_6px_0_0_#ea580c] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none disabled:opacity-50">
-              {loading ? trans[language].btn_loading : trans[language].btn_login}
+            {/* ACCESS BUTTON */}
+            <button
+              disabled={loading}
+              className="group relative w-full bg-black text-white py-4 font-black text-sm uppercase tracking-[0.3em] transition-all hover:bg-orange-600 active:translate-x-1 active:translate-y-1 shadow-[6px_6px_0_0_#ea580c] disabled:opacity-50"
+            >
+              {loading ? t.btn_loading : t.btn_login}
             </button>
           </form>
 
-          <div className="pt-6 border-t-2 border-black/5 flex justify-center items-center gap-4">
-            <MdLanguage className="text-gray-400" />
+          {/* REGIONAL SETTINGS */}
+          <div className="pt-6 border-t-2 border-black/5 flex justify-center items-center gap-3">
+            <MdLanguage size={18} className="text-orange-600" />
             <select
               value={language}
               onChange={(e) => setLanguage(e.target.value)}
-              className="bg-transparent text-[10px] font-black uppercase tracking-widest outline-none cursor-pointer hover:text-orange-600"
+              className="bg-transparent text-[9px] font-black uppercase outline-none cursor-pointer hover:text-orange-600"
             >
-              <option value="vi">Tiếng Việt (VN)</option>
-              <option value="en">English (US)</option>
+              <option value="vi">VIETNAMESE (VN)</option>
+              <option value="en">ENGLISH (US)</option>
             </select>
           </div>
         </div>
 
-        <p className="mt-8 text-center text-[9px] font-black text-white/30 tracking-[0.3em] uppercase">
-          {trans[language].footer}
+        <p className="mt-8 text-center text-[8px] font-black text-white/20 tracking-[0.4em] uppercase italic leading-loose">
+          {t.footer}
         </p>
       </div>
     </div>

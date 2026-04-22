@@ -1,232 +1,231 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { menuService } from '@/services/menuService';
-import { MdAdd, MdSearch, MdEdit, MdDelete, MdArrowBack, MdLink, MdMenuOpen, MdOutlineDragHandle } from 'react-icons/md';
-import toast from 'react-hot-toast';
+import { useState } from 'react'; // 🟢 Thêm useState để quản lý Modal
+import { useMenus } from '@/hooks/useMenus';
+import { MdAdd, MdLink, MdMenuOpen, MdEdit, MdDelete, MdArrowBack, MdSettings, MdLayers, MdWarning } from 'react-icons/md';
+import PageHeader from '@/components/admin/ui/PageHeader';
+import AdminModal from '@/components/admin/ui/AdminModal'; // 🟢 Triệu hồi Modal xóa chung
 
 export default function MenusPage() {
-    // --- 1. STATES ---
-    const [view, setView] = useState('list'); // 'list' | 'add' | 'edit'
-    const [menus, setMenus] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [selectedMenu, setSelectedMenu] = useState(null);
-    const [position, setPosition] = useState('mainmenu'); // Mặc định lọc theo Header
+    const {
+        view, setView, menus, loading, position, setPosition,
+        formData, setFormData, handleAction, handleDelete, handleSubmit,
+    } = useMenus();
 
-    // Form State
-    const [formData, setFormData] = useState({
-        name: '',
-        link: '',
-        type: 'custom',
-        parent_id: 0,
-        position: 'mainmenu',
-        sort_order: 0
-    });
+    // 🟢 STATE QUẢN LÝ VIỆC XÓA
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [itemToDelete, setItemToDelete] = useState(null);
 
-    // --- 2. FETCH DATA ---
-    const fetchMenus = async () => {
-        setLoading(true);
-        try {
-            // Gọi API index với vị trí hiện tại (mainmenu hoặc footermenu)
-            const res = await menuService.index(position);
-            // res.data lúc này là mảng phẳng từ Backend gửi về
-            setMenus(res.data);
-        } catch (error) {
-            toast.error("KHÔNG THỂ TẢI HỆ THỐNG ĐIỀU HƯỚNG!");
-        } finally {
-            setLoading(false);
-        }
+    const triggerDelete = (item) => {
+        setItemToDelete(item);
+        setIsModalOpen(true);
     };
 
-    // 🟢 ĐÃ FIX LỖI: Chỉ gọi fetchMenus, không gọi fetchUsers nữa
-    useEffect(() => {
-        fetchMenus();
-    }, [position]);
+    if (view === 'list') {
+        return (
+            <div className="space-y-12 pb-20 font-archivo uppercase animate-in fade-in duration-500">
+                <PageHeader 
+                    title="ĐIỀU HƯỚNG" 
+                    subTitle="Site Navigation & Map Control" 
+                    btnText="KHỞI TẠO MENU" 
+                    btnAction={() => handleAction('add')}
+                />
 
-    // --- 3. HANDLERS ---
-    const handleAction = (type, menu = null) => {
-        if (type === 'add') {
-            setSelectedMenu(null);
-            setFormData({ name: '', link: '', type: 'custom', parent_id: 0, position: position, sort_order: 0 });
-        } else if (menu) {
-            setSelectedMenu(menu);
-            setFormData({ ...menu });
-        }
-        setView(type);
-    };
-
-    const handleDelete = async (id) => {
-        if (!confirm("XÁC NHẬN XÓA MỤC MENU NÀY?")) return;
-        try {
-            await menuService.destroy(id);
-            toast.success("ĐÃ GỠ BỎ LIÊN KẾT!");
-            fetchMenus();
-        } catch (error) {
-            toast.error("LỖI KHI XÓA!");
-        }
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        try {
-            if (view === 'add') {
-                await menuService.store(formData);
-                toast.success("THÊM MENU THÀNH CÔNG!");
-            } else {
-                await menuService.update(selectedMenu.id, formData);
-                toast.success("CẬP NHẬT THÀNH CÔNG!");
-            }
-            setView('list');
-            fetchMenus();
-        } catch (error) {
-            toast.error(error.message || "CÓ LỖI XẢY RA!");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // --- 4. RENDER VIEWS ---
-
-    // VIEW: DANH SÁCH (LIST)
-    if (view === 'list') return (
-        <div className="space-y-6 animate-in fade-in duration-500">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b-4 border-black pb-6">
-                <div>
-                    <h1 className="text-4xl font-black uppercase tracking-tighter">ĐIỀU HƯỚNG<span className="text-orange-600">.</span></h1>
-                    <p className="text-xs font-bold text-gray-400 italic uppercase">Quản lý cấu trúc Navbar & Footer</p>
+                {/* TABS VỊ TRÍ */}
+                <div className="flex gap-4 p-2 bg-white border-4 border-black w-fit shadow-[8px_8px_0_0_#000]">
+                    {[{ id: 'mainmenu', label: 'PRIMARY HEADER' }, { id: 'footermenu', label: 'SECONDARY FOOTER' }].map((tab) => (
+                        <button key={tab.id} onClick={() => setPosition(tab.id)}
+                            className={`px-8 py-3 text-xs font-black transition-all ${position === tab.id ? 'bg-black text-white shadow-[4px_4px_0_0_#ea580c]' : 'text-gray-400 hover:text-black'}`}>
+                            {tab.label}
+                        </button>
+                    ))}
                 </div>
-                <button onClick={() => handleAction('add')} className="bg-black text-white px-8 py-4 font-black text-xs uppercase shadow-[6px_6px_0_0_#ea580c] hover:bg-orange-600 transition-all active:shadow-none active:translate-x-1 active:translate-y-1">
-                    + THÊM MENU
-                </button>
-            </div>
 
-            {/* Tabs Vị trí */}
-            <div className="flex gap-2 p-1 bg-gray-100 border-2 border-black w-fit">
-                {['mainmenu', 'footermenu'].map((pos) => (
-                    <button
-                        key={pos}
-                        onClick={() => setPosition(pos)}
-                        className={`px-6 py-2 text-[10px] font-black uppercase transition-all ${position === pos ? 'bg-black text-white' : 'text-gray-400 hover:text-black'
-                            }`}
-                    >
-                        {pos === 'mainmenu' ? 'Header chính' : 'Footer trang'}
-                    </button>
-                ))}
-            </div>
-
-            {/* Bảng Menu */}
-            <div className="border-4 border-black shadow-[12px_12px_0_0_#000] bg-white overflow-hidden">
-                <table className="w-full text-left border-collapse">
-                    <thead className="bg-black text-white text-[10px] uppercase tracking-widest">
-                        <tr>
-                            <th className="p-4 border-r border-gray-800">Cấu trúc tên & liên kết</th>
-                            <th className="p-4 border-r border-gray-800 text-center">Thứ tự</th>
-                            <th className="p-4 text-center">Thao tác</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y-2 divide-black">
-                        {loading ? (
-                            <tr><td colSpan="3" className="p-10 text-center font-black italic">ĐANG TRUY XUẤT SITEMAP...</td></tr>
-                        ) : menus.length > 0 ? (
-                            menus.map((item) => (
-                                <tr key={item.id} className={`hover:bg-orange-50 ${item.parent_id !== 0 ? 'bg-gray-50' : ''}`}>
-                                    <td className="p-4 border-r-2 border-black">
-                                        <div className="flex items-center gap-3 font-black uppercase text-sm">
-                                            {item.parent_id !== 0 && <span className="ml-8 text-orange-600">┗━━</span>}
-                                            <div className="flex flex-col">
-                                                <span>{item.name}</span>
-                                                <span className="text-[10px] text-gray-400 lowercase italic font-bold flex items-center gap-1">
-                                                    <MdLink /> {item.link}
-                                                </span>
+                {/* BẢNG DỮ LIỆU */}
+                <div className="border-[6px] border-black bg-white shadow-[15px_15px_0_0_#000] overflow-hidden">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="bg-black text-white text-[10px] tracking-[0.3em]">
+                                <th className="p-6 border-r border-white/10">STRUCTURE & DESTINATION</th>
+                                <th className="p-6 border-r border-white/10 text-center w-32">ORDER</th>
+                                <th className="p-6 text-right w-48">ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y-4 divide-black">
+                            {loading ? (
+                                <tr><td colSpan="3" className="p-20 text-center font-black italic animate-pulse">SCANNING NETWORK NODES...</td></tr>
+                            ) : menus.length > 0 ? (
+                                menus.map((item) => (
+                                    <tr key={item.id} className={`hover:bg-orange-50/50 transition-colors ${item.parent_id !== 0 ? 'bg-gray-50/50' : ''}`}>
+                                        <td className="p-6 border-r-4 border-black">
+                                            <div className="flex items-center gap-4">
+                                                {item.parent_id !== 0 && <span className="ml-10 text-orange-600 font-black text-2xl">┗━━</span>}
+                                                <div className="flex flex-col">
+                                                    <span className="font-black text-xl tracking-tighter leading-none">{item.name}</span>
+                                                    <span className="text-[10px] text-gray-400 font-bold lowercase flex items-center gap-1 italic mt-1"><MdLink size={14}/> {item.link}</span>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </td>
-                                    <td className="p-4 border-r-2 border-black text-center font-black">{item.sort_order}</td>
-                                    <td className="p-4 flex justify-center gap-2">
-                                        <button onClick={() => handleAction('edit', item)} className="p-2 border-2 border-black hover:bg-black hover:text-white transition-all"><MdEdit size={18} /></button>
-                                        <button onClick={() => handleDelete(item.id)} className="p-2 border-2 border-black hover:bg-red-600 hover:text-white transition-all"><MdDelete size={18} /></button>
-                                    </td>
-                                </tr>
-                            ))
-                        ) : (
-                            <tr><td colSpan="3" className="p-10 text-center text-gray-400 font-bold">VỊ TRÍ NÀY CHƯA CÓ MENU.</td></tr>
-                        )}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    );
+                                        </td>
+                                        <td className="p-6 border-r-4 border-black text-center font-black text-lg italic">#{item.sort_order}</td>
+                                        <td className="p-6">
+                                            <div className="flex justify-end gap-4">
+                                                <button onClick={() => handleAction('edit', item)} className="p-2 border-2 border-black hover:bg-black hover:text-white shadow-[4px_4px_0_0_#000] active:shadow-none"><MdEdit size={20} /></button>
+                                                {/* 🟢 GỌI TRIGGER DELETE Ở ĐÂY */}
+                                                <button onClick={() => triggerDelete(item)} className="p-2 border-2 border-black text-red-600 hover:bg-red-600 hover:text-white shadow-[4px_4px_0_0_#000] active:shadow-none"><MdDelete size={20} /></button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr><td colSpan="3" className="p-20 text-center text-gray-400 font-black italic uppercase">Vị trí này chưa được thiết lập.</td></tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
 
-    // VIEW: FORM (ADD / EDIT)
+                {/* 🔴 MODAL XÁC NHẬN XÓA DÙNG CHUNG */}
+                <AdminModal 
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    onConfirm={() => {
+                        handleDelete(itemToDelete.id); // 🟢 Gọi hàm xóa trong Hook
+                        setIsModalOpen(false);
+                    }}
+                    title="THU HỒI LIÊN KẾT"
+                    message={`CẨN TRỌNG: HÀNH ĐỘNG NÀY SẼ GỠ BỎ MỤC "${itemToDelete?.name?.toUpperCase()}" KHỎI HỆ THỐNG ĐIỀU HƯỚNG. CÁC MENU CON (NẾU CÓ) CŨNG SẼ BỊ ẢNH HƯỞNG.`}
+                />
+            </div>
+        );
+    }
+
+
+    // VIEW 2: FORM THÊM / SỬA
     return (
-        <div className="max-w-3xl mx-auto space-y-6 animate-in slide-in-from-right-8 duration-500">
-            <button onClick={() => setView('list')} className="flex items-center gap-2 font-black text-xs uppercase hover:text-orange-600 transition-colors">
-                <MdArrowBack size={20} /> QUAY LẠI DANH SÁCH
+        <div className="max-w-4xl mx-auto space-y-10 pb-20 font-archivo uppercase animate-in slide-in-from-right-8 duration-500">
+            <button 
+                onClick={() => setView('list')}
+                className="group flex items-center gap-3 font-black text-xs tracking-[0.3em] hover:text-orange-600 transition-all"
+            >
+                <MdArrowBack size={24} className="group-hover:-translate-x-2 transition-transform" /> 
+                HUỶ BỎ VÀ TRỞ LẠI
             </button>
 
-            <form onSubmit={handleSubmit} className="bg-white border-[6px] border-black p-8 space-y-8 shadow-[16px_16px_0_0_#ea580c]">
-                <div className="border-b-4 border-black pb-4 flex items-center gap-3">
-                    <MdMenuOpen size={30} className="text-orange-600" />
-                    <h2 className="text-2xl font-black uppercase">{view === 'add' ? 'KHỞI TẠO MENU MỚI' : 'SỬA MỤC LIÊN KẾT'}</h2>
-                </div>
+            <form onSubmit={handleSubmit} className="relative group">
+                {/* LỚP NỀN SHADOW SIÊU DÀY */}
+                <div className="absolute inset-0 bg-orange-600 translate-x-4 translate-y-4 -z-10 border-4 border-black group-hover:translate-x-6 group-hover:translate-y-6 transition-all"></div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-1">
-                        <label className="text-[10px] font-black uppercase tracking-widest">Tên hiển thị</label>
-                        <input required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="VD: SẢN PHẨM" className="w-full border-4 border-black p-4 font-bold outline-none focus:bg-black focus:text-white" />
+                <div className="bg-white border-[6px] border-black p-12 space-y-12">
+                    <div className="border-b-[6px] border-black pb-8 flex items-center gap-6">
+                        <div className="bg-black text-white p-4 shadow-[6px_6px_0_0_rgba(0,0,0,0.2)]">
+                            <MdMenuOpen size={36} />
+                        </div>
+                        <div>
+                            <h2 className="text-4xl font-black tracking-tighter italic leading-none">
+                                {view === 'add' ? 'KHỞI TẠO LIÊN KẾT' : 'HIỆU CHỈNH ĐIỀU HƯỚNG'}<span className="text-orange-600">_</span>
+                            </h2>
+                            <p className="text-[10px] font-black text-gray-400 mt-2 tracking-[0.4em]">Configure Sitemap Parameters</p>
+                        </div>
                     </div>
-                    <div className="space-y-1">
-                        <label className="text-[10px] font-black uppercase tracking-widest">Đường dẫn (URL)</label>
-                        <input required value={formData.link} onChange={(e) => setFormData({ ...formData, link: e.target.value })} placeholder="VD: /san-pham" className="w-full border-4 border-black p-4 font-bold outline-none focus:bg-black focus:text-white" />
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                        {/* Tên Menu */}
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-gray-400 italic flex items-center gap-2">
+                                <MdLayers /> DISPLAY LABEL
+                            </label>
+                            <input 
+                                required 
+                                value={formData.name} 
+                                onChange={(e) => setFormData({...formData, name: e.target.value})} 
+                                placeholder="VD: BÀI VIẾT" 
+                                className="w-full border-4 border-black p-5 font-black text-xl outline-none focus:bg-orange-50 transition-all shadow-[6px_6px_0_0_rgba(0,0,0,0.05)]" 
+                            />
+                        </div>
+
+                        {/* Link */}
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-gray-400 italic flex items-center gap-2">
+                                <MdLink /> TARGET ENDPOINT
+                            </label>
+                            <input 
+                                required 
+                                value={formData.link} 
+                                onChange={(e) => setFormData({...formData, link: e.target.value})} 
+                                placeholder="VD: /tin-tuc" 
+                                className="w-full border-4 border-black p-5 font-black text-xl outline-none focus:bg-black focus:text-white transition-all shadow-[6px_6px_0_0_rgba(0,0,0,0.05)] lowercase" 
+                            />
+                        </div>
+
+                        {/* Menu Cha */}
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-gray-400 italic">HIERARCHY NODE (PARENT)</label>
+                            <select
+                                value={formData.parent_id}
+                                onChange={(e) => setFormData({ ...formData, parent_id: parseInt(e.target.value) })}
+                                className="w-full border-4 border-black p-5 font-black text-sm outline-none bg-white cursor-pointer appearance-none hover:bg-gray-50 transition-colors"
+                            >
+                                <option value={0}>-- CẤP GỐC (ROOT LEVEL) --</option>
+                                {menus.filter(m => m.parent_id === 0 && m.id !== formData.id).map(parent => (
+                                    <option key={parent.id} value={parent.id}>BRANCH: {parent.name.toUpperCase()}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Thứ tự */}
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-gray-400 italic flex items-center gap-2">
+                                <MdSettings /> SORT SEQUENCE
+                            </label>
+                            <input
+                                type="number"
+                                value={formData.sort_order}
+                                onChange={(e) => setFormData({ ...formData, sort_order: parseInt(e.target.value) || 0 })}
+                                className="w-full border-4 border-black p-5 font-black text-xl outline-none focus:bg-orange-50 transition-all"
+                            />
+                        </div>
+
+                        {/* Vị trí */}
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-gray-400 italic uppercase">Deployment Area</label>
+                            <select 
+                                value={formData.position} 
+                                onChange={(e) => setFormData({ ...formData, position: e.target.value })} 
+                                className="w-full border-4 border-black p-5 font-black text-sm bg-orange-50 outline-none"
+                            >
+                                <option value="mainmenu">PRIMARY HEADER</option>
+                                <option value="footermenu">SECONDARY FOOTER</option>
+                            </select>
+                        </div>
+
+                        {/* Loại */}
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-gray-400 italic uppercase">Link Architecture</label>
+                            <select 
+                                value={formData.type} 
+                                onChange={(e) => setFormData({ ...formData, type: e.target.value })} 
+                                className="w-full border-4 border-black p-5 font-black text-sm bg-white outline-none cursor-pointer"
+                            >
+                                <option value="custom">EXTERNAL/CUSTOM LINK</option>
+                                <option value="category">PRODUCT CATALOG</option>
+                                <option value="post">EDITORIAL CONTENT</option>
+                            </select>
+                        </div>
                     </div>
-                    <div className="space-y-1">
-                        <label className="text-[10px] font-black uppercase tracking-widest">Menu Cha (Nếu có)</label>
-                        <select
-                            value={formData.parent_id}
-                            onChange={(e) => setFormData({ ...formData, parent_id: parseInt(e.target.value) })}
-                            className="w-full border-4 border-black p-4 font-bold bg-white outline-none cursor-pointer"
+
+                    {/* NÚT SUBMIT NẶNG ĐÔ */}
+                    <div className="pt-10 border-t-[6px] border-black">
+                        <button 
+                            disabled={loading}
+                            type="submit"
+                            className="group relative w-full bg-black text-white py-8 font-black text-2xl uppercase tracking-[0.5em] transition-all hover:bg-orange-600 active:translate-x-2 active:translate-y-2 active:shadow-none disabled:opacity-50"
                         >
-                            <option value={0}>KHÔNG CÓ (LÀ MENU CẤP 1)</option>
-                            {menus.filter(m => m.parent_id === 0 && m.id !== selectedMenu?.id).map(parent => (
-                                <option key={parent.id} value={parent.id}>THUỘC NHÓM: {parent.name}</option>
-                            ))}
-                        </select>
-                    </div>
-                    <div className="space-y-1">
-                        <label className="text-[10px] font-black uppercase tracking-widest">Thứ tự hiển thị</label>
-                        <input
-                            type="number"
-                            // Đảm bảo value luôn là số, nếu formData.sort_order bị undefined thì hiện 0
-                            value={formData.sort_order ?? 0}
-                            onChange={(e) => {
-                                const val = parseInt(e.target.value);
-                                setFormData({ ...formData, sort_order: isNaN(val) ? 0 : val });
-                            }}
-                            className="w-full border-4 border-black p-4 font-bold outline-none focus:bg-black focus:text-white transition-all"
-                        />
-                    </div>
-                    <div className="space-y-1">
-                        <label className="text-[10px] font-black uppercase tracking-widest">Vị trí</label>
-                        <select value={formData.position} onChange={(e) => setFormData({ ...formData, position: e.target.value })} className="w-full border-4 border-black p-4 font-bold bg-white outline-none">
-                            <option value="mainmenu">HEADER (THANH TRÊN)</option>
-                            <option value="footermenu">FOOTER (CHÂN TRANG)</option>
-                        </select>
-                    </div>
-                    <div className="space-y-1">
-                        <label className="text-[10px] font-black uppercase tracking-widest">Phân loại link</label>
-                        <select value={formData.type} onChange={(e) => setFormData({ ...formData, type: e.target.value })} className="w-full border-4 border-black p-4 font-bold bg-white outline-none">
-                            <option value="custom">LINK TÙY CHỈNH</option>
-                            <option value="category">DANH MỤC SẢN PHẨM</option>
-                            <option value="post">BÀI VIẾT</option>
-                        </select>
+                            <span className="relative z-10 flex items-center justify-center gap-6">
+                                {loading ? 'SYNCING...' : 'COMMIT CHANGES →'}
+                            </span>
+                            <div className="absolute inset-0 translate-x-3 translate-y-3 border-4 border-black -z-10 group-hover:translate-x-0 group-hover:translate-y-0 transition-transform bg-white"></div>
+                        </button>
                     </div>
                 </div>
-
-                <button disabled={loading} className="w-full bg-black text-white py-6 font-black uppercase tracking-[0.4em] shadow-[8px_8px_0_0_#000] hover:bg-orange-600 hover:shadow-[8px_8px_0_0_#000] active:translate-x-1 active:translate-y-1 active:shadow-none transition-all">
-                    {loading ? 'ĐANG LƯU...' : 'XÁC NHẬN CẬP NHẬT →'}
-                </button>
             </form>
         </div>
     );

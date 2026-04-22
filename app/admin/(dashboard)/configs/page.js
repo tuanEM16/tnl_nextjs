@@ -1,217 +1,173 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { configService } from '@/services/configService';
-import toast from 'react-hot-toast';
-import { MdSave, MdBusiness, MdLanguage, MdImage, MdShare, MdMap,MdCloudUpload } from 'react-icons/md';
+import { useConfig } from '@/hooks/useConfig'; // 🟢 Triệu hồi nội công
+import PageHeader from '@/components/admin/ui/PageHeader';
+import { MdSave, MdBusiness, MdLanguage, MdImage, MdShare, MdMap, MdCloudUpload, MdInfo, MdSettings } from 'react-icons/md';
 
 export default function ConfigPage() {
-    const [formData, setFormData] = useState({});
-    const [files, setFiles] = useState({ logo: null, favicon: null });
-    const [previews, setPreviews] = useState({ logo: '', favicon: '' });
-    const [loading, setLoading] = useState(false);
-    const [fetching, setFetching] = useState(true);
+    const {
+        formData, previews, fetching, loading,
+        handleChange, handleFileChange, handleSubmit
+    } = useConfig();
 
-
-    const fixedFields = [
-        'site_name', 'slogan', 'email', 'phone', 'hotline',
-        'address', 'map_embed', 'facebook', 'youtube',
-        'meta_title', 'meta_description', 'meta_keywords'
-    ];
-
-    useEffect(() => {
-        const fetchConfig = async () => {
-            try {
-                const res = await configService.show(); // Gọi hàm show() từ service
-                setFormData(res.data || {});
-
-
-                if (res.data?.logo) {
-                    setPreviews(prev => ({ ...prev, logo: `${process.env.NEXT_PUBLIC_IMAGE_URL}/${res.data.logo}` }));
-                }
-                if (res.data?.favicon) {
-                    setPreviews(prev => ({ ...prev, favicon: `${process.env.NEXT_PUBLIC_IMAGE_URL}/${res.data.favicon}` }));
-                }
-            } catch (error) {
-                toast.error('LỖI TRUY XUẤT THÔNG SỐ HỆ THỐNG');
-            } finally {
-                setFetching(false);
-            }
-        };
-        fetchConfig();
-    }, []);
-
-    const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
-
-    const handleFileChange = (e, type) => {
-        const file = e.target.files[0];
-        if (file) {
-            setFiles({ ...files, [type]: file });
-            setPreviews({ ...previews, [type]: URL.createObjectURL(file) });
-        }
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        try {
-            const data = new FormData();
-
-
-            Object.keys(formData).forEach(key => {
-
-                if (formData[key] !== null && formData[key] !== undefined) {
-                    data.append(key, formData[key]);
-                }
-            });
-
-
-            if (files.logo) data.append('logo', files.logo);
-            if (files.favicon) data.append('favicon', files.favicon);
-
-            await configService.update(data);
-            toast.success('HỆ THỐNG ĐÃ ĐƯỢC TÁI CẤU HÌNH THÀNH CÔNG');
-        } catch (error) {
-            toast.error('CẤU HÌNH THẤT BẠI - KIỂM TRA LẠI SERVER');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    if (fetching) return <div className="p-20 font-black italic animate-pulse uppercase tracking-widest text-center">Reading System Core...</div>;
+    if (fetching) return (
+        <div className="p-32 text-center font-black italic animate-pulse uppercase tracking-[0.4em]">
+            READING SYSTEM CORE VARIABLES...
+        </div>
+    );
 
     return (
         <div className="space-y-12 pb-20 font-archivo uppercase">
-            {/* HEADER */}
-            <header className="border-b-4 border-black pb-8 flex justify-between items-end">
-                <div className="space-y-2">
-                    <p className="text-[10px] font-black tracking-[0.4em] text-gray-400 italic">Global System Variables</p>
-                    <h1 className="text-7xl font-black tracking-tighter leading-none text-black">
-                        CẤU HÌNH<span className="text-orange-600">.</span>
-                    </h1>
-                </div>
-                <div className="text-right hidden md:block">
-                    <p className="text-[10px] font-black text-gray-400 italic mb-1">Last Updated</p>
-                    <p className="font-black text-xs">{new Date().toLocaleDateString('vi-VN')}</p>
-                </div>
-            </header>
+            {/* 🔴 HEADER NICKELBRONX */}
+            <PageHeader 
+                title="CẤU HÌNH" 
+                subTitle="Global System Control Unit" 
+            />
 
             <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-                {/* CỘT TRÁI: THÔNG TIN TEXT */}
+                
+                {/* 🔵 CỘT TRÁI: DATA ENTRY (2/3) */}
                 <div className="lg:col-span-2 space-y-12">
-
+                    
                     {/* SECTION: THÔNG TIN DOANH NGHIỆP */}
-                    <section className="space-y-6">
-                        <h2 className="flex items-center gap-3 text-xl font-black border-l-8 border-orange-600 pl-4 bg-gray-50 py-3 shadow-sm">
-                            <MdBusiness size={24} /> THÔNG TIN THÉP TNL
+                    <section className="bg-white border-[6px] border-black p-10 shadow-[15px_15px_0_0_#000] space-y-10">
+                        <h2 className="flex items-center gap-4 text-2xl font-black italic border-b-4 border-black pb-4">
+                            <MdBusiness size={32} className="text-orange-600" /> CORPORATE IDENTITY
                         </h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-black text-gray-400 italic">Tên hệ thống (Site Name)</label>
-                                <input type="text" name="site_name" value={formData.site_name || ''} onChange={handleChange} className="w-full border-2 border-black p-4 font-bold outline-none focus:bg-black focus:text-white transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]" />
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 italic">SITE NAME</label>
+                                <input type="text" name="site_name" value={formData.site_name || ''} onChange={handleChange} className="w-full border-4 border-black p-4 font-black text-xl outline-none focus:bg-orange-50 transition-all shadow-[6px_6px_0_0_rgba(0,0,0,0.05)]" />
                             </div>
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-black text-gray-400 italic">Slogan công ty</label>
-                                <input type="text" name="slogan" value={formData.slogan || ''} onChange={handleChange} className="w-full border-2 border-black p-4 font-bold outline-none shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]" />
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-black text-gray-400 italic">Số điện thoại</label>
-                                <input type="text" name="phone" value={formData.phone || ''} onChange={handleChange} className="w-full border-2 border-black p-4 font-bold outline-none shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]" />
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-black text-gray-400 italic">Hotline</label>
-                                <input type="text" name="hotline" value={formData.hotline || ''} onChange={handleChange} className="w-full border-2 border-black p-4 font-bold outline-none shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]" />
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-black text-gray-400 italic">Email liên hệ</label>
-                                <input type="email" name="email" value={formData.email || ''} onChange={handleChange} className="w-full border-2 border-black p-4 font-bold outline-none shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] lowercase" />
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 italic">SLOGAN</label>
+                                <input type="text" name="slogan" value={formData.slogan || ''} onChange={handleChange} className="w-full border-4 border-black p-4 font-black text-xl outline-none focus:bg-orange-50 transition-all" />
                             </div>
                         </div>
-                        <div className="space-y-1">
-                            <label className="text-[10px] font-black text-gray-400 italic">Địa chỉ trụ sở chính</label>
-                            <input type="text" name="address" value={formData.address || ''} onChange={handleChange} className="w-full border-2 border-black p-4 font-bold outline-none shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]" />
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-4 border-t-2 border-black border-dashed">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 italic">OFFICE PHONE</label>
+                                <input type="text" name="phone" value={formData.phone || ''} onChange={handleChange} className="w-full border-4 border-black p-4 font-black outline-none focus:bg-black focus:text-white transition-all" />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 italic">HOTLINE 24/7</label>
+                                <input type="text" name="hotline" value={formData.hotline || ''} onChange={handleChange} className="w-full border-4 border-black p-4 font-black outline-none focus:bg-black focus:text-white transition-all" />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 italic">BUSINESS EMAIL</label>
+                                <input type="email" name="email" value={formData.email || ''} onChange={handleChange} className="w-full border-4 border-black p-4 font-black outline-none focus:bg-black focus:text-white transition-all lowercase" />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-gray-400 italic">HEADQUARTERS ADDRESS</label>
+                            <input type="text" name="address" value={formData.address || ''} onChange={handleChange} className="w-full border-4 border-black p-4 font-black outline-none focus:bg-orange-50 transition-all" />
                         </div>
                     </section>
 
-                    {/* SECTION: SEO & MAP */}
-                    <section className="space-y-6">
-                        <h2 className="flex items-center gap-3 text-xl font-black border-l-8 border-black pl-4 bg-gray-50 py-3 shadow-sm">
-                            <MdLanguage size={24} /> SEO & ĐỊA ĐIỂM
+                    {/* SECTION: SEO & GEO-LOCATION */}
+                    <section className="bg-white border-[6px] border-black p-10 shadow-[15px_15px_0_0_#000] space-y-10">
+                        <h2 className="flex items-center gap-4 text-2xl font-black italic border-b-4 border-black pb-4">
+                            <MdLanguage size={32} className="text-orange-600" /> SEO & GLOBAL REACH
                         </h2>
-                        <div className="space-y-4">
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-black text-gray-400 italic">Meta Title (Tiêu đề SEO)</label>
-                                <input type="text" name="meta_title" value={formData.meta_title || ''} onChange={handleChange} className="w-full border-2 border-black p-4 font-bold outline-none shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]" />
+                        
+                        <div className="space-y-6">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 italic">META TITLE (SEO OPTIMIZATION)</label>
+                                <input type="text" name="meta_title" value={formData.meta_title || ''} onChange={handleChange} className="w-full border-4 border-black p-4 font-black text-xl outline-none focus:bg-orange-50 transition-all" />
                             </div>
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-black text-gray-400 italic">Meta Description (Mô tả SEO)</label>
-                                <textarea name="meta_description" value={formData.meta_description || ''} onChange={handleChange} rows="3" className="w-full border-2 border-black p-4 font-bold outline-none shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] normal-case" />
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 italic">META DESCRIPTION</label>
+                                <textarea name="meta_description" value={formData.meta_description || ''} onChange={handleChange} rows="3" className="w-full border-4 border-black p-4 font-bold outline-none normal-case leading-tight" />
                             </div>
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-black text-gray-400 italic flex items-center gap-1"><MdMap /> Map Embed Code (Iframe)</label>
-                                <textarea name="map_embed" value={formData.map_embed || ''} onChange={handleChange} rows="2" className="w-full border-2 border-black p-4 font-mono text-[10px] outline-none shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] normal-case" />
+                            <div className="space-y-2 bg-gray-50 p-6 border-4 border-black">
+                                <label className="text-[10px] font-black text-gray-400 italic flex items-center gap-2 mb-2">
+                                    <MdMap size={18} className="text-black"/> GOOGLE MAPS EMBED CODE (IFRAME)
+                                </label>
+                                <textarea name="map_embed" value={formData.map_embed || ''} onChange={handleChange} rows="2" className="w-full border-2 border-black p-4 font-mono text-[10px] outline-none bg-white normal-case" />
                             </div>
                         </div>
                     </section>
                 </div>
 
-                {/* CỘT PHẢI: MEDIA & ACTIONS */}
-                <div className="space-y-10">
-                    <div className="bg-white border-2 border-black p-8 space-y-10 shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] sticky top-10">
-                        <h3 className="text-sm font-black flex items-center gap-2 border-b-2 border-black pb-4 italic"><MdImage size={20} /> MEDIA ASSETS</h3>
+                {/* 🟠 CỘT PHẢI: ASSETS & DEPLOYMENT (1/3) */}
+                <div className="relative">
+                    <div className="sticky top-10 space-y-8">
+                        
+                        {/* CARD MEDIA */}
+                        <div className="bg-white border-[6px] border-black p-8 space-y-10 shadow-[12px_12px_0_0_#ea580c]">
+                            <h3 className="text-sm font-black flex items-center gap-2 border-b-4 border-black pb-4 italic">
+                                <MdImage size={24} /> VISUAL ASSETS
+                            </h3>
 
-                        {/* LOGO UPLOAD */}
-                        <div className="space-y-4">
-                            <label className="text-[10px] font-black text-gray-400 block tracking-widest uppercase">Company Logo</label>
-                            <div className="relative border-2 border-dashed border-black p-6 text-center cursor-pointer hover:bg-black hover:text-white transition-all group">
-                                <input type="file" onChange={(e) => handleFileChange(e, 'logo')} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
-                                {previews.logo ? (
-                                    <img src={previews.logo} className="mx-auto max-h-32 object-contain group-hover:invert transition-all" alt="Logo Preview" />
-                                ) : (
-                                    <div className="py-4">
-                                        <MdCloudUpload size={32} className="mx-auto mb-2" />
-                                        <p className="text-[9px] font-black tracking-widest">UPLOAD LOGO</p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* FAVICON UPLOAD */}
-                        <div className="space-y-4">
-                            <label className="text-[10px] font-black text-gray-400 block tracking-widest uppercase">Browser Favicon</label>
-                            <div className="relative border-2 border-dashed border-black p-4 text-center cursor-pointer hover:bg-gray-50 flex items-center justify-between">
-                                <input type="file" onChange={(e) => handleFileChange(e, 'favicon')} className="absolute inset-0 opacity-0 cursor-pointer" />
-                                <div className="text-left">
-                                    <p className="text-[9px] font-black">CHỌN FILE (ICO/PNG)</p>
+                            {/* LOGO */}
+                            <div className="space-y-4">
+                                <label className="text-[10px] font-black text-gray-400 block tracking-widest uppercase">Master Logo</label>
+                                <div className="relative border-4 border-dashed border-black group bg-gray-50 overflow-hidden">
+                                    <input type="file" onChange={(e) => handleFileChange(e, 'logo')} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
+                                    {previews.logo ? (
+                                        <div className="p-6">
+                                            <img src={previews.logo} className="mx-auto max-h-32 object-contain group-hover:scale-110 transition-all" alt="Logo" />
+                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                <p className="text-white font-black text-[10px] tracking-widest border-2 border-white p-2">CHANGE LOGO</p>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="py-10 text-center space-y-2">
+                                            <MdCloudUpload size={40} className="mx-auto text-gray-300" />
+                                            <p className="text-[9px] font-black tracking-widest text-gray-400">UPLOAD LOGO</p>
+                                        </div>
+                                    )}
                                 </div>
-                                {previews.favicon && <img src={previews.favicon} className="h-10 w-10 border border-black shadow-sm" />}
                             </div>
+
+                            {/* FAVICON */}
+                            <div className="space-y-4">
+                                <label className="text-[10px] font-black text-gray-400 block tracking-widest uppercase">System Favicon</label>
+                                <div className="relative border-4 border-black p-4 bg-orange-50 flex items-center justify-between group">
+                                    <input type="file" onChange={(e) => handleFileChange(e, 'favicon')} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
+                                    <div className="flex items-center gap-3">
+                                        {previews.favicon && <img src={previews.favicon} className="h-10 w-10 border-2 border-black bg-white" alt="Favicon" />}
+                                        <p className="text-[9px] font-black tracking-tighter">SELECT .ICO / .PNG</p>
+                                    </div>
+                                    <MdCloudUpload size={20} className="group-hover:text-orange-600 transition-colors" />
+                                </div>
+                            </div>
+
+                            {/* SOCIAL */}
+                            <div className="space-y-6 pt-6 border-t-4 border-black">
+                                <div className="flex items-center gap-4 bg-gray-100 p-3 border-2 border-black">
+                                    <MdShare className="text-orange-600" size={24} />
+                                    <input type="text" name="facebook" placeholder="FACEBOOK URL" value={formData.facebook || ''} onChange={handleChange} className="bg-transparent w-full font-bold text-xs outline-none lowercase placeholder:text-gray-300" />
+                                </div>
+                                <div className="flex items-center gap-4 bg-gray-100 p-3 border-2 border-black">
+                                    <MdShare className="text-orange-600" size={24} />
+                                    <input type="text" name="youtube" placeholder="YOUTUBE URL" value={formData.youtube || ''} onChange={handleChange} className="bg-transparent w-full font-bold text-xs outline-none lowercase placeholder:text-gray-300" />
+                                </div>
+                            </div>
+
+                            {/* SAVE BUTTON */}
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="w-full bg-black text-white py-8 text-sm font-black uppercase tracking-[0.4em] shadow-[8px_8px_0_0_#ea580c] hover:-translate-y-1 active:translate-x-1 active:translate-y-1 active:shadow-none transition-all disabled:opacity-50"
+                            >
+                                <div className="flex items-center justify-center gap-4">
+                                    <MdSave size={28} />
+                                    {loading ? 'SYNCHRONIZING...' : 'COMMIT CHANGES →'}
+                                </div>
+                            </button>
                         </div>
 
-                        {/* SOCIAL LINKS */}
-                        <div className="space-y-4 pt-4 border-t border-black/10">
-                            <div className="flex items-center gap-3">
-                                <MdShare className="text-gray-400" />
-                                <input type="text" name="facebook" placeholder="FACEBOOK URL" value={formData.facebook || ''} onChange={handleChange} className="w-full border-b-2 border-black py-2 font-bold text-[10px] outline-none focus:border-orange-600 lowercase" />
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <MdShare className="text-gray-400" />
-                                <input type="text" name="youtube" placeholder="YOUTUBE URL" value={formData.youtube || ''} onChange={handleChange} className="w-full border-b-2 border-black py-2 font-bold text-[10px] outline-none focus:border-orange-600 lowercase" />
-                            </div>
+                        {/* WARNING BOX */}
+                        <div className="p-6 border-4 border-black border-dashed bg-yellow-50 flex gap-4 shadow-[8px_8px_0_0_#000]">
+                            <MdInfo size={32} className="shrink-0 text-black" />
+                            <p className="text-[9px] font-black leading-relaxed italic">
+                                THẬN TRỌNG: MỌI THAY ĐỔI TRÊN TRANG NÀY SẼ TÁC ĐỘNG TRỰC TIẾP ĐẾN TOÀN BỘ WEBSITE VÀ CHỈ SỐ SEO TRÊN GOOGLE SEARCH CONSOLE.
+                            </p>
                         </div>
-
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="w-full bg-black text-white py-8 text-xs font-black uppercase tracking-[0.4em] hover:bg-orange-600 transition-all flex items-center justify-center gap-3 shadow-[6px_6px_0px_0px_rgba(234,88,12,1)] active:scale-95"
-                        >
-                            <MdSave size={24} />
-                            {loading ? 'STORING CONFIG...' : 'LƯU HỆ THỐNG →'}
-                        </button>
                     </div>
                 </div>
             </form>

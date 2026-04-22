@@ -1,211 +1,224 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
-import { productService } from '@/services/productService';
-import { categoryService } from '@/services/categoryService';
-import toast from 'react-hot-toast';
-import { MdCloudUpload } from 'react-icons/md';
+import { use } from 'react';
+import { useProductForm } from '@/hooks/useProducts'; // 🟢 Triệu hồi nội công siêu mạnh
+import PageHeader from '@/components/admin/ui/PageHeader';
+import { 
+    MdSave, MdCloudUpload, MdCollections, MdSettings, 
+    MdDescription, MdAssignment, MdBuild, MdClose, MdSync 
+} from 'react-icons/md';
 
-export default function EditProductPage() {
-    const router = useRouter();
-    const { id } = useParams();
+export default function EditProductPage({ params }) {
+    // 1. UNWRAP PARAMS (Next.js 15)
+    const { id } = use(params);
 
-    const [formData, setFormData] = useState({
-        category_id: '',
-        name: '',
-        description: '',
-        content: '',
-        standard: '',
-        application: '',
-        status: 1,
-    });
+    // 2. DÙNG HOOK (Dọn sạch 100 dòng code logic cũ)
+    const {
+        formData, thumbnailPreview, imagesPreviews, categories, 
+        attributes, selectedAttributes, fetching, loading,
+        handleChange, handleThumbnailChange, handleImagesChange, 
+        removeImagePreview, handleAttributeChange, handleSubmit,
+    } = useProductForm(id); // Truyền ID vào là tự hiểu chế độ EDIT
 
-    const [thumbnail, setThumbnail] = useState(null); // File ảnh mới chọn
-    const [thumbnailPreview, setThumbnailPreview] = useState('');
-    const [categories, setCategories] = useState([]);
-    const [attributes, setAttributes] = useState([]);
-    const [selectedAttributes, setSelectedAttributes] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [fetching, setFetching] = useState(true);
-
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const [productRes, catRes, attrRes] = await Promise.all([
-                    productService.getById(id),
-                    categoryService.getAll(),
-                    productService.getAttributes(),
-                ]);
-
-                const product = productRes.data;
-                setFormData({
-                    category_id: product.category_id?.toString() || '',
-                    name: product.name || '',
-                    description: product.description || '',
-                    content: product.content || '',
-                    standard: product.standard || '',
-                    application: product.application || '',
-                    status: product.status !== undefined ? product.status : 1,
-                });
-
-                if (product.thumbnail) {
-                    setThumbnailPreview(`${process.env.NEXT_PUBLIC_IMAGE_URL}/${product.thumbnail}`);
-                }
-                setCategories(catRes.data || []);
-                setAttributes(attrRes.data || []);
-                if (product.attributes) {
-                    setSelectedAttributes(product.attributes.map(attr => ({
-                        attribute_id: attr.attribute_id,
-                        value: attr.value,
-                    })));
-                }
-            } catch (error) {
-                toast.error('LỖI TRUY XUẤT DỮ LIỆU');
-                router.push('/admin/products');
-            } finally {
-                setFetching(false);
-            }
-        };
-        fetchData();
-    }, [id]);
-
-    const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
-
-    const handleThumbnailChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            setThumbnail(file); // Lưu file vào state
-            setThumbnailPreview(URL.createObjectURL(file));
-        }
-    };
-
-    const handleAttributeChange = (attrId, value) => {
-        setSelectedAttributes(prev => {
-            const filtered = prev.filter(a => a.attribute_id !== attrId);
-            if (value) filtered.push({ attribute_id: attrId, value });
-            return filtered;
-        });
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        try {
-            const data = new FormData();
-            
-
-
-            Object.keys(formData).forEach(key => {
-                data.append(key, formData[key]);
-            });
-
-
-            if (thumbnail) {
-                data.append('thumbnail', thumbnail); 
-            }
-
-            data.append('attributes', JSON.stringify(selectedAttributes));
-
-            await productService.update(id, data);
-            toast.success('CẬP NHẬT THÉP THÀNH CÔNG');
-            router.push('/admin/products');
-        } catch (error) {
-            console.error(error);
-            toast.error('CẬP NHẬT THẤT BẠI - CHECK LẠI BACKEND');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    if (fetching) return <div className="p-20 font-black uppercase italic animate-pulse text-center">Scanning warehouse...</div>;
+    // 3. MÀN HÌNH CHỜ ĐỒNG BỘ
+    if (fetching) return (
+        <div className="flex flex-col items-center justify-center h-[70vh] space-y-6 animate-in fade-in duration-500">
+            <MdSync size={80} className="animate-spin text-orange-600" />
+            <p className="font-black uppercase italic tracking-[0.5em] text-2xl">Rebuilding Product Buffer...</p>
+        </div>
+    );
 
     return (
-        <div className="space-y-12 pb-20 font-archivo">
-            <header className="border-b-4 border-black pb-8">
-                <p className="text-[10px] font-black tracking-[0.4em] text-gray-400 uppercase mb-2 italic text-center md:text-left">TNL STEEL SYSTEM</p>
-                <h1 className="text-5xl md:text-7xl font-black tracking-tighter uppercase leading-none text-center md:text-left">
-                    SỬA SẢN PHẨM<span className="text-orange-600">.</span>
-                </h1>
-            </header>
+        <div className="space-y-12 pb-20 font-archivo uppercase animate-in fade-in slide-in-from-top-6 duration-500">
+            {/* 🔴 HEADER ĐỒNG BỘ */}
+            <PageHeader 
+                title="HIỆU CHỈNH" 
+                subTitle={`Product Unit ID: #${id}`} 
+                isBack={true} 
+                backHref="/admin/products"
+            />
 
-            <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-16">
-                <div className="lg:col-span-2 space-y-10">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Tên sản phẩm</label>
-                            <input type="text" name="name" value={formData.name} onChange={handleChange} className="w-full border-2 border-black p-4 text-xl font-black uppercase outline-none focus:bg-black focus:text-white transition-all" required />
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Danh mục</label>
-                            <select name="category_id" value={formData.category_id} onChange={handleChange} className="w-full border-2 border-black p-4 font-black uppercase text-sm outline-none">
-                                {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
-                            </select>
-                        </div>
-                    </div>
+            <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+                
+                {/* 🔵 CỘT TRÁI: DATA RECONFIGURATION (2/3) */}
+                <div className="lg:col-span-2 space-y-12">
+                    
+                    {/* KHỐI 1: IDENTITY & CORE CONTENT */}
+                    <section className="bg-white border-[6px] border-black p-10 shadow-[20px_20px_0_0_#000] space-y-10">
+                        <h2 className="flex items-center gap-4 text-2xl font-black italic border-b-4 border-black pb-4">
+                            <MdAssignment size={32} className="text-orange-600" /> DATA_RESTRUCTURING
+                        </h2>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 italic underline text-orange-600">Thông số chi tiết (Attributes)</label>
-                            <div className="space-y-3 bg-gray-50 p-6 border border-black/10">
-                                {attributes.map(attr => (
-                                    <div key={attr.id} className="flex flex-col gap-1">
-                                        <span className="text-[9px] font-black uppercase text-gray-500">{attr.name}</span>
-                                        <input
-                                            type="text"
-                                            className="border-b border-black bg-transparent py-1 font-bold text-sm outline-none focus:border-orange-600 transition-colors"
-                                            value={selectedAttributes.find(a => a.attribute_id === attr.id)?.value || ''}
-                                            onChange={(e) => handleAttributeChange(attr.id, e.target.value)}
-                                        />
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                        <div className="space-y-6">
-                             <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Tiêu chuẩn kỹ thuật</label>
-                                <input type="text" name="standard" value={formData.standard} onChange={handleChange} className="w-full border-[1.5px] border-black p-4 font-bold outline-none focus:border-orange-600" />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 italic">SYSTEM CATEGORY</label>
+                                <select 
+                                    name="category_id" 
+                                    value={formData.category_id} 
+                                    onChange={handleChange} 
+                                    className="w-full border-4 border-black p-5 font-black text-lg outline-none bg-orange-50 focus:bg-white cursor-pointer" 
+                                    required
+                                >
+                                    {categories.map(cat => (
+                                        <option key={cat.id} value={cat.id}>{cat.name.toUpperCase()}</option>
+                                    ))}
+                                </select>
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Ứng dụng</label>
-                                <input type="text" name="application" value={formData.application} onChange={handleChange} className="w-full border-[1.5px] border-black p-4 font-bold outline-none focus:border-orange-600" />
+                                <label className="text-[10px] font-black text-gray-400 italic">PRODUCT LABEL / NAME</label>
+                                <input 
+                                    type="text" 
+                                    name="name" 
+                                    value={formData.name} 
+                                    onChange={handleChange} 
+                                    className="w-full border-4 border-black p-5 font-black text-2xl outline-none focus:bg-black focus:text-white transition-all shadow-[6px_6px_0_0_rgba(0,0,0,0.05)]" 
+                                    required 
+                                />
                             </div>
                         </div>
-                    </div>
 
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Nội dung bài viết</label>
-                        <textarea name="content" value={formData.content} onChange={handleChange} rows="10" className="w-full border-[1.5px] border-black p-5 font-medium outline-none focus:bg-orange-50 transition-all shadow-inner" />
-                    </div>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-gray-400 italic">EDITORIAL SUMMARY (SAPO)</label>
+                            <textarea 
+                                name="description" 
+                                value={formData.description} 
+                                onChange={handleChange} 
+                                rows="2" 
+                                className="w-full border-4 border-black p-5 font-bold outline-none focus:bg-orange-50 transition-all" 
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-gray-400 italic uppercase">Full Product Content & Documentation</label>
+                            <textarea 
+                                name="content" 
+                                value={formData.content} 
+                                onChange={handleChange} 
+                                rows="12" 
+                                className="w-full border-4 border-black p-8 font-medium normal-case leading-relaxed outline-none focus:ring-8 focus:ring-orange-500/10 transition-all" 
+                            />
+                        </div>
+                    </section>
+
+                    {/* KHỐI 2: ENGINEERING SPECS (DỮ LIỆU ĐỘNG) */}
+                    <section className="bg-white border-[6px] border-black p-10 shadow-[20px_20px_0_0_#000] space-y-10">
+                        <h2 className="flex items-center gap-4 text-2xl font-black italic border-b-4 border-black pb-4">
+                            <MdBuild size={32} className="text-orange-600" /> TECH_SPEC_OVERRIDE
+                        </h2>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-8">
+                            {attributes.map(attr => (
+                                <div key={attr.id} className="flex flex-col gap-2 group">
+                                    <span className="text-[10px] font-black text-gray-400 group-hover:text-black transition-colors">
+                                        // {attr.name.toUpperCase()}
+                                    </span>
+                                    <input
+                                        type="text"
+                                        placeholder="Value..."
+                                        value={selectedAttributes.find(a => a.attribute_id === attr.id)?.value || ''}
+                                        className="border-b-4 border-black/20 focus:border-orange-600 p-3 font-black text-lg outline-none bg-transparent transition-all"
+                                        onChange={(e) => handleAttributeChange(attr.id, e.target.value)}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t-2 border-black border-dashed">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 italic">SYSTEM STANDARD</label>
+                                <input type="text" name="standard" value={formData.standard} onChange={handleChange} className="w-full border-4 border-black p-5 font-black text-sm outline-none focus:bg-black focus:text-white transition-all" />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 italic">PRACTICAL APPLICATION</label>
+                                <input type="text" name="application" value={formData.application} onChange={handleChange} className="w-full border-4 border-black p-5 font-black text-sm outline-none focus:bg-black focus:text-white transition-all" />
+                            </div>
+                        </div>
+                    </section>
                 </div>
 
-                <div className="space-y-10">
-                    <div className="bg-white border-[1.5px] border-black p-8 space-y-8 sticky top-10 shadow-[10px_10px_0px_0px_rgba(0,0,0,1)]">
-                        <div className="space-y-4">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block underline">Thumbnail Media</label>
-                            <div className="relative border-2 border-dashed border-black p-10 hover:bg-black hover:text-white transition-all cursor-pointer group text-center overflow-hidden">
-                                <input type="file" accept="image/*" onChange={handleThumbnailChange} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
-                                <div className="relative z-0">
-                                    <MdCloudUpload size={40} className="mx-auto mb-3 group-hover:scale-110 transition-transform" />
-                                    <p className="text-[10px] font-black uppercase tracking-tighter italic">RE-FORGE THE IMAGE</p>
+                {/* 🟠 CỘT PHẢI: ASSETS MANAGEMENT (1/3) */}
+                <aside className="relative">
+                    <div className="sticky top-10 space-y-8">
+                        <div className="bg-white border-[6px] border-black p-8 shadow-[15px_15px_0_0_#ea580c] space-y-10">
+                            
+                            {/* THUMBNAIL */}
+                            <div className="space-y-4">
+                                <h3 className="text-sm font-black flex items-center gap-2 border-b-2 border-black pb-4 italic">
+                                    <MdCloudUpload size={24} /> PRIMARY ASSET
+                                </h3>
+                                <div className="relative aspect-square border-4 border-dashed border-black group bg-gray-50 overflow-hidden shadow-[8px_8px_0_0_rgba(0,0,0,0.1)]">
+                                    <input type="file" accept="image/*" onChange={handleThumbnailChange} className="absolute inset-0 opacity-0 cursor-pointer z-20" />
+                                    {thumbnailPreview ? (
+                                        <div className="relative h-full w-full">
+                                            <img src={thumbnailPreview} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" alt="Thumbnail" />
+                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center">
+                                                <MdCloudUpload size={32} className="text-white mb-2" />
+                                                <p className="text-white font-black text-[10px] border-2 border-white p-2 uppercase">Override Image</p>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="h-full flex flex-col items-center justify-center text-gray-300 p-6 text-center">
+                                            <MdCloudUpload size={56} />
+                                            <p className="text-[9px] font-black uppercase mt-4">No Asset Detected</p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
-                            {thumbnailPreview && (
-                                <div className="mt-4 border-2 border-black p-1 grayscale hover:grayscale-0 transition-all duration-700 bg-white shadow-xl">
-                                    <img src={thumbnailPreview} className="w-full aspect-[4/3] object-cover" alt="Preview" />
-                                    {!thumbnail && <p className="text-[8px] font-black uppercase text-center mt-2 text-gray-400 tracking-widest tracking-widest italic tracking-widest">Active Database Image</p>}
-                                </div>
-                            )}
-                        </div>
 
-                        <div className="space-y-4 pt-6">
-                            <button type="submit" disabled={loading} className="w-full bg-black text-white py-6 text-xs font-black uppercase tracking-[0.3em] hover:bg-orange-600 transition-all active:scale-95 shadow-[4px_4px_0px_0px_rgba(234,88,12,1)]">
-                                {loading ? 'FORGING CHANGES...' : 'LƯU THÔNG SỐ →'}
+                            {/* GALLERY */}
+                            <div className="space-y-4">
+                                <h3 className="text-sm font-black flex items-center gap-2 border-b-2 border-black pb-4 italic">
+                                    <MdCollections size={24} /> ASSET GALLERY
+                                </h3>
+                                <div className="relative border-4 border-black p-4 bg-gray-50">
+                                    <input type="file" accept="image/*" multiple onChange={handleImagesChange} className="w-full text-[9px] font-black cursor-pointer file:mr-4 file:py-2 file:px-4 file:border-0 file:text-[10px] file:font-black file:bg-black file:text-white hover:file:bg-orange-600" />
+                                </div>
+                                
+                                <div className="grid grid-cols-3 gap-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                                    {imagesPreviews.map((src, idx) => (
+                                        <div key={idx} className="relative aspect-square border-2 border-black group overflow-hidden bg-white shadow-[4px_4px_0_0_#000]">
+                                            <img src={src} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" alt="Gallery" />
+                                            <button 
+                                                type="button"
+                                                onClick={() => removeImagePreview(idx)}
+                                                className="absolute top-1 right-1 bg-black text-white p-1 border border-white hover:bg-red-600 transition-colors"
+                                            >
+                                                <MdClose size={14} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* STATUS */}
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 italic uppercase">INVENTORY_STATUS</label>
+                                <select 
+                                    name="status" 
+                                    value={formData.status} 
+                                    onChange={handleChange} 
+                                    className="w-full border-4 border-black p-4 font-black bg-orange-50 outline-none cursor-pointer shadow-[4px_4px_0_0_#000]"
+                                >
+                                    <option value={1}>ACTIVE / AUTHORIZED</option>
+                                    <option value={0}>ARCHIVED / LOCKED</option>
+                                </select>
+                            </div>
+
+                            {/* SUBMIT */}
+                            <button 
+                                type="submit" 
+                                disabled={loading}
+                                className="group relative w-full bg-black text-white py-8 font-black text-xl uppercase tracking-[0.4em] transition-all hover:bg-orange-600 active:translate-x-2 active:translate-y-2 active:shadow-none shadow-[10px_10px_0_0_#ea580c] disabled:opacity-50"
+                            >
+                                <div className="flex items-center justify-center gap-4 relative z-10">
+                                    <MdSave size={28} />
+                                    {loading ? 'SYNCHRONIZING...' : 'SAVE CHANGES →'}
+                                </div>
+                                <div className="absolute inset-0 translate-x-2 translate-y-2 border-2 border-black -z-10 bg-white"></div>
                             </button>
-                            <button type="button" onClick={() => router.back()} className="w-full border-2 border-black py-4 text-[10px] font-black uppercase tracking-[0.2em] hover:bg-gray-100 transition-colors">HỦY BỎ</button>
                         </div>
                     </div>
-                </div>
+                </aside>
             </form>
         </div>
     );

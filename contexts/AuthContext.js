@@ -14,12 +14,21 @@ export const AuthProvider = ({ children }) => {
   const router = useRouter();
 
   useEffect(() => {
-    const token = Cookies.get('token');
-    if (token) {
-      fetchProfile();
-    } else {
-      setLoading(false);
-    }
+    const checkAuth = async () => {
+      try {
+        // 🟢 Gọi thẳng API lấy profile. 
+        // Nếu có Cookie, nó sẽ trả về User. Nếu không, nó văng 401.
+        const res = await authService.getProfile();
+        setUser(res.data);
+      } catch (error) {
+        setUser(null);
+        // Chỉ khi thực sự lỗi (không có cookie/hết hạn) mới tính là chưa login
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
   }, []);
 
   const fetchProfile = async () => {
@@ -32,14 +41,30 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
     }
   };
-
+  const setCookie = (name, value, days = 7) => {
+    const expires = new Date(Date.now() + days * 864e5).toUTCString();
+    document.cookie = `${name}=${value}; expires=${expires}; path=/`;
+  };
+  // contexts/AuthContext.js
   const login = async (username, password) => {
     try {
       const res = await authService.login(username, password);
-      Cookies.set('token', res.token, { expires: 7 });
-      setUser(res.user);
+      const { token, user } = res; // Lấy token từ JSON
+
+      // 1. Lưu vào Cookie (Để Middleware đọc được) - BẮT BUỘC
+      // Sử dụng js-cookie
+      Cookies.set('token', token, { expires: 7, path: '/' });
+      // Hoặc dùng hàm setCookie thô của bạn
+      // setCookie('token', token, 7);
+
+      // 2. Lưu user vào state
+      setUser(user);
+
       toast.success('Đăng nhập thành công!');
-      router.push('/admin/dashboard');
+
+      // 3. Dùng window.location để reload hoàn toàn, tránh lỗi client-side routing
+      window.location.href = '/admin/dashboard';
+
       return { success: true };
     } catch (error) {
       toast.error(error.response?.data?.message || 'Đăng nhập thất bại');

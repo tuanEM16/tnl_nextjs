@@ -1,220 +1,221 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { productService } from '@/services/productService';
-import { categoryService } from '@/services/categoryService';
-import toast from 'react-hot-toast';
-import { MdSave, MdArrowBack, MdCloudUpload, MdCollections, MdSettings, MdDescription } from 'react-icons/md';
+import { useProductForm } from '@/hooks/useProducts'; // 🟢 Triệu hồi nội công
+import PageHeader from '@/components/admin/ui/PageHeader';
+import { 
+    MdSave, MdCloudUpload, MdCollections, MdSettings, 
+    MdDescription, MdAssignment, MdBuild, MdClose, MdSync 
+} from 'react-icons/md';
 
 export default function AddProductPage() {
-    const router = useRouter();
-    const [formData, setFormData] = useState({
-        category_id: '',
-        name: '',
-        description: '',
-        content: '',
-        standard: '',
-        application: '',
-        status: 1,
-    });
-    const [thumbnail, setThumbnail] = useState(null);
-    const [images, setImages] = useState([]);
-    const [thumbnailPreview, setThumbnailPreview] = useState('');
-    const [imagesPreviews, setImagesPreviews] = useState([]);
-    const [categories, setCategories] = useState([]);
-    const [attributes, setAttributes] = useState([]);
-    const [selectedAttributes, setSelectedAttributes] = useState([]);
-    const [loading, setLoading] = useState(false);
+    // 1. DÙNG HOOK (Dọn sạch đống useEffect và logic FormData)
+    const {
+        formData, thumbnailPreview, imagesPreviews, categories, 
+        attributes, selectedAttributes, fetching, loading,
+        handleChange, handleThumbnailChange, handleImagesChange, 
+        removeImagePreview, handleAttributeChange, handleSubmit,
+    } = useProductForm(); // Không truyền ID = Chế độ THÊM MỚI
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const [catRes, attrRes] = await Promise.all([
-                    categoryService.getAll(),
-                    productService.getAttributes()
-                ]);
-                setCategories(catRes.data || []);
-                setAttributes(attrRes.data || []);
-            } catch (error) {
-                toast.error('LỖI KẾT NỐI DỮ LIỆU');
-            }
-        };
-        fetchData();
-    }, []);
-
-    const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
-
-    const handleThumbnailChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            setThumbnail(file);
-            setThumbnailPreview(URL.createObjectURL(file));
-        }
-    };
-
-    const handleImagesChange = (e) => {
-        const files = Array.from(e.target.files);
-        setImages(files);
-        setImagesPreviews(files.map(f => URL.createObjectURL(f)));
-    };
-
-    const handleAttributeChange = (attrId, value) => {
-        setSelectedAttributes(prev => {
-            const filtered = prev.filter(a => a.attribute_id !== attrId);
-            if (value) filtered.push({ attribute_id: attrId, value });
-            return filtered;
-        });
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        if (!formData.name.trim()) {
-            toast.error('VUI LÒNG NHẬP TÊN SẢN PHẨM');
-            return;
-        }
-        setLoading(true);
-        try {
-            const data = new FormData();
-            Object.keys(formData).forEach(key => data.append(key, formData[key]));
-            if (thumbnail) data.append('thumbnail', thumbnail);
-            images.forEach(file => data.append('images', file));
-            if (selectedAttributes.length > 0) {
-                data.append('attributes', JSON.stringify(selectedAttributes));
-            }
-
-            await productService.create(data);
-            toast.success('ĐÃ THÊM SẢN PHẨM VÀO KHO');
-            router.push('/admin/products');
-        } catch (error) {
-            toast.error(error.response?.data?.message || 'THÊM THẤT BẠI');
-        } finally {
-            setLoading(false);
-        }
-    };
+    // 2. MÀN HÌNH CHỜ TRUY XUẤT THÔNG SỐ
+    if (fetching) return (
+        <div className="flex flex-col items-center justify-center h-[70vh] space-y-6 animate-in fade-in duration-500">
+            <div className="w-24 h-24 border-[12px] border-black border-t-orange-600 animate-spin shadow-[10px_10px_0_0_#000]"></div>
+            <p className="font-black uppercase italic tracking-[0.5em] text-2xl">Syncing Industrial Data...</p>
+        </div>
+    );
 
     return (
-        <div className="space-y-12 pb-20 font-archivo uppercase">
-            {/* HEADER */}
-            <header className="flex justify-between items-end border-b-4 border-black pb-8">
-                <div>
-                    <p className="text-[10px] font-black tracking-[0.4em] text-gray-400 italic mb-2">Inventory Management</p>
-                    <h1 className="text-7xl font-black tracking-tighter leading-none">SẢN PHẨM<span className="text-orange-600">.</span></h1>
-                </div>
-                <button onClick={() => router.back()} className="flex items-center gap-2 font-black text-xs hover:text-orange-600 transition-colors">
-                    <MdArrowBack size={20} /> QUAY LẠI
-                </button>
-            </header>
+        <div className="space-y-12 pb-20 font-archivo uppercase animate-in slide-in-from-bottom-6 duration-500">
+            {/* 🔴 HEADER ĐỒNG BỘ */}
+            <PageHeader 
+                title="Thêm sản phẩm" 
+                subTitle="New Product Integration Unit" 
+                isBack={true} 
+                backHref="/admin/products"
+            />
 
             <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-                {/* CỘT TRÁI: THÔNG TIN CHÍNH */}
+                
+                {/* 🔵 CỘT TRÁI: TECHNICAL SPECIFICATIONS (2/3) */}
                 <div className="lg:col-span-2 space-y-12">
-                    {/* KHỐI 1: CƠ BẢN */}
-                    <section className="space-y-6">
-                        <h2 className="flex items-center gap-3 text-xl font-black border-l-8 border-black pl-4 bg-gray-50 py-3">
-                            <MdDescription size={24}/> THÔNG TIN CƠ BẢN
+                    
+                    {/* KHỐI 1: ĐỊNH DANH CƠ BẢN */}
+                    <section className="bg-white border-[6px] border-black p-10 shadow-[15px_15px_0_0_#000] space-y-10">
+                        <h2 className="flex items-center gap-4 text-2xl font-black italic border-b-4 border-black pb-4">
+                            <MdAssignment size={32} className="text-orange-600" /> PRODUCT_ID & CORE DATA
                         </h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-black text-gray-400 italic">Danh mục sản phẩm</label>
-                                <select name="category_id" value={formData.category_id} onChange={handleChange} className="w-full border-2 border-black p-4 font-bold outline-none focus:bg-orange-50 transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]" required>
-                                    <option value="">-- CHỌN DANH MỤC --</option>
-                                    {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 italic">PHÂN LOẠI DANH MỤC</label>
+                                <select 
+                                    name="category_id" 
+                                    value={formData.category_id} 
+                                    onChange={handleChange} 
+                                    className="w-full border-4 border-black p-5 font-black text-lg outline-none bg-orange-50 focus:bg-white cursor-pointer transition-all" 
+                                    required
+                                >
+                                    <option value="">-- CHỌN DANH MỤC HÀNG --</option>
+                                    {categories.map(cat => (
+                                        <option key={cat.id} value={cat.id}>{cat.name.toUpperCase()}</option>
+                                    ))}
                                 </select>
                             </div>
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-black text-gray-400 italic">Tên sản phẩm thép</label>
-                                <input type="text" name="name" value={formData.name} onChange={handleChange} className="w-full border-2 border-black p-4 font-bold outline-none focus:bg-black focus:text-white transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]" required />
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 italic">TÊN SẢN PHẨM / MÃ THÉP</label>
+                                <input 
+                                    type="text" 
+                                    name="name" 
+                                    value={formData.name} 
+                                    onChange={handleChange} 
+                                    placeholder="VD: THÉP TẤM CÁN NÓNG SS400"
+                                    className="w-full border-4 border-black p-5 font-black text-2xl outline-none focus:bg-black focus:text-white transition-all shadow-[6px_6px_0_0_rgba(0,0,0,0.05)]" 
+                                    required 
+                                />
                             </div>
                         </div>
-                        <div className="space-y-1">
-                            <label className="text-[10px] font-black text-gray-400 italic">Mô tả ngắn gọn</label>
-                            <textarea name="description" value={formData.description} onChange={handleChange} rows="2" className="w-full border-2 border-black p-4 font-bold outline-none shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]" />
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-gray-400 italic flex items-center gap-2">
+                                <MdDescription size={16}/> MÔ TẢ TÓM TẮT (SAPO)
+                            </label>
+                            <textarea 
+                                name="description" 
+                                value={formData.description} 
+                                onChange={handleChange} 
+                                rows="2" 
+                                className="w-full border-4 border-black p-5 font-bold outline-none focus:bg-orange-50 transition-all" 
+                            />
                         </div>
-                        <div className="space-y-1">
-                            <label className="text-[10px] font-black text-gray-400 italic">Nội dung chi tiết sản phẩm</label>
-                            <textarea name="content" value={formData.content} onChange={handleChange} rows="6" className="w-full border-2 border-black p-4 font-bold outline-none shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]" />
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black text-gray-400 italic uppercase">Nội dung chi tiết & Bài viết giới thiệu</label>
+                            <textarea 
+                                name="content" 
+                                value={formData.content} 
+                                onChange={handleChange} 
+                                rows="10" 
+                                className="w-full border-4 border-black p-8 font-medium normal-case leading-relaxed outline-none focus:ring-8 focus:ring-orange-500/10 transition-all" 
+                            />
                         </div>
                     </section>
 
-                    {/* KHỐI 2: THÔNG SỐ KỸ THUẬT */}
-                    <section className="space-y-6">
-                        <h2 className="flex items-center gap-3 text-xl font-black border-l-8 border-orange-600 pl-4 bg-gray-50 py-3">
-                            <MdSettings size={24}/> THÔNG SỐ KỸ THUẬT
+                    {/* KHỐI 2: THÔNG SỐ KỸ THUẬT (DỮ LIỆU ĐỘNG) */}
+                    <section className="bg-white border-[6px] border-black p-10 shadow-[15px_15px_0_0_#000] space-y-10">
+                        <h2 className="flex items-center gap-4 text-2xl font-black italic border-b-4 border-black pb-4">
+                            <MdBuild size={32} className="text-orange-600" /> ENGINEERING SPECS
                         </h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-8">
                             {attributes.map(attr => (
-                                <div key={attr.id} className="flex items-center gap-4 group">
-                                    <span className="w-32 text-[10px] font-black text-gray-500 group-hover:text-black transition-colors">{attr.name}</span>
+                                <div key={attr.id} className="flex flex-col gap-2 group">
+                                    <span className="text-[10px] font-black text-gray-400 group-hover:text-black transition-colors">
+                                        // {attr.name.toUpperCase()}
+                                    </span>
                                     <input
                                         type="text"
-                                        placeholder="..."
-                                        className="flex-1 border-b-2 border-black/20 focus:border-black p-2 font-bold outline-none transition-all"
+                                        placeholder={`NHẬP ${attr.name.toUpperCase()}...`}
+                                        className="border-b-4 border-black/20 focus:border-orange-600 p-3 font-black text-lg outline-none bg-transparent transition-all"
                                         onChange={(e) => handleAttributeChange(attr.id, e.target.value)}
                                     />
                                 </div>
                             ))}
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-black text-gray-400 italic">Tiêu chuẩn kỹ thuật</label>
-                                <input type="text" name="standard" value={formData.standard} onChange={handleChange} className="w-full border-2 border-black p-4 font-bold outline-none shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]" />
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t-2 border-black border-dashed">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 italic">TIÊU CHUẨN (STANDARD)</label>
+                                <input type="text" name="standard" value={formData.standard} onChange={handleChange} placeholder="VD: ASTM A36 / JIS G3101" className="w-full border-4 border-black p-5 font-black text-sm outline-none focus:bg-black focus:text-white transition-all" />
                             </div>
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-black text-gray-400 italic">Ứng dụng thực tế</label>
-                                <input type="text" name="application" value={formData.application} onChange={handleChange} className="w-full border-2 border-black p-4 font-bold outline-none shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]" />
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 italic">ỨNG DỤNG (APPLICATION)</label>
+                                <input type="text" name="application" value={formData.application} onChange={handleChange} placeholder="VD: ĐÓNG TÀU, XÂY DỰNG" className="w-full border-4 border-black p-5 font-black text-sm outline-none focus:bg-black focus:text-white transition-all" />
                             </div>
                         </div>
                     </section>
                 </div>
 
-                {/* CỘT PHẢI: HÌNH ẢNH & STATUS */}
-                <div className="space-y-10">
-                    <div className="bg-white border-2 border-black p-8 space-y-10 shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] sticky top-10">
-                        {/* THUMBNAIL */}
-                        <div className="space-y-4">
-                            <h3 className="text-sm font-black flex items-center gap-2 border-b-2 border-black pb-4 italic"><MdCloudUpload size={20}/> ẢNH ĐẠI DIỆN</h3>
-                            <div className="relative border-2 border-dashed border-black p-4 text-center cursor-pointer hover:bg-gray-50 transition-all group">
-                                <input type="file" accept="image/*" onChange={handleThumbnailChange} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
-                                {thumbnailPreview ? (
-                                    <img src={thumbnailPreview} className="mx-auto max-h-40 object-cover" alt="Preview" />
-                                ) : (
-                                    <div className="py-8">
-                                        <MdCloudUpload size={32} className="mx-auto mb-2 text-gray-300 group-hover:text-black transition-colors" />
-                                        <p className="text-[9px] font-black tracking-widest text-gray-400 group-hover:text-black">CHỌN ẢNH CHÍNH</p>
-                                    </div>
-                                )}
+                {/* 🟠 CỘT PHẢI: VISUAL ASSETS & ACTION (1/3) */}
+                <aside className="relative">
+                    <div className="sticky top-10 space-y-8">
+                        <div className="bg-white border-[6px] border-black p-8 shadow-[12px_12px_0_0_#ea580c] space-y-10">
+                            
+                            {/* THUMBNAIL */}
+                            <div className="space-y-4">
+                                <h3 className="text-sm font-black flex items-center gap-2 border-b-2 border-black pb-4 italic">
+                                    <MdCloudUpload size={24} /> MAIN VISUAL
+                                </h3>
+                                <div className="relative aspect-square border-4 border-dashed border-black group bg-gray-50 overflow-hidden shadow-[6px_6px_0_0_rgba(0,0,0,0.1)]">
+                                    <input type="file" accept="image/*" onChange={handleThumbnailChange} className="absolute inset-0 opacity-0 cursor-pointer z-20" />
+                                    {thumbnailPreview ? (
+                                        <div className="relative h-full w-full">
+                                            <img src={thumbnailPreview} className="h-full w-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" alt="Thumbnail" />
+                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                <p className="text-white font-black text-[10px] border-2 border-white p-2">CHANGE IMAGE</p>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="h-full flex flex-col items-center justify-center text-gray-300 p-6 text-center group-hover:bg-orange-50 transition-colors">
+                                            <MdCloudUpload size={56} />
+                                            <p className="text-[9px] font-black uppercase mt-4">Upload Master Image</p>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                        </div>
 
-                        {/* GALLERY */}
-                        <div className="space-y-4">
-                            <h3 className="text-sm font-black flex items-center gap-2 border-b-2 border-black pb-4 italic"><MdCollections size={20}/> THƯ VIỆN ẢNH</h3>
-                            <input type="file" accept="image/*" multiple onChange={handleImagesChange} className="w-full text-[10px] font-black cursor-pointer file:mr-4 file:py-2 file:px-4 file:border-0 file:text-[10px] file:font-black file:bg-black file:text-white hover:file:bg-orange-600" />
-                            <div className="grid grid-cols-4 gap-2 mt-2">
-                                {imagesPreviews.map((src, idx) => <img key={idx} src={src} className="w-full h-12 object-cover border border-black" />)}
+                            {/* GALLERY */}
+                            <div className="space-y-4">
+                                <h3 className="text-sm font-black flex items-center gap-2 border-b-2 border-black pb-4 italic">
+                                    <MdCollections size={24} /> ASSET GALLERY
+                                </h3>
+                                <div className="relative border-4 border-black p-4 bg-gray-50">
+                                    <input type="file" accept="image/*" multiple onChange={handleImagesChange} className="w-full text-[9px] font-black cursor-pointer file:mr-4 file:py-2 file:px-4 file:border-0 file:text-[10px] file:font-black file:bg-black file:text-white hover:file:bg-orange-600" />
+                                </div>
+                                
+                                <div className="grid grid-cols-3 gap-3">
+                                    {imagesPreviews.map((src, idx) => (
+                                        <div key={idx} className="relative aspect-square border-2 border-black group overflow-hidden bg-white shadow-[3px_3px_0_0_#000]">
+                                            <img src={src} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" alt="Gallery" />
+                                            <button 
+                                                type="button"
+                                                onClick={() => removeImagePreview(idx)}
+                                                className="absolute top-1 right-1 bg-black text-white p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                            >
+                                                <MdClose size={12} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
 
-                        {/* STATUS */}
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-gray-400 italic uppercase">Trạng thái kho</label>
-                            <select name="status" value={formData.status} onChange={handleChange} className="w-full border-2 border-black p-4 font-black outline-none bg-orange-50">
-                                <option value={1}>HIỂN THỊ CÔNG KHAI</option>
-                                <option value={0}>LƯU KHO (ẨN)</option>
-                            </select>
-                        </div>
+                            {/* STATUS */}
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-gray-400 italic uppercase">INVENTORY STATUS</label>
+                                <select 
+                                    name="status" 
+                                    value={formData.status} 
+                                    onChange={handleChange} 
+                                    className="w-full border-4 border-black p-4 font-black bg-orange-50 outline-none cursor-pointer"
+                                >
+                                    <option value={1}>ACTIVE / IN STOCK</option>
+                                    <option value={0}>DRAFT / HIDDEN</option>
+                                </select>
+                            </div>
 
-                        <button 
-                            type="submit" 
-                            disabled={loading}
-                            className="w-full bg-black text-white py-8 text-xs font-black uppercase tracking-[0.4em] hover:bg-orange-600 transition-all flex items-center justify-center gap-3 shadow-[6px_6px_0px_0px_rgba(234,88,12,1)] active:scale-95 disabled:opacity-50"
-                        >
-                            <MdSave size={24} />
-                            {loading ? 'DANG XỬ LÝ...' : 'LƯU SẢN PHẨM →'}
-                        </button>
+                            {/* SUBMIT */}
+                            <button 
+                                type="submit" 
+                                disabled={loading}
+                                className="group relative w-full bg-black text-white py-8 font-black text-xl uppercase tracking-[0.4em] transition-all hover:-translate-y-1 active:translate-x-1 active:translate-y-1 active:shadow-none shadow-[8px_8px_0_0_#ea580c] disabled:grayscale disabled:opacity-50"
+                            >
+                                <div className="flex items-center justify-center gap-4">
+                                    <MdSave size={28} />
+                                    {loading ? 'STORING...' : 'COMMIT DATA →'}
+                                </div>
+                            </button>
+                        </div>
                     </div>
-                </div>
+                </aside>
             </form>
         </div>
     );
