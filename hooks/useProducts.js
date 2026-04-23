@@ -210,7 +210,7 @@ export const useProductForm = (id = null) => {
 
       Object.keys(formData).forEach(key => data.append(key, formData[key]));
       if (thumbnail) data.append('thumbnail', thumbnail);
-      images.forEach((file) => data.append('images[]', file)); 
+      images.forEach((file) => data.append('images', file)); 
       
       // 🟢 Gửi danh sách ID ảnh cũ cần xóa
       if (deletedImageIds.length > 0) {

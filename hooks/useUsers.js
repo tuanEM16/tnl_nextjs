@@ -10,36 +10,33 @@ export const useUsers = (initialFilters = { keyword: '', status: '', limit: 10, 
   const [filters, setFilters] = useState(initialFilters);
   const { loading, request: fetchRequest } = useApi(userService.index);
 
+  // 🟢 Dùng useApi cho cả lệnh xóa để hưởng Error Handling tự động
+  const { request: deleteRequest } = useApi(userService.destroy);
+
   const fetchUsers = useCallback(async () => {
     try {
       const res = await fetchRequest(filters);
-      // 🟢 FIX Ở ĐÂY: Bốc dữ liệu 3 tầng cho chắc cú
-      // Tầng 1: res.data.data (nếu có phân trang)
-      // Tầng 2: res.data (nếu trả về object body)
-      // Tầng 3: res (nếu trả về mảng trực tiếp)
       const dataArray = res?.data?.data || res?.data || res || [];
-      setUsers(Array.isArray(dataArray) ? dataArray : []); 
+      setUsers(Array.isArray(dataArray) ? dataArray : []);
     } catch (error) {
-      toast.error('LỖI TẢI DỮ LIỆU NHÂN SỰ!');
+      // toast.error đã được useApi xử lý hoặc để đây báo tùy đại ca
     }
   }, [filters, fetchRequest]);
 
-  useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+  useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
   const setFilter = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('XÓA TÀI KHOẢN NÀY VĨNH VIỄN?')) return;
+  // 🟢 HÀM XÓA "BẢN THÉP": Nhận 2 tham số, không dùng confirm() của browser
+  const handleDelete = async (id, name = 'Nhân sự') => {
     try {
-      await userService.destroy(id);
-      toast.success('ĐÃ LOẠI BỎ NHÂN SỰ');
-      fetchUsers();
+      await deleteRequest(id);
+      toast.success(`ĐÃ TIÊU HỦY: ${name.toUpperCase()}`);
+      fetchUsers(); // 🟢 Tải lại danh sách ngay sau khi dọn rác thành công
     } catch (error) {
-      toast.error('LỖI KHI XÓA!');
+      // toast.error('THAO TÁC THẤT BẠI!');
     }
   };
 
@@ -92,12 +89,12 @@ export const useUserForm = (id = null) => {
       try {
         const res = await fetchById(id);
         const user = res?.data || res; // 🟢 FIX: Lấy dữ liệu phẳng
-        
+
         setFormData({
           name: user.name || '',
           email: user.email || '',
           username: user.username || '',
-          password: '', 
+          password: '',
           phone: user.phone || '',
           status: user.status ?? 1,
           roles: user.roles || 'admin',
@@ -130,26 +127,49 @@ export const useUserForm = (id = null) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validate mật khẩu khi thêm mới
     if (!id && !formData.password.trim()) return toast.error('VUI LÒNG NHẬP MẬT KHẨU');
 
     try {
       const data = new FormData();
+
+      // 🟢 Lọc dữ liệu trước khi gửi
       Object.keys(formData).forEach(key => {
-        if (key === 'password' && id && !formData.password) return;
-        data.append(key, formData[key]);
+        // Nếu là Edit và mật khẩu trống thì không gửi field password
+        if (id && key === 'password' && !formData.password) return;
+
+        // Tránh gửi null/undefined làm hỏng logic Backend
+        if (formData[key] !== null && formData[key] !== undefined) {
+          data.append(key, formData[key]);
+        }
       });
-      if (avatarFile) data.append('avatar', avatarFile);
+
+      // 🟢 Gửi Avatar (Key phải khớp với upload.single('avatar') ở Backend)
+      if (avatarFile) {
+        data.append('avatar', avatarFile);
+      }
 
       if (id) {
         await updateRequest(id, data);
-        toast.success('CẬP NHẬT THÀNH CÔNG');
+        toast.success('HỒ SƠ NHÂN SỰ ĐÃ ĐƯỢC CẬP NHẬT');
       } else {
         await createRequest(data);
-        toast.success('ĐÃ THÊM NHÂN SỰ MỚI');
+        toast.success('NHÂN SỰ MỚI ĐÃ ĐƯỢC CẤP QUYỀN');
       }
+
       router.push('/admin/users');
-    } catch (error) {}
+    } catch (error) {
+      // Error handling đã có useApi lo
+    }
   };
 
-  return { formData, avatarFile, preview, fetching, loading: submitting || updating, handleChange, handleFileChange, handleSubmit };
+  return {
+    formData, avatarFile, preview, fetching,
+    loading: submitting || updating,
+    handleChange: (e) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value })),
+    handleFileChange,
+    handleSubmit
+  };
+
 };

@@ -175,9 +175,9 @@ export default function EditProductPage({ params }) {
                                 </div>
                                 
                                 <div className="grid grid-cols-3 gap-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
-                                    {imagesPreviews.map((src, idx) => (
+                                    {imagesPreviews.map((item, idx) => (
                                         <div key={idx} className="relative aspect-square border-2 border-black group overflow-hidden bg-white shadow-[4px_4px_0_0_#000]">
-                                            <img src={src} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" alt="Gallery" />
+                                            <img src={item.url} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" alt="Gallery" />
                                             <button 
                                                 type="button"
                                                 onClick={() => removeImagePreview(idx)}
