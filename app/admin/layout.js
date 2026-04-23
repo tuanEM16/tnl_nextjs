@@ -1,4 +1,9 @@
-// app/admin/layout.js
+import { AuthProvider } from "@/contexts/AuthContext";
 export default function AdminRootLayout({ children }) {
-    return <>{children}</>;
+    return (
+        <AuthProvider>
+            {/* Chỉ vùng này mới cần login */}
+            {children}
+        </AuthProvider>
+    );
 }

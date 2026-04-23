@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useProducts } from '@/hooks/useProducts'; // 🟢 Triệu hồi nội công đại ca đã đúc
+import { useProducts } from '@/hooks/useProducts';
 import { getImageUrl } from '@/lib/utils';
 
 // VŨ KHÍ UI NICKELBRONX
@@ -10,6 +10,7 @@ import PageHeader from '@/components/admin/ui/PageHeader';
 import AdminTable from '@/components/admin/ui/AdminTable';
 import AdminModal from '@/components/admin/ui/AdminModal';
 
+import { MdSettings, MdTune } from 'react-icons/md';
 import { MdAdd, MdEdit, MdDelete, MdVisibility, MdSearch, MdInventory, MdLayers } from 'react-icons/md';
 
 export default function ProductsPage() {
@@ -31,9 +32,9 @@ export default function ProductsPage() {
             header: 'ASSET / MEDIA',
             render: (row) => (
                 <div className="relative w-24 h-16 border-2 border-black bg-gray-100 overflow-hidden group/img shadow-[4px_4px_0_0_rgba(0,0,0,0.1)]">
-                    <img 
-                        src={getImageUrl(row.thumbnail)} 
-                        alt={row.name} 
+                    <img
+                        src={getImageUrl(row.thumbnail)}
+                        alt={row.name}
                         className="w-full h-full object-cover grayscale group-hover/img:grayscale-0 transition-all duration-500 scale-110 group-hover/img:scale-100"
                         onError={(e) => e.target.src = 'https://placehold.co/200x150?text=STEEL_TNL'}
                     />
@@ -49,7 +50,7 @@ export default function ProductsPage() {
                     </Link>
                     <div className="flex items-center gap-3">
                         <span className="text-[9px] font-black bg-black text-white px-2 py-0.5 italic tracking-widest">STD: {row.standard || 'TCVN'}</span>
-                        <span className="text-[10px] font-bold text-gray-400 flex items-center gap-1"><MdLayers size={14}/> {row.category_name || 'CHƯA PHÂN LOẠI'}</span>
+                        <span className="text-[10px] font-bold text-gray-400 flex items-center gap-1"><MdLayers size={14} /> {row.category_name || 'CHƯA PHÂN LOẠI'}</span>
                     </div>
                 </div>
             )
@@ -59,9 +60,8 @@ export default function ProductsPage() {
             className: 'text-center',
             cellClassName: 'text-center',
             render: (row) => (
-                <span className={`px-4 py-1 text-[9px] font-black uppercase italic border-2 border-black shadow-[4px_4px_0_0_#000] ${
-                    row.status === 1 ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-500 shadow-none'
-                }`}>
+                <span className={`px-4 py-1 text-[9px] font-black uppercase italic border-2 border-black shadow-[4px_4px_0_0_#000] ${row.status === 1 ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-500 shadow-none'
+                    }`}>
                     {row.status === 1 ? 'AVAILABLE' : 'HIDDEN'}
                 </span>
             )
@@ -77,7 +77,7 @@ export default function ProductsPage() {
                     <Link href={`/admin/products/${row.id}/edit`} className="p-2 border-2 border-black hover:bg-black hover:text-white transition-all shadow-[3px_3px_0_0_#000] active:translate-x-1 active:translate-y-1 active:shadow-none">
                         <MdEdit size={20} />
                     </Link>
-                    <button 
+                    <button
                         onClick={() => triggerDelete(row)}
                         className="p-2 border-2 border-black text-red-600 hover:bg-red-600 hover:text-white transition-all shadow-[3px_3px_0_0_#000] active:translate-x-1 active:translate-y-1 active:shadow-none"
                     >
@@ -90,13 +90,40 @@ export default function ProductsPage() {
 
     return (
         <div className="space-y-12 pb-20 font-archivo uppercase animate-in fade-in duration-500">
-            {/* 🔴 HEADER NICKELBRONX ĐỈNH CAO */}
-            <PageHeader 
-                title="sản phẩm" 
-                subTitle="Industrial Inventory Management" 
-                btnText="NHẬP THÉP MỚI" 
-                btnHref="/admin/products/add" 
-            />
+            {/* 🔴 HEADER CHIẾN THUẬT: DÀN HÀNG NGANG */}
+            <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-8">
+
+                {/* BÊN TRÁI: TIÊU ĐỀ (Bỏ btnText và btnHref để nó không đẻ thêm nút lẻ) */}
+                <div className="flex-1">
+                    <PageHeader
+                        title="sản phẩm"
+                        subTitle="Industrial Inventory Management"
+                    />
+                </div>
+
+                {/* BÊN PHẢI: CỤM NÚT BẤM ĐỒNG BỘ */}
+                <div className="flex flex-wrap items-center gap-4 mb-[6px]">
+
+                    {/* 🟢 NÚT QUẢN LÝ THUỘC TÍNH (MÀU TRẮNG) */}
+                    <Link
+                        href="/admin/products/attributes"
+                        className="inline-flex items-center gap-3 bg-white border-4 border-black px-8 py-4 font-black text-[10px] tracking-[0.2em] shadow-[6px_6px_0_0_#000] hover:bg-black hover:text-white transition-all active:translate-x-1 active:translate-y-1 active:shadow-none"
+                    >
+                        <MdTune size={20} className="text-orange-600" />
+                        QUẢN LÝ QUY CÁCH / MÁC THÉP
+                    </Link>
+
+                    {/* 🔴 NÚT NHẬP THÉP MỚI (MÀU ĐEN - NỔI BẬT NHẤT) */}
+                    <Link
+                        href="/admin/products/add"
+                        className="inline-flex items-center gap-3 bg-black text-white border-4 border-black px-8 py-4 font-black text-[10px] tracking-[0.2em] shadow-[6px_6px_0_0_#ea580c] hover:-translate-y-1 transition-all active:translate-x-1 active:translate-y-1 active:shadow-none"
+                    >
+                        <MdAdd size={20} />
+                        NHẬP THÉP MỚI
+                    </Link>
+                </div>
+            </div>
+
 
             {/* 🔴 BỘ LỌC CHIẾN THUẬT */}
             <div className="bg-white border-[6px] border-black flex flex-col md:flex-row shadow-[12px_12px_0_0_#000]">
@@ -115,7 +142,7 @@ export default function ProductsPage() {
                         ))}
                     </select>
                 </div>
-                
+
                 <div className="flex-1 flex items-center px-8 gap-4 bg-white focus-within:bg-orange-50/30 transition-colors">
                     <MdSearch size={28} className="text-black" />
                     <input
@@ -130,16 +157,16 @@ export default function ProductsPage() {
 
             {/* 🔴 BẢNG DỮ LIỆU NẶNG ĐÔ */}
             <div className="border-[6px] border-black bg-white shadow-[20px_20px_0_0_#000] overflow-hidden">
-                <AdminTable 
-                    columns={columns} 
-                    data={products} 
-                    loading={loading} 
+                <AdminTable
+                    columns={columns}
+                    data={products}
+                    loading={loading}
                     emptyText="KHO HÀNG TRỐNG RỖNG - CHƯA PHÁT HIỆN DỮ LIỆU THÉP."
                 />
             </div>
 
             {/* 🔴 MODAL XÁC NHẬN TIÊU HỦY */}
-            <AdminModal 
+            <AdminModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 onConfirm={() => {

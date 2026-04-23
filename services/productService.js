@@ -27,9 +27,9 @@ export const productService = {
 
     delete: (id) => api.delete(`/products/${id}`).then(res => res.data),
 
-
     getAttributes: () => api.get('/attributes').then(res => res.data),
-    createAttribute: (data) => api.post('/attributes', data).then(res => res.data),
+    getAttributeById: (id) => api.get(`/attributes/${id}`).then(res => res.data), // Thêm hàm này để Edit load được dữ liệu
+    storeAttribute: (data) => api.post('/attributes', data).then(res => res.data),
     updateAttribute: (id, data) => api.put(`/attributes/${id}`, data).then(res => res.data),
-    deleteAttribute: (id) => api.delete(`/attributes/${id}`).then(res => res.data),
+    destroyAttribute: (id) => api.delete(`/attributes/${id}`).then(res => res.data),
 };

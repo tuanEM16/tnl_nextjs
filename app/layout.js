@@ -1,5 +1,3 @@
-
-import { AuthProvider } from '@/contexts/AuthContext';
 import { Toaster } from 'react-hot-toast';
 import './globals.css';
 
@@ -11,11 +9,9 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="vi">
-      <body>
-        <AuthProvider>
-          {children}
-          <Toaster position="top-right" />
-        </AuthProvider>
+      <body className="antialiased font-archivo">
+        {children}
+        <Toaster position="top-right" />
       </body>
     </html>
   );
