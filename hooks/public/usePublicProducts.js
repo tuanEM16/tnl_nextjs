@@ -13,6 +13,7 @@ export const useProductDetail = (slug) => {
         const res = await publicService.getProductBySlug(slug);
         setProduct(res?.data || res);
       } catch (error) {
+        console.error("LỖI CHI TIẾT:", error.response?.data || error.message); // 🟢 In lỗi thật ra đây
         console.error("LỖI TRUY XUẤT HỒ SƠ THÉP");
       } finally {
         setLoading(false);
@@ -37,7 +38,7 @@ export const usePublicProducts = (initialFilters = {}) => {
         publicService.getProducts(filters),
         publicService.getCategories({ tree: true }) // Hoặc lấy attributes riêng tùy API đại ca
       ]);
-      
+
       setProducts(prodRes?.data || prodRes || []);
       // Giả sử API trả về attributes kèm theo hoặc gọi riêng
     } catch (error) {

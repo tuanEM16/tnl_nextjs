@@ -20,7 +20,7 @@ export default function LatestNews() {
           {posts.map((post) => (
             <Link href={`/news/${post.slug}`} key={post.id} className="group bg-white border-4 border-black shadow-[8px_8px_0_0_#000] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all">
               <div className="aspect-video overflow-hidden border-b-4 border-black">
-                <img src={getImageUrl(post.thumbnail)} alt={post.title} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" />
+                <img src={getImageUrl(post.image)} alt={post.title} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" />
               </div>
               <div className="p-6 space-y-3">
                 <span className="text-[10px] font-black text-orange-600 uppercase tracking-widest">// {formatDate(post.created_at)}</span>

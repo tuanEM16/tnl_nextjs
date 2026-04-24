@@ -1,22 +1,24 @@
-// services/publicService.js
 import api from '@/lib/api';
 
 export const publicService = {
-    // 1. LẤY DANH MỤC (Đã có)
+    // 1. CẤU HÌNH & BANNER
+    getConfig: () => api.get('/config').then(res => res.data),
+    getBanners: (params = { page: 'home' }) => api.get('/banners', { params }).then(res => res.data),
+
+    // 2. SẢN PHẨM
     getCategories: (params) => api.get('/categories', { params }).then(res => res.data),
-
-    // 🟢 2. LẤY DANH SÁCH SẢN PHẨM (Mới thêm - Giải quyết lỗi của đại ca)
     getProducts: (params) => api.get('/products', { params }).then(res => res.data),
+    getProductBySlug: (slug) => api.get(`/products/slug/${slug}`).then(res => res.data),
 
-    // 🟢 3. LẤY CHI TIẾT SẢN PHẨM THEO SLUG
-    getProductBySlug: (slug) => api.get(`/products/${slug}`).then(res => res.data),
+    // 3. DỰ ÁN (PROJECTS) - Dùng chung bảng posts cho chuyên nghiệp
+    // Đại ca giữ lại thằng này vì Backend thường quản lý dự án trong bảng posts
+    getProjects: () => api.get('/posts?post_type=project').then(res => res.data),
+    getProjectBySlug: (slug) => api.get(`/posts/slug/${slug}`).then(res => res.data),
 
-    // 🟢 4. LẤY DANH SÁCH BÀI VIẾT / DỰ ÁN (Dùng cho tin-tuc và du-an)
+    // 4. TIN TỨC (NEWS/POSTS)
     getPosts: (params) => api.get('/posts', { params }).then(res => res.data),
+    getPostBySlug: (slug) => api.get(`/posts/slug/${slug}`).then(res => res.data),
 
-    // 🟢 5. LẤY CHI TIẾT BÀI VIẾT THEO SLUG
-    getPostBySlug: (slug) => api.get(`/posts/${slug}`).then(res => res.data),
-
-    // 🟢 6. GỬI FORM LIÊN HỆ (Cho trang /lien-he)
+    // 5. LIÊN HỆ
     sendContact: (data) => api.post('/contacts', data).then(res => res.data),
 };

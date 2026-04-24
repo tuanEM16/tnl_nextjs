@@ -5,11 +5,13 @@ import Container from '../ui/Container';
 import SectionTitle from '../ui/SectionTitle';
 import { usePublicCategories } from '@/hooks/public/usePublicCategories';
 import { MdArrowForward } from 'react-icons/md';
+// 🟢 1. PHẢI IMPORT HÀM CHUẨN ĐÃ SIẾT Ở ĐÂY
+import { getImageUrl } from '@/lib/utils'; 
 
 export default function CategoryGrid() {
   const { categories, loading } = usePublicCategories();
 
-  if (loading) return null; // Hoặc để skeleton cho xịn đại ca nhé
+  if (loading) return null;
 
   return (
     <section className="py-24 bg-gray-50 border-y-8 border-black">
@@ -34,14 +36,13 @@ export default function CategoryGrid() {
               href={`/products?category=${cat.id}`}
               className="group relative aspect-square bg-black border-4 border-black overflow-hidden shadow-[10px_10px_0_0_#000] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all"
             >
-              {/* IMAGE BACKGROUND */}
+              {/* 🟢 2. DÙNG HÀM CHUẨN: getImageUrl(cat.image) */}
               <img 
-                src={cat.image ? `${process.env.NEXT_PUBLIC_IMAGE_URL}/${cat.image}` : '/images/placeholder.jpg'} 
+                src={getImageUrl(cat.image)} 
                 alt={cat.name}
                 className="w-full h-full object-cover opacity-60 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700 grayscale group-hover:grayscale-0"
               />
               
-              {/* CONTENT OVERLAY */}
               <div className="absolute inset-0 p-8 flex flex-col justify-end bg-gradient-to-t from-black/80 to-transparent">
                 <span className="text-orange-500 font-black text-xs tracking-widest mb-2 opacity-0 group-hover:opacity-100 transition-opacity uppercase">
                   // Explore Category

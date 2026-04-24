@@ -1,10 +1,13 @@
+// components/admin/layout/AdminSidebar.js
 'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { configService } from '@/services/configService';
-import { MdSettingsSuggest } from 'react-icons/md';
+import { MdSettingsSuggest, MdDashboard, MdInventory2, MdCategory, MdArticle, MdViewCarousel, MdMenu, MdContactPhone, MdPeople, MdSettings } from 'react-icons/md';
+// 🟢 1. Dùng máy hàn đường dẫn chuẩn
+import { getImageUrl } from '@/lib/utils'; 
 
 export default function AdminSidebar() {
   const pathname = usePathname();
@@ -15,19 +18,28 @@ export default function AdminSidebar() {
     logo: ''
   });
 
-  const getLogoUrl = () => {
-    if (!config.logo) return null;
-    return `${process.env.NEXT_PUBLIC_IMAGE_URL}/${config.logo}`;
-  };
+  // 🟢 2. Danh sách Menu (Phải khai báo đầy đủ để map không bị crash)
+  const menuItems = [
+    { label: 'TỔNG QUAN', href: '/admin/dashboard', icon: <MdDashboard size={20} /> },
+    { label: 'SẢN PHẨM', href: '/admin/products', icon: <MdInventory2 size={20} /> },
+    { label: 'DANH MỤC', href: '/admin/categories', icon: <MdCategory size={20} /> },
+    { label: 'BÀI VIẾT', href: '/admin/posts', icon: <MdArticle size={20} /> },
+    { label: 'BANNER', href: '/admin/banners', icon: <MdViewCarousel size={20} /> },
+    { label: 'QUẢN LÝ MENU', href: '/admin/menus', icon: <MdMenu size={20} /> },
+    { label: 'LIÊN HỆ', href: '/admin/contacts', icon: <MdContactPhone size={20} /> },
+    { label: 'NHÂN SỰ', href: '/admin/users', icon: <MdPeople size={20} /> },
+    { label: 'CẤU HÌNH', href: '/admin/configs', icon: <MdSettings size={20} /> },
+  ];
 
   useEffect(() => {
     const fetchSidebarConfig = async () => {
       try {
         const res = await configService.show();
-        if (res.data) {
+        const data = res.data || res;
+        if (data) {
           setConfig({
-            site_name: res.data.site_name || 'TÂN NGỌC LỰC',
-            logo: res.data.logo || ''
+            site_name: data.site_name || 'TÂN NGỌC LỰC',
+            logo: data.logo || '' //
           });
         }
       } catch (error) {
@@ -35,20 +47,7 @@ export default function AdminSidebar() {
       }
     };
     fetchSidebarConfig();
-  }, [pathname]);
-
-  // 🟢 DANH SÁCH MENU PHẲNG (Đã thêm Quản lý Menu)
-  const menuItems = [
-    { label: 'TỔNG QUAN', href: '/admin/dashboard' },
-    { label: 'SẢN PHẨM', href: '/admin/products' },
-    { label: 'DANH MỤC', href: '/admin/categories' },
-    { label: 'BÀI VIẾT', href: '/admin/posts' },
-    { label: 'BANNER', href: '/admin/banners' },
-    { label: 'QUẢN LÝ MENU', href: '/admin/menus' }, // 🔥 Nút mới nằm đây em ơi
-    { label: 'LIÊN HỆ', href: '/admin/contacts' },
-    { label: 'NHÂN SỰ', href: '/admin/users' },
-    { label: 'CẤU HÌNH', href: '/admin/configs' },
-  ];
+  }, [pathname]); // Cập nhật khi chuyển trang để đồng bộ logo mới nhất
 
   return (
     <aside
@@ -58,7 +57,7 @@ export default function AdminSidebar() {
         collapsed ? 'w-20' : 'w-72'
       }`}
       style={{
-        background: 'linear-gradient(180deg, #8C001A 0%, #0B1F4F 35%, #5B1F5A 65%, #8C001A 100%)'
+        background: 'linear-gradient(180deg, #0B1F4F 0%, #1a3a8a 100%)' // Đổi màu gradient cho chuyên nghiệp hơn
       }}
     >
       {/* 🔴 Logo Area */}
@@ -68,33 +67,30 @@ export default function AdminSidebar() {
         <div className={`mb-4 flex items-center justify-center overflow-hidden transition-all duration-300 ${
           collapsed ? 'w-10 h-10' : 'w-24 h-16'
         }`}>
+          {/* 🟢 3. Hiển thị Logo từ Backend */}
           {config.logo ? (
             <img 
-              src={getLogoUrl()} 
-              alt="" 
+              src={getImageUrl(config.logo)} 
+              alt={config.site_name} 
               className="w-full h-full object-contain"
+              onError={(e) => { e.target.style.display = 'none'; }} 
             />
-          ) : null}
-          <MdSettingsSuggest 
-            className={`text-orange-600 ${config.logo ? 'hidden' : 'block'}`} 
-            size={collapsed ? 30 : 40} 
-          />
+          ) : (
+            <MdSettingsSuggest 
+              className="text-orange-600" 
+              size={collapsed ? 30 : 40} 
+            />
+          )}
         </div>
 
         {!collapsed && (
-          <h2 className="text-xl font-black tracking-tighter leading-none text-[#0B1F4F] uppercase text-center w-full">
+          <h2 className="text-lg font-black tracking-tighter leading-none text-[#0B1F4F] uppercase text-center w-full">
             {config.site_name}<span className="text-orange-600">.</span>
           </h2>
         )}
-        
-        {collapsed && (
-            <div className="text-xl font-black text-orange-600 uppercase">
-              {config.site_name.charAt(0)}
-            </div>
-        )}
       </div>
 
-      {/* 🔵 Navigation (Danh sách phẳng) */}
+      {/* 🔵 Navigation */}
       <nav className={`flex-1 py-6 px-4 space-y-1 overflow-y-auto ${collapsed ? 'px-2' : ''}`}>
         {menuItems.map((item) => {
           const isActive = pathname.startsWith(item.href);
@@ -103,22 +99,19 @@ export default function AdminSidebar() {
               key={item.href}
               href={item.href}
               className={`group flex items-center ${
-                collapsed ? 'justify-center' : 'justify-between'
-              } px-4 py-4 text-xs font-black tracking-[0.2em] transition-all duration-300 ${
+                collapsed ? 'justify-center' : 'justify-start gap-4'
+              } px-4 py-4 text-[10px] font-black tracking-[0.2em] transition-all duration-300 ${
                 isActive
-                  ? 'bg-amber-500 text-[#0A1E2F] shadow-[4px_4px_0_0_#000] -translate-y-1'
-                  : 'text-[#8AA9C9] hover:bg-white/5 hover:text-white'
+                  ? 'bg-orange-600 text-white shadow-[4px_4px_0_0_#000] -translate-y-1'
+                  : 'text-gray-400 hover:bg-white/5 hover:text-white'
               }`}
               title={collapsed ? item.label : ''}
             >
-              <span>{collapsed ? item.label.charAt(0) : item.label}</span>
-              {!collapsed && (
-                <span className={`text-[10px] transition-all duration-300 ${
-                  isActive ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0'
-                }`}>
-                  →
-                </span>
-              )}
+              <span className={isActive ? 'text-white' : 'text-orange-600/50 group-hover:text-orange-600'}>
+                {item.icon}
+              </span>
+              {!collapsed && <span>{item.label}</span>}
+              {!collapsed && isActive && <span className="ml-auto text-white">→</span>}
             </Link>
           );
         })}
@@ -127,11 +120,11 @@ export default function AdminSidebar() {
       {/* ⚪ Footer */}
       <div className={`p-6 border-t border-white/10 ${collapsed ? 'hidden' : ''}`}>
         <div className="flex items-center gap-2 mb-2">
-          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
-          <span className="text-[10px] font-bold tracking-widest uppercase text-[#8AA9C9]">System Online</span>
+          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+          <span className="text-[9px] font-bold tracking-widest uppercase text-gray-400">System Online</span>
         </div>
-        <p className="text-[9px] font-bold text-[#8AA9C9] opacity-40 tracking-widest italic uppercase">
-          Steel Admin / {config.site_name}
+        <p className="text-[8px] font-bold text-gray-500 opacity-60 tracking-widest italic uppercase">
+          Steel Management v1.0
         </p>
       </div>
     </aside>
