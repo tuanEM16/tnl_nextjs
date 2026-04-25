@@ -1,56 +1,75 @@
 // components/public/home/IntroSection.js
+'use client';
+import { motion } from 'framer-motion';
 import Container from '../ui/Container';
-import SectionTitle from '../ui/SectionTitle';
-import Button from '../ui/Button';
+import { getImageUrl } from '@/lib/utils';
 
-export default function IntroSection() {
+export default function IntroSection({ data, config, projectsCount }) {
+  // 🟢 TỰ ĐỘNG TÍNH NĂM KINH NGHIỆM (Công thức: Năm hiện tại - 2007)
+  const experienceYears = new Date().getFullYear() - 2007;
+
   return (
-    <section className="py-24 bg-white">
+    <section className="py-32 bg-white overflow-hidden font-archivo">
       <Container>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
-          {/* TEXT CONTENT */}
-          <div className="space-y-8">
-            <SectionTitle 
-              subtitle="Về chúng tôi" 
-              title="Công ty TNHH Tân Ngọc Lực" 
-            />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-32 items-center">
+          
+          <motion.div 
+            initial={{ x: -100, opacity: 0 }}
+            whileInView={{ x: 0, opacity: 1 }}
+            viewport={{ once: true }}
+            className="space-y-12"
+          >
+            <div className="space-y-4">
+              <span className="inline-block bg-black text-white px-5 py-1 font-black text-[10px] tracking-[0.4em] uppercase skew-x-[-15deg]">
+                // {config?.site_name || 'TÂN NGỌC LỰC'}
+              </span>
+              
+              {/* Tiêu đề bài viết từ Admin */}
+              <h2 className="text-6xl md:text-8xl font-black italic uppercase leading-[0.85] tracking-tighter text-black">
+                {data.title}
+              </h2>
+            </div>
             
-            <div className="space-y-6 text-gray-700 font-medium leading-loose text-lg">
-              <p>
-                Với nhiều năm kinh nghiệm trong ngành vật liệu xây dựng, Tân Ngọc Lực không chỉ là nhà cung cấp 
-                mà còn là đối tác chiến lược của hàng ngàn công trình tại Tây Ninh và các khu vực lân cận. [cite: 8, 14]
+            <div className="space-y-6 text-zinc-600 font-bold leading-relaxed text-xl max-w-xl">
+              <p className="border-l-8 border-orange-600 pl-8 uppercase">
+                {data.description}
               </p>
-              <p className="font-bold italic border-l-4 border-black pl-4">
-                "Chúng tôi tin rằng, mỗi thanh thép chắc chắn là nền móng cho những công trình trường tồn."
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-8 py-6">
-              <div className="border-t-4 border-black pt-4">
-                <span className="block text-4xl font-black text-orange-600">10+</span>
-                <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Năm kinh nghiệm</span>
-              </div>
-              <div className="border-t-4 border-black pt-4">
-                <span className="block text-4xl font-black text-orange-600">500+</span>
-                <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Dự án hoàn thành</span>
+              {/* Nội dung chi tiết Render từ Database */}
+              <div className="text-sm normal-case font-medium text-zinc-400" 
+                   dangerouslySetInnerHTML={{ __html: data.content }}>
               </div>
             </div>
 
-            <Button variant="outline">Tìm hiểu thêm về TNL</Button>
-          </div>
+            <div className="grid grid-cols-2 gap-0 border-4 border-black">
+              <div className="p-8 border-r-4 border-black bg-zinc-50">
+                <span className="block text-6xl font-black italic tracking-tighter text-orange-600">
+                  {experienceYears}+
+                </span>
+                <span className="text-[10px] font-black uppercase tracking-widest opacity-50">Năm kinh nghiệm</span>
+              </div>
+              <div className="p-8 bg-zinc-50">
+                <span className="block text-6xl font-black italic tracking-tighter text-black">
+                  {projectsCount}+
+                </span>
+                <span className="text-[10px] font-black uppercase tracking-widest opacity-50">Dự án hoàn thành</span>
+              </div>
+            </div>
+          </motion.div>
 
-          {/* IMAGE DECORATION */}
-          <div className="relative">
-            <div className="aspect-[4/5] border-[10px] border-black overflow-hidden shadow-[25px_25px_0_0_#ea580c]">
+          <motion.div 
+            initial={{ y: 100, opacity: 0 }}
+            whileInView={{ y: 0, opacity: 1 }}
+            viewport={{ once: true }}
+            className="relative"
+          >
+            <div className="relative z-10 aspect-[4/5] border-[12px] border-black overflow-hidden shadow-[30px_30px_0_0_#ea580c]">
               <img 
-                src="/images/placeholder.jpg" 
-                alt="Construction Site" 
-                className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700" 
+                src={getImageUrl(data.image)} 
+                alt={data.title} 
+                className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-1000" 
               />
             </div>
-            {/* Lớp khung đen trang trí kiểu Nickelbronx */}
-            <div className="absolute -top-6 -right-6 w-32 h-32 border-t-8 border-r-8 border-black -z-10"></div>
-          </div>
+          </motion.div>
         </div>
       </Container>
     </section>

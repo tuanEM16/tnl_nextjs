@@ -1,28 +1,26 @@
 'use client';
 
-import { usePostForm } from '@/hooks/usePosts'; // 🟢 Dùng Hook đã đúc
-import { POST_TYPES, GLOBAL_STATUS } from '@/types';
+import { usePostForm } from '@/hooks/usePosts'; 
+import { POST_TYPES } from '@/types';
 
 // TRIỆU HỒI VŨ KHÍ UI
 import PageHeader from '@/components/admin/ui/PageHeader';
-
-import { MdSave, MdCloudUpload, MdArticle, MdSettings, MdInfo, MdOutlineDescription, MdHistoryEdu } from 'react-icons/md';
+import { MdSave, MdCloudUpload, MdArticle, MdSettings, MdInfo, MdOutlineDescription, MdHistoryEdu, MdPlace } from 'react-icons/md';
 
 export default function AddPostPage() {
-    // 1. TRIỆU HỒI HOOK (Dọn sạch đống useState rườm rà)
     const {
         formData,
         preview,
         categories,
+        pageCategories, // 🟢 BỐC THÊM THẰNG NÀY TỪ HOOK
         loading,
         handleChange,
         handleImageChange,
         handleSubmit,
-    } = usePostForm(); // Truyền id nếu là trang Edit, không truyền là trang Add
+    } = usePostForm();
 
     return (
-        <div className="space-y-12 pb-20 font-archivo uppercase">
-            {/* 🔴 HEADER NICKELBRONX */}
+        <div className="space-y-12 pb-20 font-archivo uppercase text-black">
             <PageHeader 
                 title="VIẾT BÀI" 
                 subTitle="Content Editorial Station" 
@@ -32,16 +30,15 @@ export default function AddPostPage() {
 
             <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-12">
                 
-                {/* 🔵 CỘT TRÁI: KHÔNG GIAN SÁNG TẠO (NẶNG ĐÔ) */}
+                {/* 🔵 CỘT TRÁI: NỘI DUNG */}
                 <div className="lg:col-span-2 space-y-12">
                     <section className="bg-white border-4 border-black p-10 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] space-y-10">
                         <h2 className="flex items-center gap-3 text-2xl font-black italic border-b-4 border-black pb-4">
                             <MdHistoryEdu size={32} className="text-orange-600" /> NỘI DUNG BIÊN TẬP
                         </h2>
 
-                        {/* TIÊU ĐỀ */}
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-gray-400 italic flex items-center gap-2">
+                            <label className="text-[10px] font-black text-gray-400 italic flex items-center gap-2 uppercase">
                                 <MdArticle /> TIÊU ĐỀ BÀI VIẾT (BẮT BUỘC)
                             </label>
                             <input
@@ -50,14 +47,13 @@ export default function AddPostPage() {
                                 placeholder="NHẬP TIÊU ĐỀ THU HÚT..."
                                 value={formData.title}
                                 onChange={handleChange}
-                                className="w-full border-4 border-black p-6 font-black text-3xl tracking-tighter outline-none focus:bg-orange-50 transition-all placeholder:text-gray-200"
+                                className="w-full border-4 border-black p-6 font-black text-3xl tracking-tighter outline-none focus:bg-orange-50 transition-all placeholder:text-gray-200 uppercase"
                                 required
                             />
                         </div>
 
-                        {/* SAPO */}
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-gray-400 italic flex items-center gap-2">
+                            <label className="text-[10px] font-black text-gray-400 italic flex items-center gap-2 uppercase">
                                 <MdOutlineDescription /> MÔ TẢ NGẮN (SAPO)
                             </label>
                             <textarea
@@ -70,7 +66,6 @@ export default function AddPostPage() {
                             ></textarea>
                         </div>
 
-                        {/* NỘI DUNG CHÍNH */}
                         <div className="space-y-2">
                             <label className="text-[10px] font-black text-gray-400 italic uppercase">Chi tiết nội dung</label>
                             <textarea
@@ -86,11 +81,9 @@ export default function AddPostPage() {
                     </section>
                 </div>
 
-                {/* 🟠 CỘT PHẢI: CẤU HÌNH HỆ THỐNG (STICKY) */}
+                {/* 🟠 CỘT PHẢI: CẤU HÌNH */}
                 <div className="relative">
                     <div className="sticky top-10 space-y-8">
-                        
-                        {/* CARD CẤU HÌNH */}
                         <div className="bg-white border-4 border-black p-8 space-y-10 shadow-[10px_10px_0px_0px_#ea580c]">
                             
                             <h3 className="text-sm font-black flex items-center gap-2 border-b-2 border-black pb-4 italic">
@@ -112,7 +105,28 @@ export default function AddPostPage() {
                                 </select>
                             </div>
 
-                            {/* DANH MỤC */}
+                            {/* 🟢 DANH MỤC TRANG TĨNH (HIỆN KHI CHỌN TRANG TĨNH) */}
+                            {formData.post_type === 'page' && (
+                                <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
+                                    <label className="text-[10px] font-black text-orange-600 italic flex items-center gap-1">
+                                        <MdPlace /> VỊ TRÍ HIỂN THỊ (SLOT)
+                                    </label>
+                                    <select
+                                        name="page_category_id"
+                                        value={formData.page_category_id}
+                                        onChange={handleChange}
+                                        className="w-full border-4 border-orange-600 p-4 font-black bg-white outline-none cursor-pointer"
+                                        required
+                                    >
+                                        <option value="">-- CHỌN VỊ TRÍ --</option>
+                                        {pageCategories.map((pc) => (
+                                            <option key={pc.id} value={pc.id}>{pc.name.toUpperCase()}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
+
+                            {/* DANH MỤC TIN TỨC */}
                             {formData.post_type === 'post' && (
                                 <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
                                     <label className="text-[10px] font-black text-gray-400 italic">CHỦ ĐỀ TIN TỨC</label>

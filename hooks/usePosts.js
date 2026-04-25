@@ -5,77 +5,91 @@ import { useApi } from './useApi';
 import toast from 'react-hot-toast';
 
 // ==================== HOOK DANH SÁCH BÀI VIẾT ====================
-export const usePosts = (initialFilters = { post_type: 'post', category_id: '', keyword: '' }) => {
+export const usePosts = (initialFilters = {
+  post_type: 'post',
+  category_id: '',
+  page_category_id: '',
+  keyword: ''
+}) => {
   const [posts, setPosts] = useState([]);
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories] = useState([]); // Danh mục cho Tin tức
+  const [pageCategories, setPageCategories] = useState([]); // Danh mục cho Trang tĩnh (Slot)
   const [filters, setFilters] = useState(initialFilters);
-  
+
+  // 🟢 Triệu hồi các API cần thiết
   const { loading: postsLoading, request: fetchPostsRequest } = useApi(postService.getAll);
-  const { loading: categoriesLoading, request: fetchCategoriesRequest } = useApi(postService.getCategories);
+  const { request: fetchCategoriesRequest } = useApi(postService.getCategories);
+  const { request: fetchPageCategoriesRequest } = useApi(postService.getPageCategories);
   const { request: deleteRequest } = useApi(postService.delete);
 
-  const loading = postsLoading || categoriesLoading;
-
+  // 1. HÀM LẤY DANH SÁCH BÀI VIẾT (Có lọc)
   const fetchPosts = useCallback(async () => {
     try {
       const res = await fetchPostsRequest(filters);
-      // 🟢 Bốc dữ liệu lì lợm: Ưu tiên res.data, không thì lấy res
       setPosts(res?.data || res || []);
     } catch (error) {
       toast.error('KHÔNG THỂ TẢI DANH SÁCH BÀI VIẾT');
     }
   }, [filters, fetchPostsRequest]);
 
-  const fetchCategories = useCallback(async () => {
+  // 2. HÀM LẤY TOÀN BỘ DANH MỤC (Tin tức + Vị trí Web)
+  const fetchAllCategories = useCallback(async () => {
     try {
-      const res = await fetchCategoriesRequest();
-      const data = res?.data || res || [];
-      // 🚩 FIX: Đổ dữ liệu vào State thì bộ lọc mới hiện chữ được!
-      setCategories(data); 
+      const [resCat, resPageCat] = await Promise.all([
+        fetchCategoriesRequest(),
+        fetchPageCategoriesRequest()
+      ]);
+      setCategories(resCat?.data || resCat || []);
+      setPageCategories(resPageCat?.data || resPageCat || []);
     } catch (error) {
-      console.error('Lỗi tải danh mục');
+      console.error('❌ LỖI TẢI DANH MỤC:', error.message);
     }
-  }, [fetchCategoriesRequest]);
+  }, [fetchCategoriesRequest, fetchPageCategoriesRequest]);
 
+  // Chạy một lần khi khởi động để lấy "đạn" (danh mục)
   useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
+    fetchAllCategories();
+  }, [fetchAllCategories]);
 
+  // Chạy mỗi khi bộ lọc thay đổi
   useEffect(() => {
     fetchPosts();
   }, [fetchPosts]);
 
-  const setFilter = (key, value) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
-  };
-
+  // 3. XỬ LÝ ĐỔI LOẠI BÀI VIẾT (Reset các bộ lọc con)
   const handleTypeChange = (type) => {
-    setFilters(prev => ({
-      ...prev,
+    setFilters({
       post_type: type,
       category_id: '',
-    }));
+      page_category_id: '',
+      keyword: '', // Có thể giữ lại keyword nếu muốn
+    });
   };
 
-  const handleDelete = async (id, title) => {
-    if (!window.confirm(`XÁC NHẬN XÓA: ${title.toUpperCase()}?`)) return;
-    try {
-      await deleteRequest(id);
-      toast.success('ĐÃ XÓA BÀI VIẾT');
-      fetchPosts();
-    } catch (error) {
-      toast.error('XÓA THẤT BẠI');
-    }
+  // 4. CẬP NHẬT BỘ LỌC TỪNG CÁI
+  const setFilter = (key, value) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
   };
 
   return {
     posts,
     categories,
-    loading,
+    pageCategories,
+    loading: postsLoading,
     filters,
     setFilter,
     handleTypeChange,
-    handleDelete,
+    // Hàm xóa bài viết có xác nhận
+    handleDelete: async (id, title) => {
+      if (!window.confirm(`TIÊU HỦY VĨNH VIỄN: ${title.toUpperCase()}?`)) return;
+      try {
+        await deleteRequest(id);
+        toast.success('ĐÃ TIÊU HỦY THÀNH CÔNG');
+        fetchPosts(); // Load lại danh sách sau khi xóa
+      } catch (error) {
+        toast.error('XÓA THẤT BẠI');
+      }
+    },
     refreshPosts: fetchPosts,
   };
 };
@@ -105,6 +119,7 @@ export const usePost = (id) => {
 };
 
 // ==================== HOOK FORM ADD/EDIT BÀI VIẾT ====================
+// hooks/usePosts.js (Phần usePostForm)
 export const usePostForm = (id = null) => {
   const router = useRouter();
   const imageUrl = process.env.NEXT_PUBLIC_IMAGE_URL;
@@ -113,108 +128,83 @@ export const usePostForm = (id = null) => {
     title: '',
     post_type: 'post',
     category_id: '',
+    page_category_id: '', // 🟢 Thêm cột này để lưu vào DB
     description: '',
     content: '',
     status: 1,
   });
+
+  const [categories, setCategories] = useState([]);
+  const [pageCategories, setPageCategories] = useState([]); // 🟢 State chứa các slot trang tĩnh
   const [imageFile, setImageFile] = useState(null);
   const [preview, setPreview] = useState('');
-  const [oldImage, setOldImage] = useState('');
-  const [categories, setCategories] = useState([]);
   const [fetching, setFetching] = useState(!!id);
 
   const { loading: submitting, request: createRequest } = useApi(postService.create);
   const { loading: updating, request: updateRequest } = useApi(postService.update);
   const { request: fetchById } = useApi(postService.getById);
-  const { request: fetchCategories } = useApi(postService.getCategories);
 
+  // 🟢 Load toàn bộ danh mục để Admin chọn
   useEffect(() => {
-    const loadCategories = async () => {
+    const loadData = async () => {
       try {
-        const res = await fetchCategories();
-        // 🟢 Fix bốc dữ liệu cho Form
-        setCategories(res?.data || res || []);
-      } catch (error) {
-        console.error('Lỗi tải danh mục');
-      }
+        const [resCat, resPageCat] = await Promise.all([
+          postService.getCategories(),
+          postService.getPageCategories()
+        ]);
+        setCategories(resCat?.data || resCat || []);
+        setPageCategories(resPageCat?.data || resPageCat || []);
+      } catch (error) { console.error('Lỗi tải danh mục'); }
     };
-    loadCategories();
-  }, [fetchCategories]);
+    loadData();
+  }, []);
 
+  // 🟢 Load dữ liệu cũ khi Sửa
   useEffect(() => {
-    if (!id) {
-      setFetching(false);
-      return;
-    }
+    if (!id) return;
     const loadPost = async () => {
       try {
         const res = await fetchById(id);
-        const post = res?.data || res; // 🟢 Fix bốc dữ liệu
-        
+        const post = res?.data || res;
         setFormData({
           title: post.title || '',
           post_type: post.post_type || 'post',
           category_id: post.category_id?.toString() || '',
+          page_category_id: post.page_category_id?.toString() || '', // 🟢 Gán dữ liệu vị trí
           description: post.description || '',
           content: post.content || '',
           status: post.status ?? 1,
         });
-        if (post.image) {
-          setOldImage(post.image);
-          setPreview(`${imageUrl}/${post.image}`);
-        }
-      } catch (error) {
-        toast.error('Không tìm thấy bài viết');
-        router.push('/admin/posts');
-      } finally {
-        setFetching(false);
-      }
+        if (post.image) setPreview(`${imageUrl}/${post.image}`);
+      } catch (error) { router.push('/admin/posts'); }
+      finally { setFetching(false); }
     };
     loadPost();
   }, [id, fetchById, router, imageUrl]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleImageChange = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImageFile(file);
-      setPreview(URL.createObjectURL(file));
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!formData.title.trim()) return toast.error('Vui lòng nhập tiêu đề');
-
-    try {
+  return {
+    formData,
+    categories,
+    pageCategories, // 🟢 Trả về để Form render Select Box
+    fetching,
+    loading: submitting || updating,
+    preview,
+    handleChange: (e) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value })),
+    handleImageChange: (e) => {
+      const file = e.target.files?.[0];
+      if (file) { setImageFile(file); setPreview(URL.createObjectURL(file)); }
+    },
+    handleSubmit: async (e) => {
+      e.preventDefault();
       const data = new FormData();
       Object.keys(formData).forEach(key => data.append(key, formData[key]));
       if (imageFile) data.append('image', imageFile);
 
-      if (id) {
-        await updateRequest(id, data);
-        toast.success('CẬP NHẬT THÀNH CÔNG');
-      } else {
-        await createRequest(data);
-        toast.success('THÊM MỚI THÀNH CÔNG');
-      }
-      router.push('/admin/posts');
-    } catch (error) { /* useApi handle */ }
-  };
-
-  return {
-    formData,
-    imageFile,
-    preview,
-    categories,
-    fetching,
-    loading: submitting || updating,
-    handleChange,
-    handleImageChange,
-    handleSubmit,
+      try {
+        id ? await updateRequest(id, data) : await createRequest(data);
+        toast.success('THÀNH CÔNG!');
+        router.push('/admin/posts');
+      } catch (error) { }
+    },
   };
 };

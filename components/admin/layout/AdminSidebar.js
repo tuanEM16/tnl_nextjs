@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { configService } from '@/services/configService';
-import { MdSettingsSuggest, MdDashboard, MdInventory2, MdCategory, MdArticle, MdViewCarousel, MdMenu, MdContactPhone, MdPeople, MdSettings } from 'react-icons/md';
+import { MdSettingsSuggest, MdDashboard, MdInventory2, MdCategory, MdArticle, MdViewCarousel, MdMenu, MdContactPhone, MdPeople, MdSettings,MdVerified, MdHandshake } from 'react-icons/md';
 // 🟢 1. Dùng máy hàn đường dẫn chuẩn
 import { getImageUrl } from '@/lib/utils'; 
 
@@ -18,12 +18,18 @@ export default function AdminSidebar() {
     logo: ''
   });
 
-  // 🟢 2. Danh sách Menu (Phải khai báo đầy đủ để map không bị crash)
+// 🟢 CẬP NHẬT DANH SÁCH MENU (Thêm 2 ông thần mới vào)
   const menuItems = [
     { label: 'TỔNG QUAN', href: '/admin/dashboard', icon: <MdDashboard size={20} /> },
     { label: 'SẢN PHẨM', href: '/admin/products', icon: <MdInventory2 size={20} /> },
     { label: 'DANH MỤC', href: '/admin/categories', icon: <MdCategory size={20} /> },
     { label: 'BÀI VIẾT', href: '/admin/posts', icon: <MdArticle size={20} /> },
+    
+    // --- 2 MỤC MỚI ĐÂY ĐẠI CA ---
+    { label: 'CHỨNG CHỈ', href: '/admin/certificates', icon: <MdVerified size={20} /> },
+    { label: 'ĐỐI TÁC', href: '/admin/partners', icon: <MdHandshake size={20} /> },
+    // ----------------------------
+
     { label: 'BANNER', href: '/admin/banners', icon: <MdViewCarousel size={20} /> },
     { label: 'QUẢN LÝ MENU', href: '/admin/menus', icon: <MdMenu size={20} /> },
     { label: 'LIÊN HỆ', href: '/admin/contacts', icon: <MdContactPhone size={20} /> },

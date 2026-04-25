@@ -11,6 +11,7 @@
   "dependencies": {
     "@next/swc-win32-x64-msvc": "^16.2.4",
     "axios": "^1.15.0",
+    "framer-motion": "^12.38.0",
     "js-cookie": "^3.0.5",
     "next": "16.2.3",
     "react": "19.2.4",

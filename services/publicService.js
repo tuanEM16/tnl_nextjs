@@ -21,4 +21,22 @@ export const publicService = {
 
     // 5. LIÊN HỆ
     sendContact: (data) => api.post('/contacts', data).then(res => res.data),
+
+    getPostByPageSlug: async (slug) => {
+        try {
+            // Đại ca kiểm tra lại URL này có khớp với Route ở Backend không nhé!
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/public/posts-by-page/${slug}`, {
+                next: { revalidate: 3600 } // Tự động làm mới dữ liệu sau 1 giờ (Tùy chọn)
+            });
+
+            if (!response.ok) {
+                throw new Error('LỖI KHI TRUY XUẤT DỮ LIỆU TRANG TĨNH');
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error("❌ LỖI publicService:", error.message);
+            return { success: false, data: [] };
+        }
+    }
 };
