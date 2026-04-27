@@ -1,8 +1,9 @@
 'use client';
 
-import { useConfig } from '@/hooks/useConfig'; // 🟢 Triệu hồi nội công
+import { useConfig } from '@/hooks/useConfig'; 
 import PageHeader from '@/components/admin/ui/PageHeader';
-import { MdSave, MdBusiness, MdLanguage, MdImage, MdShare, MdMap, MdCloudUpload, MdInfo, MdSettings } from 'react-icons/md';
+import { MdSave, MdBusiness, MdLanguage, MdImage, MdShare, MdMap, MdCloudUpload, MdInfo, MdPlayCircle } from 'react-icons/md';
+import { getImageUrl } from '@/lib/utils';
 
 export default function ConfigPage() {
     const {
@@ -18,7 +19,6 @@ export default function ConfigPage() {
 
     return (
         <div className="space-y-12 pb-20 font-archivo uppercase">
-            {/* 🔴 HEADER NICKELBRONX */}
             <PageHeader 
                 title="CẤU HÌNH" 
                 subTitle="Global System Control Unit" 
@@ -28,7 +28,6 @@ export default function ConfigPage() {
                 
                 {/* 🔵 CỘT TRÁI: DATA ENTRY (2/3) */}
                 <div className="lg:col-span-2 space-y-12">
-                    
                     {/* SECTION: THÔNG TIN DOANH NGHIỆP */}
                     <section className="bg-white border-[6px] border-black p-10 shadow-[15px_15px_0_0_#000] space-y-10">
                         <h2 className="flex items-center gap-4 text-2xl font-black italic border-b-4 border-black pb-4">
@@ -38,7 +37,7 @@ export default function ConfigPage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black text-gray-400 italic">SITE NAME</label>
-                                <input type="text" name="site_name" value={formData.site_name || ''} onChange={handleChange} className="w-full border-4 border-black p-4 font-black text-xl outline-none focus:bg-orange-50 transition-all shadow-[6px_6px_0_0_rgba(0,0,0,0.05)]" />
+                                <input type="text" name="site_name" value={formData.site_name || ''} onChange={handleChange} className="w-full border-4 border-black p-4 font-black text-xl outline-none focus:bg-orange-50 transition-all" />
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black text-gray-400 italic">SLOGAN</label>
@@ -80,7 +79,7 @@ export default function ConfigPage() {
                             </div>
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black text-gray-400 italic">META DESCRIPTION</label>
-                                <textarea name="meta_description" value={formData.meta_description || ''} onChange={handleChange} rows="3" className="w-full border-4 border-black p-4 font-bold outline-none normal-case leading-tight" />
+                                <textarea name="meta_description" value={formData.meta_description || ''} onChange={handleChange} rows="3" className="w-full border-4 border-black p-4 font-bold outline-none normal-case leading-tight focus:bg-orange-50" />
                             </div>
                             <div className="space-y-2 bg-gray-50 p-6 border-4 border-black">
                                 <label className="text-[10px] font-black text-gray-400 italic flex items-center gap-2 mb-2">
@@ -96,8 +95,7 @@ export default function ConfigPage() {
                 <div className="relative">
                     <div className="sticky top-10 space-y-8">
                         
-                        {/* CARD MEDIA */}
-                        <div className="bg-white border-[6px] border-black p-8 space-y-10 shadow-[12px_12px_0_0_#ea580c]">
+                        <div className="bg-white border-[6px] border-black p-8 space-y-8 shadow-[12px_12px_0_0_#ea580c]">
                             <h3 className="text-sm font-black flex items-center gap-2 border-b-4 border-black pb-4 italic">
                                 <MdImage size={24} /> VISUAL ASSETS
                             </h3>
@@ -110,21 +108,49 @@ export default function ConfigPage() {
                                     {previews.logo ? (
                                         <div className="p-6">
                                             <img src={previews.logo} className="mx-auto max-h-32 object-contain group-hover:scale-110 transition-all" alt="Logo" />
-                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                                <p className="text-white font-black text-[10px] tracking-widest border-2 border-white p-2">CHANGE LOGO</p>
-                                            </div>
                                         </div>
                                     ) : (
-                                        <div className="py-10 text-center space-y-2">
+                                        <div className="py-10 text-center">
                                             <MdCloudUpload size={40} className="mx-auto text-gray-300" />
-                                            <p className="text-[9px] font-black tracking-widest text-gray-400">UPLOAD LOGO</p>
+                                            <p className="text-[9px] font-black tracking-widest text-gray-400 mt-2">UPLOAD LOGO</p>
                                         </div>
                                     )}
                                 </div>
                             </div>
 
+                            {/* 🟢 VIDEO INTRO (HÀNG MỚI) */}
+                            <div className="space-y-4 pt-4 border-t-4 border-black border-dotted">
+                                <label className="text-[10px] font-black text-gray-400 block tracking-widest uppercase italic">Hero Video / Intro</label>
+                                <div className="relative border-4 border-black bg-black group overflow-hidden aspect-video">
+                                    <input 
+                                        type="file" 
+                                        accept="video/*" 
+                                        onChange={(e) => handleFileChange(e, 'intro_video')} 
+                                        className="absolute inset-0 opacity-0 cursor-pointer z-20" 
+                                    />
+                                    
+                                    {/* Ưu tiên hiện video preview mới chọn, nếu không thì bốc hàng cũ từ DB */}
+                                    {(previews.intro_video || formData.intro_video) ? (
+                                        <video 
+                                            key={previews.intro_video || formData.intro_video}
+                                            src={previews.intro_video || getImageUrl(formData.intro_video)} 
+                                            className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity"
+                                            autoPlay muted loop 
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full flex flex-col items-center justify-center space-y-2">
+                                            <MdPlayCircle size={40} className="text-zinc-700" />
+                                            <p className="text-[9px] font-black text-zinc-500 tracking-widest">SELECT MP4 VIDEO</p>
+                                        </div>
+                                    )}
+                                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                        <p className="text-white font-black text-[10px] tracking-widest border-2 border-white p-2 bg-black/40">CHANGE VIDEO</p>
+                                    </div>
+                                </div>
+                            </div>
+
                             {/* FAVICON */}
-                            <div className="space-y-4">
+                            <div className="space-y-4 pt-4 border-t-4 border-black border-dotted">
                                 <label className="text-[10px] font-black text-gray-400 block tracking-widest uppercase">System Favicon</label>
                                 <div className="relative border-4 border-black p-4 bg-orange-50 flex items-center justify-between group">
                                     <input type="file" onChange={(e) => handleFileChange(e, 'favicon')} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
@@ -133,18 +159,6 @@ export default function ConfigPage() {
                                         <p className="text-[9px] font-black tracking-tighter">SELECT .ICO / .PNG</p>
                                     </div>
                                     <MdCloudUpload size={20} className="group-hover:text-orange-600 transition-colors" />
-                                </div>
-                            </div>
-
-                            {/* SOCIAL */}
-                            <div className="space-y-6 pt-6 border-t-4 border-black">
-                                <div className="flex items-center gap-4 bg-gray-100 p-3 border-2 border-black">
-                                    <MdShare className="text-orange-600" size={24} />
-                                    <input type="text" name="facebook" placeholder="FACEBOOK URL" value={formData.facebook || ''} onChange={handleChange} className="bg-transparent w-full font-bold text-xs outline-none lowercase placeholder:text-gray-300" />
-                                </div>
-                                <div className="flex items-center gap-4 bg-gray-100 p-3 border-2 border-black">
-                                    <MdShare className="text-orange-600" size={24} />
-                                    <input type="text" name="youtube" placeholder="YOUTUBE URL" value={formData.youtube || ''} onChange={handleChange} className="bg-transparent w-full font-bold text-xs outline-none lowercase placeholder:text-gray-300" />
                                 </div>
                             </div>
 

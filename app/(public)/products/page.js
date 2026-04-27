@@ -23,7 +23,7 @@ export default function ProductsPage() {
       />
       
       {/* 🔵 3. PHẦN NỘI DUNG CHÍNH - CÁCH BANNER MỘT KHOẢNG (py-20) */}
-      <section className="py-20">
+      <section className="">
         <Container>
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-12 items-start">
             

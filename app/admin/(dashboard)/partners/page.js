@@ -29,9 +29,25 @@ export default function PartnersPage() {
         setItems(newOrder);
         try {
             await partnerService.updateOrder(newOrder.map(i => i.id));
-        } catch (error) {}
+        } catch (error) { }
     };
+    const handleDelete = async (id) => {
+        // 🟢 Hỏi ý kiến đại ca trước khi "tiễn khách"
+        if (!confirm('Đại ca có chắc muốn tiễn ông đối tác này lên đường không?')) return;
 
+        try {
+            // 1. Gọi Service Backend xóa sạch cả file lẫn DB
+            await partnerService.delete(id);
+
+            // 2. Cập nhật lại UI ngay lập tức để đại ca thấy nó biến mất
+            setItems(prevItems => prevItems.filter(item => item.id !== id));
+
+            alert('Đã xóa sạch sành sanh!');
+        } catch (error) {
+            console.error("LỖI XÓA:", error);
+            alert('Xóa thất bại rồi đại ca ơi! Check lại Backend xem.');
+        }
+    };
     return (
         <div className="space-y-12 pb-20 font-archivo">
             <header className="flex justify-between items-end border-b-4 border-black pb-10">
@@ -57,8 +73,12 @@ export default function PartnersPage() {
                             </div>
                             <div className="flex gap-4">
                                 <Link href={`/admin/partners/${partner.id}/edit`} className="hover:scale-125 transition-transform"><MdEdit size={20} /></Link>
-                                <button onClick={() => {/* Hàm xóa */}} className="hover:text-red-600 hover:scale-125 transition-transform"><MdDelete size={20} /></button>
-                            </div>
+                                <button
+                                    onClick={() => handleDelete(partner.id)} // 🟢 Gọi hàm xóa kèm theo ID
+                                    className="hover:text-red-600 hover:scale-125 transition-transform"
+                                >
+                                    <MdDelete size={20} />
+                                </button>                            </div>
                         </div>
                     </div>
                 ))}

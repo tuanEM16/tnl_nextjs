@@ -27,7 +27,7 @@ export default function ProductDetailPage({ params }) {
     );
 
     return (
-        <div className="py-20 bg-white">
+        <div className=" bg-white">
              <ProductBanner />
             <SEO title={product.name} description={product.description} />
             

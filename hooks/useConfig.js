@@ -4,20 +4,25 @@
 import { useState, useEffect } from 'react';
 import { configService } from '@/services/configService';
 import toast from 'react-hot-toast';
-import { getImageUrl } from '@/lib/utils'; // 🟢 1. PHẢI DÙNG MÁY HÀN CHUẨN NÀY
+import { getImageUrl } from '@/lib/utils';
 
 export const useConfig = () => {
   const [formData, setFormData] = useState({});
-  const [files, setFiles] = useState({ logo: null, favicon: null });
-  const [previews, setPreviews] = useState({ logo: '', favicon: '' });
+  // 🟢 1. Thêm intro_video vào bộ ba quản lý file
+  const [files, setFiles] = useState({ logo: null, favicon: null, intro_video: null });
+  const [previews, setPreviews] = useState({ logo: '', favicon: '', intro_video: '' });
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
 
-  // 🟢 2. HÀM CẬP NHẬT PREVIEW THÔNG MINH
+  // 🟢 2. CẬP NHẬT PREVIEW (Hỗ trợ bốc video từ mảng Meta)
   const updatePreviews = (data) => {
+    // Tìm tên file video trong mảng meta trả về từ DB
+    const videoFilename = data?.meta?.find(m => m.meta_key === 'intro_video')?.meta_value;
+
     setPreviews({
       logo: getImageUrl(data?.logo),
       favicon: getImageUrl(data?.favicon),
+      intro_video: videoFilename ? getImageUrl(videoFilename) : '', // 👈 Hiện clip cũ
     });
   };
 
@@ -27,7 +32,6 @@ export const useConfig = () => {
         const res = await configService.show();
         const data = res.data || res;
         setFormData(data);
-        // 🟢 3. Dùng hàm thông minh để hiện ảnh cũ từ server
         updatePreviews(data);
       } catch (error) {
         toast.error('LỖI TRUY XUẤT THÔNG SỐ HỆ THỐNG');
@@ -47,7 +51,7 @@ export const useConfig = () => {
     const file = e.target.files?.[0];
     if (file) {
       setFiles(prev => ({ ...prev, [type]: file }));
-      // 🟢 4. Xem trước ảnh mới ngay lập tức từ máy tính
+      // Xem trước ảnh hoặc video mới ngay lập tức
       setPreviews(prev => ({ ...prev, [type]: URL.createObjectURL(file) }));
     }
   };
@@ -58,27 +62,32 @@ export const useConfig = () => {
     try {
       const data = new FormData();
       
-      // 🟢 5. CHỈ ĐẨY DỮ LIỆU CHỮ, KHÔNG ĐẨY TÊN FILE CŨ TRÁNH LỖI SERVER
+      // 🟢 3. DỌN RÁC TUYỆT ĐỐI KHI GỬI LÊN SERVER
+      // Loại bỏ các trường file cũ, mảng meta và timestamp để tránh lỗi Unknown Column
+      const blackList = ['logo', 'favicon', 'intro_video', 'meta', 'created_at', 'updated_at', 'id'];
+      
       Object.keys(formData).forEach(key => {
-        if (key !== 'logo' && key !== 'favicon' && formData[key] !== null) {
+        if (!blackList.includes(key) && formData[key] !== null) {
           data.append(key, formData[key]);
         }
       });
 
-      // Chỉ append file nếu người dùng có chọn file mới
+      // 🟢 4. NÃ LỆNH APPEND FILE MỚI (Nếu có)
       if (files.logo) data.append('logo', files.logo);
       if (files.favicon) data.append('favicon', files.favicon);
+      if (files.intro_video) data.append('intro_video', files.intro_video);
 
       await configService.update(data);
       toast.success('HỆ THỐNG ĐÃ ĐƯỢC TÁI CẤU HÌNH THÀNH CÔNG');
 
-      // Refresh lại để lấy tên file mới từ Database
+      // Refresh dữ liệu để đồng bộ tên file mới
       const res = await configService.show();
       const updatedData = res.data || res;
       setFormData(updatedData);
       updatePreviews(updatedData);
-      setFiles({ logo: null, favicon: null });
+      setFiles({ logo: null, favicon: null, intro_video: null });
     } catch (error) {
+      console.error("Submit Error:", error);
       toast.error('CẤU HÌNH THẤT BẠI - KIỂM TRA LẠI SERVER');
     } finally {
       setLoading(false);
