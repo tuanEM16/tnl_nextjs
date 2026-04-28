@@ -4,10 +4,9 @@ import { useRef, useState } from 'react';
 import { getImageUrl } from '@/lib/utils';
 import Link from 'next/link';
 
-const CARD_W = 300;
-const CARD_H = 420; // tỉ lệ 3/4
+const CARD_W = 320;
+const CARD_H = 460;
 
-// Chuẩn hóa góc về khoảng -180..180
 function normalizeAngle(angle) {
   let a = angle % 360;
   if (a > 180) a -= 360;
@@ -15,58 +14,57 @@ function normalizeAngle(angle) {
   return a;
 }
 
-// Card con (giao diện giữ nguyên)
 function ProjectCard({ item, isActive }) {
   return (
-    <div className="relative w-full h-full rounded-2xl overflow-hidden shadow-2xl">
+    <div className="relative w-full h-full overflow-hidden rounded-sm bg-white">
       <img
         src={getImageUrl(item.image)}
         alt={item.title}
-        className={`w-full h-full object-cover transition-all duration-500 pointer-events-none ${
-          isActive ? 'grayscale-0 brightness-100' : 'grayscale brightness-50'
+        className={`w-full h-full object-cover transition-all duration-700 pointer-events-none ${
+          isActive ? 'scale-105 grayscale-0' : 'scale-100 grayscale brightness-75'
         }`}
       />
-      <div className="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-black/90 via-black/40 to-transparent text-white">
-        <div className="w-7 h-7 bg-orange-600 rotate-45 mb-4 flex items-center justify-center">
-          <span className="-rotate-45 font-black text-[7px]">TNL</span>
+      {/* Overlay: subtle gradient consistent with armenia.travel style */}
+      <div className={`absolute inset-0 transition-opacity duration-500 ${isActive ? 'bg-black/20' : 'bg-black/40'}`} />
+      
+      <div className="absolute inset-x-0 bottom-0 p-8 text-white z-10">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="w-8 h-[1px] bg-[#e33127]"></span>
+          <p className="text-[#e33127] font-bold text-[10px] uppercase tracking-[0.2em]">
+            {item.category_name || 'ENGINEERING'}
+          </p>
         </div>
-        <p className="text-orange-500 font-black text-[10px] uppercase tracking-widest mb-1">
-          {item.category_name || 'STEEL PROJECT'}
-        </p>
-        <h3 className="text-xl font-black uppercase tracking-tighter leading-tight">{item.title}</h3>
-        {isActive && (
+        
+        <h3 className="text-2xl font-bold uppercase tracking-tight leading-tight mb-4">
+          {item.title}
+        </h3>
+
+        <div className={`transition-all duration-500 overflow-hidden ${isActive ? 'max-h-20 opacity-100' : 'max-h-0 opacity-0'}`}>
           <Link
             href={`/du-an/${item.slug}`}
             onClick={e => e.stopPropagation()}
-            className="mt-4 inline-block text-[10px] font-black border-b-2 border-orange-600 pb-0.5 hover:text-orange-400 transition-colors"
+            className="inline-flex items-center text-[11px] font-bold tracking-widest uppercase py-2 border-b border-white/50 hover:border-[#e33127] hover:text-[#e33127] transition-all"
           >
-            VIEW CASE STUDY →
+            Explore Project
+            <svg className="ml-2 w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+            </svg>
           </Link>
-        )}
+        </div>
       </div>
     </div>
   );
 }
 
-// Card nằm trên quạt 2D
 function FanCard({ angle, radius, springRot, onClick, children }) {
-  // deltaAngle: góc lệch của card so với hướng nhìn thẳng (0 = chính giữa)
   const deltaAngle = useTransform(springRot, (rot) => normalizeAngle(angle + rot));
-  
-  // Vị trí ngang: r * sin(delta)
   const x = useTransform(deltaAngle, (a) => radius * Math.sin(a * Math.PI / 180));
-  
-  // Scale: dựa vào cos(delta), card giữa to nhất (1), càng xa càng nhỏ
-  const scale = useTransform(deltaAngle, (a) => 0.55 + 0.45 * Math.cos(a * Math.PI / 180));
-  
-  // Opacity: card trong khoảng ±60° rõ, ngoài mờ dần
+  const scale = useTransform(deltaAngle, (a) => 0.6 + 0.4 * Math.cos(a * Math.PI / 180));
   const opacity = useTransform(deltaAngle, (a) => {
     const abs = Math.abs(a);
-    return abs < 60 ? 1 : Math.max(0.2, 1 - (abs - 60) / 40);
+    return abs < 60 ? 1 : Math.max(0.1, 1 - (abs - 60) / 50);
   });
-  
-  // zIndex: card gần trung tâm nằm trên
-  const zIndex = useTransform(deltaAngle, (a) => 100 - Math.floor(Math.abs(a) / 5));
+  const zIndex = useTransform(deltaAngle, (a) => 100 - Math.floor(Math.abs(a)));
 
   return (
     <motion.div
@@ -74,17 +72,17 @@ function FanCard({ angle, radius, springRot, onClick, children }) {
         position: 'absolute',
         width: `${CARD_W}px`,
         height: '100%',
-        left: '50%',               // đặt mép trái vào giữa
+        left: '50%',
         top: 0,
-        x,                         // dịch ngang theo góc
+        x,
         scale,
         opacity,
         zIndex,
-        translateX: '-50%',        // đưa tâm card về vị trí chính giữa
+        translateX: '-50%',
         transformOrigin: 'center center',
       }}
       onClick={onClick}
-      whileTap={{ cursor: 'grabbing' }}
+      className="cursor-pointer"
     >
       {children}
     </motion.div>
@@ -96,11 +94,10 @@ export default function Projects({ data }) {
 
   const total = data.length;
   const ANGLE = 360 / total;
-  // Bán kính quạt – có thể chỉnh để các card xòe rộng hay hẹp
-  const radius = Math.max(CARD_W * total / 4, 350);
+  const radius = Math.max(CARD_W * total / 4.5, 400);
 
   const rotY = useMotionValue(0);
-  const springRot = useSpring(rotY, { stiffness: 65, damping: 16, mass: 1 });
+  const springRot = useSpring(rotY, { stiffness: 45, damping: 20, mass: 1.2 });
   const [activeIndex, setActiveIndex] = useState(0);
 
   useMotionValueEvent(springRot, 'change', (v) => {
@@ -127,12 +124,12 @@ export default function Projects({ data }) {
     if (dt > 0) ptr.current.vel = (e.clientX - ptr.current.lastX) * 0.3 / dt;
     ptr.current.lastX = e.clientX;
     ptr.current.lastT = Date.now();
-    rotY.set(ptr.current.base + (e.clientX - ptr.current.startX) * 0.25);
+    rotY.set(ptr.current.base + (e.clientX - ptr.current.startX) * 0.2);
   };
 
   const onPointerUp = () => {
     if (!ptr.current) return;
-    const projected = rotY.get() + ptr.current.vel * 300;
+    const projected = rotY.get() + ptr.current.vel * 250;
     const snapped = Math.round(projected / ANGLE) * ANGLE;
     rotY.set(snapped);
     ptr.current = null;
@@ -143,31 +140,43 @@ export default function Projects({ data }) {
     rotY.set(-idx * ANGLE);
   };
 
-  const prev = () => goTo(activeIndex - 1);
-  const next = () => goTo(activeIndex + 1);
-
   return (
-    <section className=" relative py-24 bg-[#f0f0f0] text-black overflow-hidden font-archivo select-none">
-      {/* Header */}
-      <div className="px-6 md:px-20 mb-16 flex justify-between items-end">
-        <div>
-          <span className="text-orange-600 font-black text-xs tracking-[0.3em] uppercase">
-            // Selected_Works
-          </span>
-          <h2 className="text-5xl md:text-7xl font-black uppercase italic tracking-tighter leading-none mt-2">
-            DỰ ÁN <span className="text-orange-600">THÉP.</span>
+    <section className="relative py-32 bg-white text-[#0e2188] overflow-hidden font-sans select-none">
+      {/* Header Section */}
+      <div className="container mx-auto px-6 md:px-12 mb-20 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+        <div className="max-w-2xl">
+          <div className="flex items-center gap-3 mb-4">
+            <span className="w-12 h-[2px] bg-[#e33127]"></span>
+            <span className="text-[#e33127] font-bold text-xs tracking-[0.4em] uppercase">
+              Portfolio
+            </span>
+          </div>
+          <h2 className="text-5xl md:text-7xl font-bold uppercase tracking-tighter leading-[0.95]">
+            DỰ ÁN <span className="text-zinc-300">TIÊU BIỂU</span>
           </h2>
         </div>
-        <div className="hidden md:flex flex-col items-center gap-2 opacity-40">
-          <div className="w-16 h-16 rounded-full border-2 border-black flex items-center justify-center text-2xl font-black">↻</div>
-          <span className="text-[10px] font-black tracking-widest">SPIN</span>
+        
+        <div className="flex items-center gap-8">
+          <div className="hidden lg:block text-right">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1">Drag to browse</p>
+            <div className="h-[1px] w-24 bg-zinc-200 relative overflow-hidden">
+               <motion.div 
+                 animate={{ x: ['-100%', '100%'] }}
+                 transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
+                 className="absolute inset-0 w-1/2 bg-[#0e2188]"
+               />
+            </div>
+          </div>
+          <div className="text-6xl font-light text-zinc-100 hidden md:block">
+            {String(activeIndex + 1).padStart(2, '0')}
+          </div>
         </div>
       </div>
 
-      {/* Khu vực quạt */}
+      {/* Fan Area */}
       <div
-        className="relative flex items-center justify-center cursor-grab active:cursor-grabbing touch-none overflow-hidden"
-        style={{ height: `${CARD_H + 100}px` }}
+        className="relative flex items-center justify-center cursor-grab active:cursor-grabbing touch-none"
+        style={{ height: `${CARD_H + 120}px` }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
@@ -191,23 +200,29 @@ export default function Projects({ data }) {
         </div>
       </div>
 
-      {/* Dots */}
-      <div className="flex justify-center gap-2 mt-8">
+      {/* Modern Pagination Dots */}
+      <div className="flex justify-center items-center gap-4 mt-12">
         {data.map((_, i) => (
           <button
             key={i}
             onClick={() => goTo(i)}
-            className={`h-1.5 rounded-full transition-all duration-300 ${
-              i === activeIndex ? 'w-8 bg-orange-600' : 'w-1.5 bg-black/25'
+            className={`transition-all duration-500 rounded-full ${
+              i === activeIndex 
+              ? 'w-12 h-[2px] bg-[#e33127]' 
+              : 'w-2 h-[2px] bg-zinc-200 hover:bg-zinc-400'
             }`}
           />
         ))}
       </div>
 
-      {/* Mobile arrows */}
-      <div className="flex justify-center gap-6 mt-6 md:hidden">
-        <button onClick={prev} className="w-12 h-12 rounded-full border-2 border-black/20 font-black text-lg flex items-center justify-center">←</button>
-        <button onClick={next} className="w-12 h-12 rounded-full border-2 border-black/20 font-black text-lg flex items-center justify-center">→</button>
+      {/* Navigation Controls */}
+      <div className="flex justify-center gap-12 mt-12 md:hidden">
+        <button onClick={() => goTo(activeIndex - 1)} className="text-[#0e2188] hover:text-[#e33127] transition-colors">
+          <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15 19l-7-7 7-7" /></svg>
+        </button>
+        <button onClick={() => goTo(activeIndex + 1)} className="text-[#0e2188] hover:text-[#e33127] transition-colors">
+          <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 5l7 7-7 7" /></svg>
+        </button>
       </div>
     </section>
   );

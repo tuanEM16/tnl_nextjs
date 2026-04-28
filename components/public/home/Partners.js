@@ -1,70 +1,162 @@
-// components/public/home/Partners.js
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { partnerService } from '@/services/partnerService';
-import { certificateService } from '@/services/certificateService'; // 🟢 Triệu hồi thêm chứng chỉ
-import { getImageUrl } from '@/lib/utils'; // 🟢 Hàm bốc link ảnh chuẩn
+import { getImageUrl } from '@/lib/utils';
 import Container from '../ui/Container';
 
+const CARD_W = 280;
+const CARD_H = 140;
+const GAP = 60;
+const ITEM_W = CARD_W + GAP;
+
 export default function Partners() {
-  const [logos, setLogos] = useState([]); 
+  const [logos, setLogos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const isInteractingRef = useRef(false);
 
   useEffect(() => {
-    fetchHomeData();
+    const fetchPartners = async () => {
+      try {
+        const res = await partnerService.getAll();
+        const activeLogos = (res.data || res || []).filter(p => p.status === 1);
+        setLogos(activeLogos);
+      } catch (error) {
+        console.error("LỖI:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPartners();
   }, []);
 
-const fetchHomeData = async () => {
-    try {
-        const partnerRes = await partnerService.getAll();
-        // 🟢 CHỈ LẤY ĐỐI TÁC THÔI
-        const activePartners = (partnerRes.data || []).filter(p => p.status === 1);
-        
-        const combined = activePartners.map(p => ({ 
-            id: `p-${p.id}`, 
-            name: p.name, 
-            img: p.logo 
-        }));
+  const loopLogos = [...logos, ...logos];
+  const rotX = useMotionValue(0);
+  const springX = useSpring(rotX, { stiffness: 35, damping: 25 });
 
-        setLogos(combined);
-    } catch (error) {
-        console.error(error);
-    } finally {
-        setLoading(false);
-    }
-};
+  useEffect(() => {
+    if (!logos.length) return;
 
-  // Nếu đang load thì đại ca có thể để trống hoặc làm skeleton
-  if (loading) return <div className="py-20 bg-white border-t-4 border-black text-center font-bold uppercase italic">Đang bốc dữ liệu...</div>;
+    const interval = setInterval(() => {
+      if (isInteractingRef.current) return;
+
+      let current = rotX.get();
+      current -= ITEM_W;
+
+      const max = logos.length * ITEM_W;
+      if (Math.abs(current) >= max) {
+        current = 0;
+      }
+      rotX.set(current);
+    }, 3500);
+
+    return () => clearInterval(interval);
+  }, [logos]);
+
+  const ptr = useRef(null);
+
+  const onPointerDown = (e) => {
+    isInteractingRef.current = true;
+    ptr.current = {
+      startX: e.clientX,
+      base: rotX.get()
+    };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+
+  const onPointerMove = (e) => {
+    if (!ptr.current) return;
+    const dx = e.clientX - ptr.current.startX;
+    rotX.set(ptr.current.base + dx);
+  };
+
+  const onPointerUp = () => {
+    ptr.current = null;
+    setTimeout(() => {
+      isInteractingRef.current = false;
+    }, 2000);
+  };
+
+  if (loading || !logos.length) return null;
 
   return (
-    <section className="py-20 bg-white border-t-4 border-black">
+    <section className="py-32 bg-white overflow-hidden">
       <Container>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-center">
-          {/* TIÊU ĐỀ BÊN TRÁI */}
-          <div className="space-y-4">
-            <span className="text-orange-600 font-black text-xs tracking-[0.3em] uppercase">// TRUSTED_BY</span>
-            <h2 className="text-4xl font-black italic uppercase tracking-tighter">Đối tác & <br/>Chứng nhận</h2>
-            <p className="text-gray-500 font-bold text-sm">
-              Sản phẩm của Tân Ngọc Lực đạt các tiêu chuẩn kiểm định khắt khe nhất ngành thép từ năm 2007.
-            </p>
+        <div className="mb-20 space-y-4">
+          <div className="flex items-center gap-3">
+            <span className="w-12 h-[2px] bg-[#e33127]"></span>
+            <span className="text-[#e33127] font-bold text-xs tracking-[0.4em] uppercase">
+              Global Network
+            </span>
           </div>
+          <h2 className="text-5xl md:text-7xl font-bold uppercase tracking-tighter text-[#0e2188]">
+            ĐỐI TÁC <span className="text-zinc-300">CHIẾN LƯỢC</span>
+          </h2>
+        </div>
+      </Container>
 
-          {/* LOGO CHẠY NGANG (GRID) */}
-          <div className="lg:col-span-2 grid grid-cols-2 md:grid-cols-4 gap-8">
-            {logos.map(item => (
-              <div key={item.id} className="h-24 border-2 border-black/10 flex items-center justify-center p-4 grayscale hover:grayscale-0 transition-all hover:border-black shadow-[4px_4px_0_0_transparent] hover:shadow-[4px_4px_0_0_#000] bg-white">
-                <img 
-                  src={getImageUrl(item.img)} 
-                  alt={item.name} 
-                  className="max-h-full max-w-full object-contain" 
-                  onError={(e) => e.target.src = '/images/placeholder.jpg'} // 🟢 Nếu mất ảnh thì hiện placeholder
+      <div
+        className="relative overflow-hidden cursor-grab active:cursor-grabbing bg-[#F8F9FA] py-24 border-y border-zinc-100"
+        style={{ height: `${CARD_H + 160}px` }}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+      >
+        <div className="relative w-full h-full flex items-center justify-center">
+          {loopLogos.map((partner, index) => (
+            <PartnerCard
+              key={index}
+              index={index}
+              total={logos.length}
+              springX={springX}
+            >
+              <div className="w-full h-full bg-white rounded-sm shadow-[0_10px_30px_rgba(0,0,0,0.04)] flex items-center justify-center p-8 group transition-all duration-500 hover:shadow-[0_20px_40px_rgba(14,33,136,0.08)]">
+                <img
+                  src={getImageUrl(partner.logo)}
+                  alt={partner.name}
+                  className="w-full h-full object-contain grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-500"
+                  onError={(e) => (e.target.src = '/images/placeholder.jpg')}
                 />
               </div>
-            ))}
-          </div>
+            </PartnerCard>
+          ))}
+        </div>
+      </div>
+      
+      <Container>
+        <div className="mt-12 flex justify-end">
+           <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest flex items-center gap-2">
+             <span className="w-4 h-[1px] bg-zinc-300"></span>
+             Drag to explore our ecosystem
+           </p>
         </div>
       </Container>
     </section>
+  );
+}
+
+function PartnerCard({ index, total, springX, children }) {
+  const x = useTransform(springX, (v) => {
+    const totalWidth = total * ITEM_W;
+    let pos = index * ITEM_W + v;
+    pos = ((pos % totalWidth) + totalWidth) % totalWidth;
+    return pos - totalWidth / 2;
+  });
+
+  return (
+    <motion.div
+      style={{
+        position: 'absolute',
+        width: CARD_W,
+        height: CARD_H,
+        left: '50%',
+        top: '50%',
+        x,
+        translateX: '-50%',
+        translateY: '-50%',
+      }}
+    >
+      {children}
+    </motion.div>
   );
 }

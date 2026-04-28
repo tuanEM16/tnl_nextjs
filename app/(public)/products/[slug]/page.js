@@ -1,78 +1,91 @@
 'use client';
-import { use, useEffect } from 'react';
+import { use } from 'react';
+import { useProductDetail } from '@/hooks/public/usePublicProducts';
+import { getImageUrl } from '@/lib/utils';
 import Container from '@/components/public/ui/Container';
 import ProductSpecs from '@/components/public/product/ProductSpecs';
 import SEO from '@/components/public/shared/SEO';
-import { useProductDetail } from '@/hooks/public/usePublicProducts';
 import ProductBanner from '@/components/public/product/ProductBanner';
-import { getImageUrl } from '@/lib/utils';
 
 export default function ProductDetailPage({ params }) {
-    // 🟢 1. Giải mã slug từ URL
     const { slug } = use(params); 
-    
-    // 🟢 2. Gọi hook lấy dữ liệu (Hàm này sẽ gọi /api/products/slug/${slug})
     const { product, loading } = useProductDetail(slug);
 
     if (loading) return (
-        <div className="py-40 text-center font-black animate-pulse uppercase tracking-[0.5em]">
-            // ĐANG KIỂM ĐỊNH CHẤT LƯỢNG THÉP...
+        <div className="py-40 flex flex-col items-center justify-center bg-white">
+            <div className="w-12 h-12 border-4 border-zinc-100 border-t-[#e33127] rounded-full animate-spin mb-4"></div>
+            <p className="font-bold text-[#0e2188] uppercase tracking-[0.3em] text-xs">
+                Đang kiểm định chất lượng...
+            </p>
         </div>
     );
 
     if (!product) return (
-        <div className="py-40 text-center font-black uppercase text-red-600">
-            KHÔNG TÌM THẤY HỒ SƠ SẢN PHẨM TRÊN HỆ THỐNG
+        <div className="py-40 text-center bg-white">
+            <h2 className="text-2xl font-bold text-[#0e2188] uppercase tracking-tighter">
+                Không tìm thấy hồ sơ sản phẩm
+            </h2>
+            <div className="mt-4 w-12 h-1 bg-[#e33127] mx-auto"></div>
         </div>
     );
 
     return (
-        <div className=" bg-white">
-             <ProductBanner />
+        <div className="bg-white font-sans">
+            <ProductBanner />
             <SEO title={product.name} description={product.description} />
             
-            <Container>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-start">
+            <Container className="py-20 lg:py-32">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-start">
                     
-                    {/* 🖼️ TRÁI: HÌNH ẢNH SẢN PHẨM (NICKELBRONX STYLE) */}
-                    <div className="relative group">
-                        <div className="border-[10px] border-black shadow-[30px_30px_0_0_#000] overflow-hidden bg-gray-100">
+                    {/* 🖼️ TRÁI: HÌNH ẢNH SẢN PHẨM (PREMIUM MINIMALISM) */}
+                    <div className="relative">
+                        <div className="relative z-10 aspect-square overflow-hidden rounded-sm bg-zinc-50 shadow-2xl shadow-zinc-200/50">
                             <img 
                                 src={getImageUrl(product.thumbnail)} 
                                 alt={product.name} 
-                                className="w-full grayscale hover:grayscale-0 transition-all duration-700" 
+                                className="w-full h-full object-cover transition-transform duration-1000 hover:scale-105" 
                             />
                         </div>
-                        {/* Lớp khung trang trí góc */}
-                        <div className="absolute -top-6 -left-6 w-24 h-24 border-t-8 border-l-8 border-orange-600 -z-10"></div>
+                        {/* Decorative Accent */}
+                        <div className="absolute -top-4 -left-4 w-20 h-20 bg-[#e33127]/5 -z-0"></div>
+                        <div className="absolute -bottom-8 -right-8 text-8xl font-bold text-zinc-50 -z-0 select-none">
+                            TNL
+                        </div>
                     </div>
 
                     {/* 📝 PHẢI: THÔNG TIN CHI TIẾT */}
-                    <div className="space-y-10">
-                        <div className="space-y-4">
-                            <span className="inline-block bg-black text-white px-4 py-2 text-xs font-black tracking-widest uppercase italic">
-                                // {product.category_name || 'STEEL_ITEM'}
-                            </span>
-                            <h1 className="text-7xl font-black italic uppercase tracking-tighter leading-none text-black">
+                    <div className="flex flex-col">
+                        <div className="space-y-6 mb-10">
+                            <div className="flex items-center gap-3">
+                                <span className="w-10 h-[2px] bg-[#e33127]"></span>
+                                <span className="text-[#e33127] font-bold text-xs tracking-[0.4em] uppercase">
+                                    {product.category_name || 'STEEL SOLUTION'}
+                                </span>
+                            </div>
+                            
+                            <h1 className="text-5xl md:text-6xl font-bold uppercase tracking-tighter leading-[1.1] text-[#0e2188]">
                                 {product.name}
                             </h1>
-                            <div className="h-2 w-32 bg-orange-600"></div>
                         </div>
 
-                        <p className="text-xl font-bold text-gray-600 leading-relaxed border-l-8 border-black pl-8 italic">
-                            {product.description || "Dòng sản phẩm thép chất lượng cao, đáp ứng đầy đủ các tiêu chuẩn kỹ thuật khắt khe nhất của ngành xây dựng."}
-                        </p>
+                        <div className="mb-10">
+                            <p className="text-lg md:text-xl text-zinc-500 leading-relaxed font-medium border-l-4 border-[#e33127] pl-8">
+                                {product.description || "Dòng sản phẩm thép chất lượng cao, đáp ứng đầy đủ các tiêu chuẩn kỹ thuật khắt khe nhất của ngành xây dựng."}
+                            </p>
+                        </div>
 
-                        {/* 📊 BẢNG THÔNG SỐ KỸ THUẬT ĐỘNG (JOIN TỪ SQL) */}
-                        <ProductSpecs product={product} />
+                        {/* 📊 BẢNG THÔNG SỐ KỸ THUẬT */}
+                        <div className="bg-zinc-50 p-1 rounded-sm border border-zinc-100 mb-10">
+                            <ProductSpecs product={product} />
+                        </div>
 
-                        {/* 📞 HÀNH ĐỘNG */}
-                        <div className="pt-10 flex flex-wrap gap-6">
+                        {/* 📞 HÀNH ĐỘNG (CTA) */}
+                        <div className="pt-6">
                             <a 
                                 href="tel:0366638969" 
-                                className="flex-1 bg-black text-white text-center py-6 font-black uppercase italic shadow-[10px_10px_0_0_#ea580c] hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all"
+                                className="inline-flex items-center justify-center w-full md:w-auto px-12 py-5 bg-[#e33127] text-white font-bold uppercase text-xs tracking-[0.2em] rounded-sm transition-all duration-300 hover:bg-[#0e2188] hover:shadow-xl hover:shadow-red-500/20"
                             >
-                                GỌI BÁO GIÁ: 0366.638.969
+                                Liên hệ báo giá ngay
                             </a>
                         </div>
                     </div>
@@ -80,10 +93,20 @@ export default function ProductDetailPage({ params }) {
 
                 {/* PHẦN NỘI DUNG CHI TIẾT (CONTENT) */}
                 {product.content && (
-                    <div className="mt-32 pt-20 border-t-8 border-black">
-                        <h2 className="text-4xl font-black italic uppercase mb-10 tracking-tighter">// CHI TIẾT KỸ THUẬT & ỨNG DỤNG</h2>
+                    <div className="mt-32 pt-20 border-t border-zinc-100">
+                        <div className="flex items-center gap-4 mb-16">
+                            <h2 className="text-3xl font-bold uppercase tracking-tight text-[#0e2188]">
+                                Chi tiết kỹ thuật & Ứng dụng
+                            </h2>
+                            <div className="flex-1 h-[1px] bg-zinc-100"></div>
+                        </div>
+                        
                         <div 
-                            className="prose prose-xl max-w-none font-medium text-gray-800 leading-loose"
+                            className="prose prose-zinc prose-lg md:prose-xl max-w-none 
+                                prose-headings:text-[#0e2188] prose-headings:uppercase prose-headings:font-bold
+                                prose-p:text-zinc-600 prose-p:leading-loose
+                                prose-strong:text-[#0e2188]
+                                prose-img:rounded-sm prose-img:shadow-2xl"
                             dangerouslySetInnerHTML={{ __html: product.content }}
                         />
                     </div>

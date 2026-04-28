@@ -5,6 +5,7 @@ import { getImageUrl } from '@/lib/utils';
 import Container from '@/components/public/ui/Container';
 import Link from 'next/link';
 import ProjectBanner from '@/components/public/project/ProjectBanner';
+import { MdArrowForward } from 'react-icons/md';
 
 export default function ProjectPage() {
     const [project, setProjects] = useState([]);
@@ -13,8 +14,6 @@ export default function ProjectPage() {
     useEffect(() => {
         publicService.getProjects()
             .then(res => {
-                // 🟢 SOI ĐÚNG LOG CỦA ĐẠI CA: res là {success: true, data: Array(2)}
-                // Vậy dữ liệu nằm trong res.data
                 const dataArray = res?.data || []; 
                 setProjects(Array.isArray(dataArray) ? dataArray : []);
             })
@@ -23,47 +22,69 @@ export default function ProjectPage() {
     }, []);
 
     if (loading) return (
-        <div className="h-screen flex items-center justify-center bg-black text-white font-black animate-pulse">
-            // ĐANG TRUY XUẤT CÔNG TRÌNH...
+        <div className="h-screen flex flex-col items-center justify-center bg-white">
+            <div className="w-12 h-12 border-4 border-zinc-100 border-t-[#e33127] rounded-full animate-spin mb-4"></div>
+            <p className="text-[#0e2188] font-bold uppercase tracking-[0.3em] text-xs">Truy xuất dữ liệu công trình...</p>
         </div>
     );
 
     return (
-        <main className="bg-white min-h-screen">
-            {/* 🔴 CÁI NÀY ĐANG ĐEN VÌ LỖI TÊN (XEM BƯỚC 2 BÊN DƯỚI) */}
+        <main className="bg-white min-h-screen font-sans">
             <ProjectBanner />
             
-            <section className="py-24">
+            <section className="py-24 lg:py-32">
                 <Container>
-                    <div className="mb-20 border-l-8 border-orange-600 pl-8">
-                        <span className="text-orange-600 font-black tracking-[0.3em] uppercase text-[10px]">
-                            // KHÁCH HÀNG TIÊU BIỂU
-                        </span>
-                        <h1 className="text-6xl md:text-8xl font-black italic uppercase tracking-tighter mt-4 leading-none">
-                            DỰ ÁN ĐÃ <br/> THỰC HIỆN
+                    {/* Section Header */}
+                    <div className="mb-20 space-y-4">
+                        <div className="flex items-center gap-3">
+                            <span className="w-12 h-[2px] bg-[#e33127]"></span>
+                            <span className="text-[#e33127] font-bold text-xs tracking-[0.4em] uppercase">
+                                Success Stories
+                            </span>
+                        </div>
+                        <h1 className="text-5xl md:text-7xl font-bold uppercase tracking-tighter text-[#0e2188] leading-[0.95]">
+                            DỰ ÁN ĐÃ <br/> <span className="text-zinc-300">THỰC HIỆN</span>
                         </h1>
                     </div>
 
                     {project.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-16">
                             {project.map((item) => (
                                 <Link key={item.id} href={`/project/${item.slug}`} className="group block">
-                                    <div className="border-4 border-black overflow-hidden bg-gray-100 shadow-[12px_12px_0_0_#000] group-hover:shadow-none group-hover:translate-x-1 group-hover:translate-y-1 transition-all">
-                                        <div className="relative aspect-[16/10] overflow-hidden border-b-4 border-black">
+                                    <div className="flex flex-col h-full bg-white transition-all duration-500">
+                                        {/* Image Container */}
+                                        <div className="relative aspect-[16/10] overflow-hidden rounded-sm bg-zinc-100 shadow-sm group-hover:shadow-2xl transition-all duration-700">
                                             <img
                                                 src={getImageUrl(item.image)}
-                                                className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700"
+                                                className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-105 transition-all duration-1000"
                                                 alt={item.title}
                                             />
+                                            <div className="absolute inset-0 bg-[#0e2188]/10 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
                                         </div>
-                                        <div className="p-10 space-y-4">
-                                            <h2 className="text-4xl font-black italic uppercase leading-none">{item.title}</h2>
-                                            <p className="font-bold text-gray-500 line-clamp-2 uppercase text-sm leading-relaxed">
+
+                                        {/* Content Area */}
+                                        <div className="py-8 space-y-4 flex flex-col flex-grow">
+                                            <div className="flex items-center gap-2">
+                                                <span className="w-6 h-[1px] bg-[#e33127]"></span>
+                                                <span className="text-[10px] font-bold text-[#e33127] uppercase tracking-[0.2em]">Steel Construction</span>
+                                            </div>
+                                            
+                                            <h2 className="text-3xl font-bold uppercase tracking-tight text-[#0e2188] group-hover:text-[#e33127] transition-colors duration-300 leading-tight">
+                                                {item.title}
+                                            </h2>
+                                            
+                                            <p className="font-medium text-zinc-500 line-clamp-2 text-sm leading-relaxed">
                                                 {item.description}
                                             </p>
-                                            <div className="pt-6 border-t-2 border-black border-dashed flex justify-between items-center">
-                                                <span className="text-[10px] font-black tracking-[0.3em] uppercase italic">// VIEW_CASE_STUDY</span>
-                                                <span className="text-3xl">→</span>
+                                            
+                                            <div className="pt-6 mt-auto flex items-center justify-between border-t border-zinc-50 group">
+                                                <div className="flex items-center gap-3">
+                                                    <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-[#0e2188] group-hover:text-[#e33127] transition-colors">
+                                                        View Case Study
+                                                    </span>
+                                                    <div className="w-8 h-[1px] bg-[#0e2188] group-hover:w-12 group-hover:bg-[#e33127] transition-all"></div>
+                                                </div>
+                                                <MdArrowForward className="text-2xl text-zinc-200 group-hover:text-[#e33127] group-hover:translate-x-2 transition-all" />
                                             </div>
                                         </div>
                                     </div>
@@ -71,8 +92,10 @@ export default function ProjectPage() {
                             ))}
                         </div>
                     ) : (
-                        <div className="py-20 text-center border-4 border-dashed border-gray-100">
-                            <p className="font-black italic text-gray-300 uppercase">KHÔNG CÓ DỰ ÁN NÀO ĐỂ HIỂN THỊ</p>
+                        <div className="py-32 text-center border border-dashed border-zinc-100 rounded-sm">
+                            <p className="font-bold text-zinc-300 uppercase tracking-widest text-sm italic">
+                                Chưa có hồ sơ dự án nào để hiển thị
+                            </p>
                         </div>
                     )}
                 </Container>

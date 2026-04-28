@@ -8,7 +8,15 @@
   --foreground-rgb: 0, 0, 0;
   --background-rgb: 248, 248, 248; /* Màu trắng xám nhẹ */
 }
+/* globals.css */
 
+html, body {
+  /* 🟢 Khóa hiệu ứng kéo quá đà theo chiều dọc */
+  overscroll-behavior-y: none; 
+  
+  /* 🟢 Khóa luôn chiều ngang nếu đại ca không muốn nó bị trượt qua lại */
+  overscroll-behavior-x: none; 
+}
 body {
   font-family: 'Archivo', sans-serif;
   color: rgb(var(--foreground-rgb));

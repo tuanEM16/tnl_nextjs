@@ -1,94 +1,147 @@
 'use client';
-import { usePublicBanners } from '@/hooks/public/usePublicBanners';
-import { getImageUrl } from '@/lib/utils';
-import Button from '../ui/Button';
-import Container from '../ui/Container';
+import { useState } from 'react';
 import Link from 'next/link';
+import { motion, useScroll, useMotionValueEvent } from 'framer-motion';
+import { usePublicBanners } from '@/hooks/public/usePublicBanners';
+import { usePublicConfig } from '@/hooks/public/usePublicConfig';
+import { getImageUrl } from '@/lib/utils';
+import Container from '../ui/Container';
 
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Autoplay, EffectFade, Navigation } from 'swiper/modules';
+import { Autoplay, EffectFade, Parallax, Pagination } from 'swiper/modules';
 
 import 'swiper/css';
-import 'swiper/css/navigation';
 import 'swiper/css/effect-fade';
+import 'swiper/css/pagination';
 
 export default function HeroBanner() {
-  const { banners, loading } = usePublicBanners('home');
+  const { banners, loading: bannerLoading } = usePublicBanners('home');
+  const { config, loading: configLoading } = usePublicConfig();
+  const { scrollY } = useScroll();
+  const [isExpanded, setIsExpanded] = useState(false);
 
-  if (loading || banners.length === 0) return <div className="h-[85vh] bg-black animate-pulse" />;
+  useMotionValueEvent(scrollY, "change", (latest) => {
+    if (latest > 100) {
+      setIsExpanded(true);
+    } else {
+      setIsExpanded(false);
+    }
+  });
+
+  if (bannerLoading || banners.length === 0) return <div className="h-screen bg-[#0e2188]" />;
 
   return (
-    <section className="relative h-[85vh] min-h-[600px] w-full bg-black overflow-hidden">
-      <Swiper
-        modules={[Autoplay, EffectFade, Navigation]}
-        effect="fade"
-        fadeEffect={{ crossFade: true }}
-        autoplay={{ delay: 5000, disableOnInteraction: false }}
-        loop={true}
-        className="h-full w-full"
+    <section className="relative bg-white font-sans select-none">
+
+      {/* 🔴 BANNER CHÍNH: "Rèm thép" (z-10) */}
+
+      <motion.div
+
+        initial={false}
+
+        animate={{
+
+          clipPath: isExpanded
+
+            ? "inset(0% 0% 0% 0% round 0px 0px 0px 0px)"
+
+            : "inset(0% 0% 17% 0% round 0px 0px 200px 200px)"
+
+        }}
+
+        transition={{
+
+          duration: 1.8,
+
+          ease: [0.25, 0.1, 0.25, 1]
+
+        }}
+        className="relative h-screen w-full bg-[#0e2188] overflow-hidden z-10 shadow-2xl"
       >
-        {banners.map((banner) => (
-          <SwiperSlide key={banner.id} className="relative overflow-hidden bg-black">
-            
-            {/* 🟢 Background Image */}
-            <div className="absolute inset-0">
-              <img 
-                src={getImageUrl(banner.image)} 
-                alt={banner.name} 
-                className="w-full h-full object-cover opacity-80" 
-              />
-              <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/40 to-transparent"></div>
-            </div>
+        <Swiper
+          modules={[Autoplay, EffectFade, Parallax, Pagination]}
+          effect="fade"
+          parallax={true}
+          speed={1500}
+          autoplay={{ delay: 7000, disableOnInteraction: false }}
+          loop={true}
+          pagination={{ clickable: true, bulletClass: 'banner-bullet', bulletActiveClass: 'banner-bullet-active' }}
+          className="h-full w-full"
+        >
+          {banners.map((banner) => (
+            <SwiperSlide key={banner.id} className="relative overflow-hidden">
+              <div className="absolute inset-0 z-0">
+                <img
+                  src={getImageUrl(banner.image)}
+                  alt={banner.name}
+                  className="w-full h-full object-cover scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-[#0e2188]/90 via-[#0e2188]/40 to-transparent"></div>
+              </div>
 
-            {/* 🔴 Content Overlay - ÉP SANG TRÁI MAX TẦM */}
-            <div className="relative h-full w-full flex items-center justify-start">
-              {/* 🟢 Siết Container: !mx-0 và !max-w-none để dạt sát lề trái */}
-              <Container className="!mx-0 !max-w-none !pl-5 md:!pl-16 lg:!pl-24">
-                <div className="max-w-4xl space-y-8 text-left">
-                  
-                  {/* Nhãn nhãn dán */}
-                  <div className="inline-block bg-orange-600 text-white px-4 py-2 font-black text-xs tracking-[0.4em] uppercase shadow-[4px_4px_0_0_#fff]">
-                    // {banner.name}
+              <div className="relative z-10 h-full w-full flex items-center">
+                <Container className="!mx-0 !max-w-none !pl-6 md:!pl-16 lg:!pl-24">
+                  <div className="max-w-5xl space-y-8">
+                    {/* Accent: Đổi cam sang đỏ #e33127, bỏ Italic, tracking rộng */}
+                    <div data-swiper-parallax="-200" className="flex items-center gap-4 text-[#e33127] font-bold text-xs tracking-[0.5em] uppercase">
+                      <span className="w-12 h-[2px] bg-[#e33127]"></span>
+                      {banner.name}
+                    </div>
+
+                    {/* Headline: Bỏ italic, dùng Bold gọn gàng chuẩn armenia.travel */}
+                    <h1 data-swiper-parallax="-400" className="text-5xl md:text-8xl font-bold text-white uppercase leading-[1.05] tracking-tighter">
+                      {banner.description || 'TÂN NGỌC LỰC'}
+                    </h1>
+
+                    {/* Button: Đổi style từ Shadow Industrial sang Premium Minimalist */}
+                    <div data-swiper-parallax="-600" className="pt-6">
+                      <Link href={banner.link || '/contact'}>
+                        <button className="group relative overflow-hidden bg-[#e33127] text-white px-12 py-5 font-bold uppercase text-[11px] tracking-[0.2em] rounded-sm transition-all hover:bg-white hover:text-[#0e2188]">
+                          <span className="relative z-10">Khám phá ngay —</span>
+                          <div className="absolute inset-0 bg-white translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                        </button>
+                      </Link>
+                    </div>
                   </div>
-                  
-                  {/* Tiêu đề - Tăng leading-tight để bảo vệ dấu tiếng Việt */}
-                  <h1 className="text-6xl md:text-8xl font-black text-white italic uppercase leading-tight tracking-tighter drop-shadow-2xl">
-                    {banner.description || 'Cung cấp thép Công trình uy tín'}
-                  </h1>
+                </Container>
+              </div>
+            </SwiperSlide>
+          ))}
+        </Swiper>
+      </motion.div>
 
-                  <p className="text-gray-200 font-bold text-lg max-w-xl leading-relaxed border-l-4 border-orange-600 pl-6 uppercase italic">
-                    Chuyên cung ứng thép xây dựng chất lượng cao <br/> cho mọi công trình tại Tây Ninh.
-                  </p>
-
-                  <div className="flex flex-wrap gap-6 pt-4">
-                    {/* 🟢 Nút này Admin nhập link nào nó chạy đi link đó */}
-                    <Link href={banner.link || '#'}>
-                      <Button variant="primary" className="!px-12 !py-6 font-black uppercase italic shadow-[6px_6px_0_0_#000]">
-                        XEM CHI TIẾT
-                      </Button>
-                    </Link>
-                    
-                    <Link href="/contact">
-                      <Button variant="outline" className="!border-white !text-white hover:!bg-white hover:!text-black !px-12 !py-6 font-black uppercase italic shadow-[6px_6px_0_0_#ea580c]">
-                        Báo giá ngay
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-              </Container>
-            </div>
-          </SwiperSlide>
-        ))}
-      </Swiper>
-
-      {/* Decorative Elements */}
-      <div className="absolute bottom-10 right-10 z-10 hidden lg:block pointer-events-none">
-        <div className="border-4 border-white/10 p-10 backdrop-blur-sm">
-          <p className="text-white font-black text-6xl italic opacity-10 tracking-tighter uppercase">
-            TNL_STEEL_CORE
+      {/* 🔵 SLOGAN BẤT TỬ: Giữ nguyên logic mix-blend */}
+      <div className="absolute bottom-[8%] left-0 w-full z-20 flex justify-center px-10 pointer-events-none mix-blend-difference">
+        {!configLoading && (
+          <p className="text-white font-bold text-center uppercase tracking-[0.5em] text-[10px] md:text-xs max-w-4xl leading-relaxed opacity-80">
+            {config.slogan || 'TÂN NGỌC LỰC — VỮNG BỀN THỜI ĐẠI'}
           </p>
+        )}
+      </div>
+
+      {/* 🟡 SCROLL INDICATOR: Chỉnh mỏng nhẹ hơn */}
+      <div className="absolute bottom-12 right-10 md:right-20 z-20 flex flex-col items-center gap-6 mix-blend-difference pointer-events-none">
+        <span className="text-[9px] font-bold text-white uppercase tracking-[0.4em] [writing-mode:vertical-rl]">Explore</span>
+        <div className="relative w-[1px] h-20 bg-white/30 overflow-hidden">
+          <motion.div
+            animate={{ y: ["-100%", "100%"] }}
+            transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
+            className="absolute top-0 left-0 w-full h-1/2 bg-white"
+          />
         </div>
       </div>
+
+      <style jsx global>{`
+        .banner-bullet {
+          width: 40px; height: 2px; background: rgba(255,255,255,0.2);
+          display: inline-block; margin: 0 6px; cursor: pointer; transition: all 0.4s;
+        }
+        .banner-bullet-active { background: #e33127; width: 80px; }
+        .swiper-pagination { bottom: 60px !important; text-align: right !important; padding-right: 5% !important; }
+        @media (max-width: 768px) {
+            .swiper-pagination { text-align: center !important; padding-right: 0 !important; }
+        }
+      `}</style>
     </section>
   );
 }

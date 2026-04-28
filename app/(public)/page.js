@@ -11,63 +11,53 @@ import Contact from '@/components/public/home/Contact';
 import VideoScrollSection from '@/components/public/home/VideoScrollSection';
 import { postService } from '@/services/postService';
 import { configService } from '@/services/configService';
-import { categoryService } from '@/services/categoryService'; 
+import { categoryService } from '@/services/categoryService';
 
 export default async function HomePage() {
-    // 🟢 1. TỔNG LỰC BỐC DỮ LIỆU (Thêm sản phẩm, đối tác, chứng chỉ)
     const [
-        introRes, 
-        allProjectsRes, 
-        configRes, 
-        newsRes, 
+        introRes,
+        allProjectsRes,
+        configRes,
+        newsRes,
         categoryRes,
-        productRes, // Hàng mới
-        partnerRes, // Hàng mới
-        certRes     // Hàng mới
+        productRes,
+        partnerRes,
+        certRes
     ] = await Promise.all([
         postService.getAll({ post_type: 'page', page_slug: 'trang_chu' }),
-        postService.getAll({ post_type: 'project', limit: 10 }), // Lấy nhiều chút để quay 3D cho sướng
+        postService.getAll({ post_type: 'project', limit: 10 }),
         configService.getAll(),
         postService.getAll({ post_type: 'post', limit: 3 }),
-        categoryService.getAll({ limit: 10 }), // Lấy hết danh mục để chạy Side-Scroll
+        categoryService.getAll({ limit: 10 }),
         postService.getAll({ post_type: 'product', limit: 8 }),
         postService.getAll({ post_type: 'partner' }),
         postService.getAll({ post_type: 'certificate' })
     ]);
 
-    // 🟢 2. GIẢI MÃ DỮ LIỆU
-    const config = configRes?.data || {};
-    const introData = introRes?.data?.[0] || null;
+    const config      = configRes?.data || {};
+    const introData   = introRes?.data?.[0] || null;
     const projectData = allProjectsRes?.data || [];
-    const newsData = newsRes?.data || [];
-    const catData = categoryRes?.data || [];
+    const newsData    = newsRes?.data || [];
+    const catData     = categoryRes?.data || [];
     const productData = productRes?.data || [];
     const partnerData = partnerRes?.data || [];
-    const certData = certRes?.data || [];
+    const certData    = certRes?.data || [];
 
-    // Tìm video intro từ config_meta
-    const introVideo = config.meta?.find(m => m.meta_key === 'intro_video')?.meta_value || "";
-
-    // Chia ảnh đối xứng cho VideoScrollSection
-    const leftImages = [projectData[0]?.image, newsData[0]?.image, catData[0]?.image].filter(Boolean);
-    const rightImages = [projectData[1]?.image, newsData[1]?.image, catData[1]?.image].filter(Boolean);
+    const introVideo   = config.meta?.find(m => m.meta_key === 'intro_video')?.meta_value || '';
+    const leftImages   = [projectData[0]?.image, newsData[0]?.image, catData[0]?.image].filter(Boolean);
+    const rightImages  = [projectData[1]?.image, newsData[1]?.image, catData[1]?.image].filter(Boolean);
 
     return (
         <>
             <SEO title="Trang chủ - Tân Ngọc Lực Steel" config={config} />
-            
+
             <div className="space-y-0">
+
+                {/* 1 ── ẤN TƯỢNG ĐẦU TIÊN */}
                 <HeroBanner config={config} />
 
-                {/* VIDEO GIÃN NỞ */}
-                <VideoScrollSection 
-                    description={config.meta_description} 
-                    videoUrl={introVideo} 
-                    leftImages={leftImages}
-                    rightImages={rightImages}
-                />
-
-                {/* INTRO TĨNH */}
+                {/* 2 ── GIỚI THIỆU CÔNG TY (đẩy lên ngay sau banner)
+                    Khách hàng vừa thấy visual đẹp → muốn biết đây là ai ngay */}
                 {introData && (
                     <IntroSection
                         data={introData}
@@ -76,30 +66,45 @@ export default async function HomePage() {
                     />
                 )}
 
-                {/* 🟢 CATEGORY: Đổ data trực tiếp vào để trượt ngang vô tận */}
-                <CategoryGrid data={catData} />
+                {/* 3 ── VIDEO KỂ CHUYỆN THƯƠNG HIỆU
+                    Sau khi đọc intro, video củng cố cảm xúc và tăng thời gian ở lại trang */}
+                <VideoScrollSection
+                    description={config.meta_description}
+                    videoUrl={introVideo}
+                    leftImages={leftImages}
+                    rightImages={rightImages}
+                />
 
-                {/* 🟢 PRODUCTS: Đổ data sản phẩm tiêu biểu */}
-                <FeaturedProducts data={productData} />
-
-                {/* 🟢 PROJECTS: Vòng quay 3D đại ca vừa siết */}
+                {/* 4 ── DỰ ÁN NỔI BẬT
+                    Bằng chứng thực tế: "chúng tôi đã làm được điều này" */}
                 <Projects data={projectData} />
 
-                {/* 🟢 CERTIFICATES: Chứng chỉ năng lực */}
+                {/* 5 ── CHỨNG CHỈ NĂNG LỰC
+                    Ngay sau dự án → đóng dấu uy tín, xây dựng niềm tin */}
                 <Certificates data={certData} />
 
-                <LatestNews data={newsData} />
-                
+                {/* 6 ── ĐỐI TÁC
+                    Những thương hiệu lớn đã tin tưởng → social proof mạnh */}
                 <Partners data={partnerData} />
-                
+
+                {/* 7 ── DANH MỤC SẢN PHẨM
+                    Sau khi tin tưởng, khách bắt đầu tìm hiểu sản phẩm/dịch vụ */}
+                <CategoryGrid data={catData} />
+
+                {/* 8 ── SẢN PHẨM TIÊU BIỂU
+                    Đẩy các sản phẩm nổi bật để kích thích khám phá sâu hơn */}
+                <FeaturedProducts data={productData} />
+
+                {/* 9 ── TIN TỨC MỚI NHẤT
+                    Cho thấy công ty đang hoạt động tích cực, nội dung luôn cập nhật */}
+                <LatestNews data={newsData} />
+
+                {/* 10 ── LIÊN HỆ
+                    CTA cuối trang — sau khi đã hiểu và tin tưởng */}
                 <Contact config={config} />
 
-                {/* FOOTER DECOR */}
-                <section className="py-24 bg-gray-50 border-t-8 border-black">
-                    <p className="text-center font-black italic text-gray-200 text-7xl md:text-9xl opacity-10 tracking-tighter uppercase select-none">
-                        Tan Ngoc Luc . 2026
-                    </p>
-                </section>
+  
+
             </div>
         </>
     );

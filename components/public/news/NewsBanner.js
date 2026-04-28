@@ -7,89 +7,123 @@ import Link from 'next/link';
 
 // Triệu hồi động cơ Swiper
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Autoplay, EffectFade } from 'swiper/modules';
+import { Autoplay, EffectFade, Pagination } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/effect-fade';
+import 'swiper/css/pagination';
 
 export default function NewsBanner() {
-    // 🟢 Bốc banner dành riêng cho trang 'news'
-    const { banners, loading } = usePublicBanners('news');
+  // 🟢 Bốc banner dành riêng cho trang 'news'
+  const { banners, loading } = usePublicBanners('news');
 
-    if (loading || banners.length === 0) return <div className="h-[85vh] bg-black animate-pulse" />;
+  if (loading || banners.length === 0) return <div className="h-[75vh] bg-[#0e2188] animate-pulse" />;
 
-    return (
-        <section className="relative h-[85vh] min-h-[600px] w-full bg-black overflow-hidden">
-            <Swiper
-                modules={[Autoplay, EffectFade]}
-                effect="fade"
-                fadeEffect={{ crossFade: true }}
-                autoplay={{ delay: 5000, disableOnInteraction: false }}
-                loop={banners.length > 1}
-                className="h-full w-full"
-            >
-                {banners.map((banner) => (
-                    <SwiperSlide key={banner.id} className="relative overflow-hidden bg-black">
-                        
-                        {/* 🟢 Background Image - Ảnh màu thực tế */}
-                        <div className="absolute inset-0">
-                            <img 
-                                src={getImageUrl(banner.image)} 
-                                alt={banner.name} 
-                                className="w-full h-full object-cover opacity-75" 
-                            />
-                            {/* Lớp phủ dạt trái cực mạnh */}
-                            <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/40 to-transparent"></div>
-                        </div>
-
-                        {/* 🔴 CONTENT - DẠT TRÁI MAX TẦM NHƯ ĐẠI CA MUỐN */}
-                        <div className="relative h-full w-full flex items-center justify-start">
-                            {/* Ép Container về lề trái kịch khung */}
-                            <Container className="!mx-0 !max-w-none !pl-6 md:!pl-16 lg:!pl-24">
-                                <div className="max-w-4xl space-y-10 text-left">
-                                    {/* Nhãn nhãn dán từ cột 'name' */}
-                                    <div className="inline-block bg-orange-600 text-white px-5 py-2 font-black text-xs tracking-[0.4em] uppercase shadow-[4px_4px_0_0_#fff]">
-                                        // {banner.name}
-                                    </div>
-                                    
-                                    {/* Tiêu đề tin tức - leading-tight bảo vệ dấu tiếng Việt */}
-                                    <h1 className="text-6xl md:text-8xl lg:text-9xl font-black text-white italic uppercase leading-tight tracking-tighter drop-shadow-2xl">
-                                        {banner.description || 'TIN TỨC NGÀNH THÉP'}
-                                    </h1>
-
-                                    <p className="text-gray-300 font-bold text-lg md:text-xl max-w-xl leading-relaxed border-l-8 border-orange-600 pl-8 uppercase italic">
-                                        Cập nhật những diễn biến mới nhất về <br/> 
-                                        thị trường thép xây dựng tại Tây Ninh.
-                                    </p>
-
-                                    {/* 🔘 NÚT BẤM CHỐT CHẾT - LINK ADMIN QUYẾT ĐỊNH */}
-                                    <div className="flex flex-wrap gap-8 pt-6">
-                                        <Link href={banner.link || '#'}>
-                                            <Button variant="primary" className="!px-14 !py-7 font-black uppercase italic shadow-[10px_10px_0_0_#000]">
-                                                XEM CHI TIẾT
-                                            </Button>
-                                        </Link>
-
-                                        <Link href="/contact">
-                                            <Button variant="outline" className="!border-white !text-white hover:!bg-white hover:!text-black !px-14 !py-7 font-black uppercase italic shadow-[10px_10px_0_0_#ea580c]">
-                                                NHẬN BÁO GIÁ
-                                            </Button>
-                                        </Link>
-                                    </div>
-                                </div>
-                            </Container>
-                        </div>
-                    </SwiperSlide>
-                ))}
-            </Swiper>
-
-            {/* Decorative Elements */}
-            <div className="absolute bottom-10 right-10 hidden xl:block pointer-events-none z-10">
-                <div className="border-4 border-white/10 p-10 backdrop-blur-sm">
-                    <p className="text-white font-black text-6xl italic opacity-10 tracking-tighter uppercase">
-                        TNL_NEWS_UPDATES
-                    </p>
-                </div>
+  return (
+    <section className="relative h-[75vh] min-h-[600px] w-full bg-[#0e2188] overflow-hidden font-sans">
+      <Swiper
+        modules={[Autoplay, EffectFade, Pagination]}
+        effect="fade"
+        fadeEffect={{ crossFade: true }}
+        autoplay={{ delay: 6000, disableOnInteraction: false }}
+        loop={banners.length > 1}
+        pagination={{ 
+          clickable: true,
+          bulletClass: 'news-bullet',
+          bulletActiveClass: 'news-bullet-active'
+        }}
+        className="h-full w-full"
+      >
+        {banners.map((banner) => (
+          <SwiperSlide key={banner.id} className="relative overflow-hidden">
+            
+            {/* 🟢 Background Image với lớp phủ Brand Color */}
+            <div className="absolute inset-0">
+              <img 
+                src={getImageUrl(banner.image)} 
+                alt={banner.name} 
+                className="w-full h-full object-cover" 
+              />
+              {/* Lớp phủ Gradient Navy sang trọng theo phong cách cao cấp */}
+              <div className="absolute inset-0 bg-gradient-to-r from-[#0e2188] via-[#0e2188]/60 to-transparent"></div>
             </div>
-        </section>
-    );
+
+            {/* 🔴 CONTENT - Layout dạt trái kịch khung */}
+            <div className="relative h-full w-full flex items-center">
+              <Container className="!mx-0 !max-w-none !pl-6 md:!pl-16 lg:!pl-24">
+                <div className="max-w-4xl space-y-8">
+                  {/* Label phong cách Armenia Travel: Chữ mảnh, tracking rộng */}
+                  <div className="flex items-center gap-4">
+                    <span className="w-12 h-[2px] bg-[#e33127]"></span>
+                    <span className="text-[#e33127] font-bold text-xs tracking-[0.4em] uppercase">
+                      {banner.name}
+                    </span>
+                  </div>
+                  
+                  {/* Tiêu đề tin tức: Bold, Uppercase, Hùng hồn */}
+                  <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold text-white uppercase leading-[1.1] tracking-tighter">
+                    {banner.description || 'TIN TỨC & SỰ KIỆN'}
+                  </h1>
+
+                  {/* Mô tả ngắn: Tinh tế với border đặc trưng */}
+                  <div className="max-w-xl border-l-4 border-[#e33127] pl-8">
+                    <p className="text-zinc-300 text-lg md:text-xl font-medium leading-relaxed italic opacity-90">
+                      Cập nhật những diễn biến mới nhất về <br/> 
+                      thị trường thép và công nghệ xây dựng.
+                    </p>
+                  </div>
+
+                  {/* 🔘 Nhóm nút hành động */}
+                  <div className="flex flex-wrap gap-6 pt-6">
+                    <Link href={banner.link || '#'}>
+                      <button className="bg-[#e33127] text-white px-12 py-5 font-bold uppercase text-[11px] tracking-[0.2em] rounded-sm transition-all hover:bg-white hover:text-[#0e2188] shadow-xl shadow-black/20">
+                        XEM CHI TIẾT
+                      </button>
+                    </Link>
+
+                    <Link href="/contact">
+                      <button className="border border-white/30 text-white px-12 py-5 font-bold uppercase text-[11px] tracking-[0.2em] rounded-sm transition-all hover:bg-white hover:text-[#0e2188] backdrop-blur-sm">
+                        NHẬN BÁO GIÁ
+                      </button>
+                    </Link>
+                  </div>
+                </div>
+              </Container>
+            </div>
+          </SwiperSlide>
+        ))}
+      </Swiper>
+
+      {/* Decorative Text Bottom Right */}
+      <div className="absolute bottom-12 right-12 hidden xl:block pointer-events-none z-10 select-none">
+        <p className="text-white/5 font-bold text-8xl tracking-tighter uppercase">
+          TNL_UPDATES
+        </p>
+      </div>
+
+      <style jsx global>{`
+        .news-bullet {
+          width: 8px;
+          height: 8px;
+          background: rgba(255,255,255,0.3);
+          display: inline-block;
+          margin: 0 6px;
+          border-radius: 50%;
+          cursor: pointer;
+          transition: all 0.3s ease;
+        }
+        .news-bullet-active {
+          background: #e33127;
+          transform: scale(1.5);
+        }
+        .swiper-pagination {
+          bottom: 40px !important;
+          text-align: left !important;
+          padding-left: 6rem !important;
+        }
+        @media (max-width: 768px) {
+          .swiper-pagination { padding-left: 2rem !important; }
+        }
+      `}</style>
+    </section>
+  );
 }
