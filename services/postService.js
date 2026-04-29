@@ -29,7 +29,10 @@ export const postService = {
         });
         return res.data;
     },
-
+uploadEditorImage: async (formData) => {
+        const res = await api.post('/posts/upload-content', formData);
+        return res.data; // Trả về { filename: '...' }
+    },
     update: async (id, data) => {
         const res = await api.put(`/posts/${id}`, data, {
             headers: { 'Content-Type': 'multipart/form-data' },

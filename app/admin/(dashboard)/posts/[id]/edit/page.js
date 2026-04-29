@@ -1,23 +1,41 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useParams } from 'next/navigation';
-import { usePostForm } from '@/hooks/usePosts'; 
+import { useRef, useCallback } from 'react';
+import { usePostForm } from '@/hooks/usePosts';
 import { POST_TYPES } from '@/types';
+import toast from 'react-hot-toast';
 
-// TRIỆU HỒI VŨ KHÍ UI
 import PageHeader from '@/components/admin/ui/PageHeader';
 import { MdSave, MdCloudUpload, MdArticle, MdSettings, MdInfo, MdOutlineDescription, MdHistoryEdu, MdPlace } from 'react-icons/md';
 
+const ReactQuill = dynamic(() => import('react-quill-new'), {
+    ssr: false,
+    loading: () => (
+        <div className="border-4 border-black h-64 flex items-center justify-center bg-gray-50">
+            <p className="text-[10px] font-black tracking-widest text-gray-400 animate-pulse">ĐANG TẢI EDITOR...</p>
+        </div>
+    ),
+});
+import 'react-quill-new/dist/quill.snow.css';
+
+const QUILL_FORMATS = [
+    'header', 'bold', 'italic', 'underline', 'strike',
+    'color', 'background', 'list', 'indent', 'align',
+    'blockquote', 'code-block', 'link', 'image',
+];
+
 export default function EditPostPage() {
     const { id } = useParams();
+    const quillRef = useRef(null);
 
-    // 1. TRIỆU HỒI HOOK (Tự động Fetch dữ liệu theo ID)
     const {
         formData,
         preview,
         oldImage,
         categories,
-        pageCategories, // 🟢 BỐC THÊM THẰNG NÀY ĐỂ HIỆN VỊ TRÍ CŨ
+        pageCategories,
         fetching,
         loading,
         handleChange,
@@ -25,7 +43,72 @@ export default function EditPostPage() {
         handleSubmit,
     } = usePostForm(id);
 
-    // 2. MÀN HÌNH CHỜ (CỰC LÌ)
+    // ✅ CUSTOM IMAGE HANDLER: Upload ảnh và chèn URL vào content
+    const imageHandler = useCallback(() => {
+        const input = document.createElement('input');
+        input.setAttribute('type', 'file');
+        input.setAttribute('accept', 'image/*');
+        input.click();
+
+        input.onchange = async () => {
+            const file = input.files[0];
+            if (!file) return;
+
+            const uploadData = new FormData();
+            uploadData.append('image', file);
+
+            try {
+                const res = await fetch('http://localhost:5000/api/posts/upload-content', {
+                    method: 'POST',
+                    body: uploadData,
+                });
+
+                const result = await res.json();
+
+                if (result.filename) {
+                    const editor = quillRef.current.getEditor();
+                    const range = editor.getSelection(true);
+
+                    const finalImageUrl = `http://localhost:5000/uploads/${result.filename}`;
+                    editor.insertEmbed(range.index, 'image', finalImageUrl);
+                    editor.setSelection(range.index + 1);
+                    toast.success('✅ Ảnh đã được thêm');
+                }
+            } catch (err) {
+                console.error('❌ Lỗi upload:', err);
+                toast.error('Upload ảnh thất bại');
+            }
+        };
+    }, []);
+
+    // ✅ Cấu hình QUILL_MODULES với custom image handler
+    const QUILL_MODULES = {
+        toolbar: {
+            container: [
+                [{ header: [1, 2, 3, false] }],
+                ['bold', 'italic', 'underline', 'strike'],
+                [{ color: [] }, { background: [] }],
+                [{ list: 'ordered' }, { list: 'bullet' }],
+                [{ indent: '-1' }, { indent: '+1' }],
+                [{ align: [] }],
+                ['blockquote', 'code-block'],
+                ['link', 'image'],
+                ['clean'],
+            ],
+            handlers: {
+                image: imageHandler,
+            },
+        },
+    };
+
+    const handleContentChange = (value) => {
+        // ✅ Block base64 images
+        if (value.includes('data:image')) {
+            return;
+        }
+        handleChange({ target: { name: 'content', value } });
+    };
+
     if (fetching) return (
         <div className="p-32 text-center font-black italic animate-pulse uppercase tracking-[0.4em] text-black">
             REBUILDING CONTENT BUFFER...
@@ -34,16 +117,68 @@ export default function EditPostPage() {
 
     return (
         <div className="space-y-12 pb-20 font-archivo uppercase text-black">
-            <PageHeader 
-                title="CHỈNH SỬA" 
-                subTitle="Content Modification Unit" 
-                isBack={true} 
+            <PageHeader
+                title="CHỈNH SỬA"
+                subTitle="Content Modification Unit"
+                isBack={true}
                 backHref="/admin/posts"
             />
 
+            <style>{`
+  /* 🟢 GIỮ NGUYÊN KHUNG VÀ MÀU SẮC CỦA ĐẠI CA */
+  .ql-toolbar.ql-snow {
+    border: 4px solid black !important;
+    border-bottom: 2px solid black !important;
+    background: #f9fafb;
+    font-family: inherit;
+  }
+  .ql-container.ql-snow {
+    border: 4px solid black !important;
+    border-top: none !important;
+    font-family: inherit;
+    font-size: 16px;
+    background: white;
+  }
+  .ql-editor {
+    min-height: 320px;
+    line-height: 1.75;
+    padding: 24px;
+    text-transform: none !important;
+  }
+  .ql-editor.ql-blank::before {
+    font-style: normal;
+    color: #d1d5db;
+    font-weight: 700;
+    font-size: 14px;
+    text-transform: none;
+  }
+  .ql-editor:focus { outline: none; background: #fff9f5; }
+  
+  /* 🟢 HÀN THÊM: BỘ ĐIỀU HƯỚNG CĂN LỀ (GIẢI QUYẾT VỤ ĐỨNG IM) */
+  .ql-editor .ql-align-center { text-align: center; }
+  .ql-editor .ql-align-right { text-align: right; }
+  .ql-editor .ql-align-left { text-align: left; }
+
+  /* 🟢 HÀN THÊM: ĐỊNH DẠNG ẢNH ĐỂ NÓ CHỊU NHẢY THEO LỆNH */
+  .ql-editor img {
+    max-width: 100%;
+    height: auto;
+    display: inline-block; /* Chìa khóa để text-align: center có tác dụng */
+    margin: 10px 0;
+  }
+
+  /* 🟢 GIỮ NGUYÊN MÀU ICON TOOLBAR */
+  .ql-snow .ql-stroke { stroke: #000; }
+  .ql-snow .ql-fill  { fill: #000; }
+  .ql-snow.ql-toolbar button:hover .ql-stroke,
+  .ql-snow .ql-toolbar button:hover .ql-stroke { stroke: #ea580c; }
+  .ql-snow.ql-toolbar button.ql-active .ql-stroke { stroke: #ea580c; }
+  .ql-snow.ql-toolbar button.ql-active { color: #ea580c; }
+`}</style>
+
             <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-                
-                {/* 🔵 CỘT TRÁI: KHÔNG GIAN BIÊN TẬP */}
+
+                {/* CỘT TRÁI */}
                 <div className="lg:col-span-2 space-y-12">
                     <section className="bg-white border-4 border-black p-10 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] space-y-10">
                         <h2 className="flex items-center gap-3 text-2xl font-black italic border-b-4 border-black pb-4">
@@ -73,34 +208,40 @@ export default function EditPostPage() {
                                 value={formData.description}
                                 onChange={handleChange}
                                 rows="3"
-                                className="w-full border-2 border-black p-5 font-bold outline-none bg-gray-50 focus:bg-white transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
-                            ></textarea>
+                                className="w-full border-2 border-black p-5 font-bold outline-none bg-gray-50 focus:bg-white transition-all shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] normal-case"
+                            />
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-gray-400 italic uppercase">Nội dung chi tiết</label>
-                            <textarea
-                                name="content"
-                                value={formData.content}
-                                onChange={handleChange}
-                                rows="18"
-                                className="w-full border-4 border-black p-8 font-medium normal-case leading-relaxed outline-none focus:ring-8 focus:ring-orange-500/10 transition-all"
-                                required
-                            ></textarea>
+                        <div className="space-y-2 normal-case">
+                            <label className="text-[10px] font-black text-gray-400 italic uppercase">
+                                NỘI DUNG CHI TIẾT
+                            </label>
+                            {/* ✅ Chỉ render Quill khi formData.content đã được load từ server
+                  Tránh trường hợp Quill mount với value rỗng rồi không nhận data sau */}
+                            {!fetching && (
+                                <ReactQuill
+                                    ref={quillRef}
+                                    theme="snow"
+                                    value={formData.content || ''}
+                                    onChange={handleContentChange}
+                                    modules={QUILL_MODULES}
+                                    formats={QUILL_FORMATS}
+                                    placeholder="Chỉnh sửa nội dung tại đây..."
+                                />
+                            )}
                         </div>
                     </section>
                 </div>
 
-                {/* 🟠 CỘT PHẢI: TECHNICAL CONFIG */}
+                {/* CỘT PHẢI */}
                 <div className="relative">
                     <div className="sticky top-10 space-y-8">
                         <div className="bg-white border-4 border-black p-8 space-y-10 shadow-[10px_10px_0px_0px_#ea580c]">
-                            
+
                             <h3 className="text-sm font-black flex items-center gap-2 border-b-2 border-black pb-4 italic">
                                 <MdSettings size={20} /> TECHNICAL CONFIG
                             </h3>
 
-                            {/* LOẠI BÀI */}
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black text-gray-400 italic">PHÂN LOẠI HỆ THỐNG</label>
                                 <select
@@ -115,7 +256,6 @@ export default function EditPostPage() {
                                 </select>
                             </div>
 
-                            {/* 🟢 DANH MỤC TRANG TĨNH (VỊ TRÍ SLOT) */}
                             {formData.post_type === 'page' && (
                                 <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
                                     <label className="text-[10px] font-black text-orange-600 italic flex items-center gap-1">
@@ -136,7 +276,6 @@ export default function EditPostPage() {
                                 </div>
                             )}
 
-                            {/* DANH MỤC TIN TỨC */}
                             {formData.post_type === 'post' && (
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black text-gray-400 italic">DANH MỤC PHÂN LOẠI</label>
@@ -154,7 +293,6 @@ export default function EditPostPage() {
                                 </div>
                             )}
 
-                            {/* ẢNH ĐẠI DIỆN */}
                             <div className="space-y-4">
                                 <label className="text-[10px] font-black text-gray-400 italic flex justify-between uppercase">
                                     <span>COVER ASSET</span>
@@ -163,11 +301,11 @@ export default function EditPostPage() {
                                     )}
                                 </label>
                                 <div className="relative border-4 border-dashed border-black group overflow-hidden bg-gray-50">
-                                    <input 
-                                        type="file" 
-                                        accept="image/*" 
-                                        onChange={handleImageChange} 
-                                        className="absolute inset-0 opacity-0 cursor-pointer z-20" 
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleImageChange}
+                                        className="absolute inset-0 opacity-0 cursor-pointer z-20"
                                     />
                                     {preview ? (
                                         <div className="relative h-48 w-full">
@@ -186,7 +324,6 @@ export default function EditPostPage() {
                                 </div>
                             </div>
 
-                            {/* TRẠNG THÁI */}
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black text-gray-400 italic">VISIBILITY STATUS</label>
                                 <select
@@ -200,7 +337,6 @@ export default function EditPostPage() {
                                 </select>
                             </div>
 
-                            {/* NÚT CẬP NHẬT */}
                             <button
                                 type="submit"
                                 disabled={loading}

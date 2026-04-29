@@ -1,108 +1,211 @@
 'use client';
-import { use } from 'react';
+import { use, useState, useEffect, useMemo } from 'react';
 import { useProjectDetail } from '@/hooks/public/usePublicPosts';
 import { getImageUrl, formatDate } from '@/lib/utils';
 import Container from '@/components/public/ui/Container';
 import NewsBanner from '@/components/public/news/NewsBanner';
 import Link from 'next/link';
 
+// ✅ Import CSS Quill để render đúng định dạng
+import 'react-quill-new/dist/quill.snow.css';
+
 export default function NewsDetailPage({ params }) {
   const { slug } = use(params);
   const { project: post, loading } = useProjectDetail(slug);
+  const [headings, setHeadings] = useState([]);
+
+  // 🟢 1. XỬ LÝ NỘI DUNG & BỐC MỤC LỤC (Chạy 1 lần duy nhất)
+  const processedContent = useMemo(() => {
+    if (!post?.content) return '';
+
+    // Dùng DOMParser để "phẫu thuật" HTML từ Quill
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(post.content, 'text/html');
+    const headingElements = doc.querySelectorAll('h2, h3');
+
+    const extracted = [];
+    headingElements.forEach((el, index) => {
+      const id = `tnl-section-${index}`;
+      el.id = id; // Gắn ID trực tiếp vào nội dung để làm điểm nhảy
+      extracted.push({
+        id,
+        text: el.innerText,
+        level: el.tagName.toLowerCase()
+      });
+    });
+
+    setHeadings(extracted);
+    return doc.body.innerHTML;
+  }, [post?.content]);
+
+  // 🟢 2. HÀM CUỘN MƯỢT (Kết hợp với scroll-margin trong CSS)
+  const scrollToHeading = (id) => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   if (loading) return (
-    <div className="py-40 flex flex-col items-center justify-center gap-6 bg-white">
-      <div className="w-12 h-12 border-2 border-zinc-100 border-t-[#e33127] rounded-full animate-spin"></div>
-      <p className="font-bold text-zinc-400 uppercase tracking-[0.4em] text-[10px]">Đang tải nội dung...</p>
+    <div className="py-40 flex flex-col items-center justify-center gap-6 bg-white uppercase font-black italic animate-pulse text-zinc-400">
+      <div className="w-12 h-12 border-4 border-zinc-100 border-t-[#e33127] rounded-full animate-spin"></div>
+      // ĐANG TRUY XUẤT DỮ LIỆU THÉP...
     </div>
   );
 
   if (!post) return (
     <div className="py-40 text-center bg-white flex flex-col items-center">
       <h2 className="text-8xl font-bold text-zinc-100 select-none">404</h2>
-      <p className="font-bold text-[#0e2188] uppercase tracking-widest text-sm -mt-8">Không tìm thấy bài viết</p>
-      <Link href="/news" className="mt-12 text-[10px] font-bold border-b border-[#e33127] pb-1 text-[#e33127] uppercase tracking-widest">
-        Quay lại tin tức
-      </Link>
+      <p className="font-bold text-[#0e2188] uppercase tracking-widest text-sm -mt-8">Không tìm thấy bản tin</p>
+      <Link href="/news" className="mt-12 text-[10px] font-bold border-b-2 border-[#e33127] pb-1 text-[#e33127] uppercase tracking-[0.3em]">Quay lại danh sách</Link>
     </div>
   );
 
   return (
     <div className="bg-white min-h-screen font-sans">
       <NewsBanner />
-      
+
+      {/* 🛠️ BỘ STYLE "HÀN CHẾT" CĂN GIỮA VÀ MỤC LỤC */}
+      <style>{`
+        /* 🎯 CĂN LỀ KHI NHẢY MỤC LỤC: Cách top 120px để không bị Banner che */
+        .news-content.ql-editor h2, 
+        .news-content.ql-editor h3 { 
+          scroll-margin-top: 120px; 
+          color: #0e2188; font-weight: 700; text-transform: uppercase; margin-top: 3.5rem; margin-bottom: 1.5rem;
+        }
+
+        /* Định dạng nội dung Quill */
+        .news-content.ql-editor { padding: 0; font-size: 18px; line-height: 1.85; color: #52525b; white-space: normal; }
+        .news-content.ql-editor p { margin-bottom: 1.75rem; }
+        
+        /* 🎯 CĂN GIỮA ẢNH: Dứt điểm vụ đứng im */
+        .news-content.ql-editor .ql-align-center { text-align: center; }
+        .news-content.ql-editor .ql-align-right { text-align: right; }
+        .news-content.ql-editor img { display: inline-block; max-width: 100%; height: auto; margin: 2rem 0; border-radius: 4px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+
+       /* 🟢 SIẾT MỤC LỤC: Tối đa 2 dòng chữ cho mỗi đầu mục */
+  .toc-link {
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* 🎯 CHỐT CHẶN: Chỉ hiện đúng 2 dòng */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    
+    word-break: break-word;
+    text-align: left;
+    line-height: 1.4;
+    transition: all 0.3s;
+    margin-bottom: 4px; /* Khoảng cách giữa các mục */
+  }
+
+  .toc-link:hover { 
+    color: #e33127; 
+    transform: translateX(4px); 
+  }
+`}</style>
+
       <Container className="py-20 md:py-32">
-        <article className="max-w-4xl mx-auto">
-          {/* Header Section */}
-          <header className="mb-16 space-y-8">
-            <div className="flex items-center gap-4">
-              <span className="w-12 h-[2px] bg-[#e33127]"></span>
-              <span className="text-[#e33127] font-bold text-xs tracking-[0.4em] uppercase">
-                {post.category_name || 'BẢN TIN TÂN NGỌC LỰC'}
-              </span>
+        {/* 🟢 KHỐI CHA: relative để thằng sidebar nó "bám" vào */}
+        <div className="max-w-4xl mx-auto relative">
+
+          {/* 🟢 SIDEBAR MỤC LỤC: Treo lơ lửng bên trái bài viết */}
+          <aside className="absolute right-full mr-20 top-0 h-full hidden xl:block w-[260px]">
+            <div className="sticky top-32 space-y-8 border-l-2 border-zinc-100 pl-8">
+              <div className="space-y-2">
+                <span className="text-[10px] font-black text-zinc-300 uppercase tracking-[0.4em]">// Nội dung bài</span>
+                <h4 className="text-[#0e2188] font-black italic uppercase text-2xl tracking-tighter">Mục lục</h4>
+              </div>
+
+              <nav className="flex flex-col gap-5">
+                {headings.length > 0 ? headings.map((h) => (
+                  <button
+                    key={h.id}
+                    onClick={() => scrollToHeading(h.id)}
+                    className={`toc-link text-[11px] font-bold uppercase tracking-widest ${h.level === 'h3' ? 'pl-5 text-zinc-400 font-medium' : 'text-zinc-600'
+                      }`}
+                  >
+                    {h.text}
+                  </button>
+                )) : (
+                  <p className="text-[10px] italic text-zinc-300">Đang cập nhật mục lục...</p>
+                )}
+              </nav>
+
+              <div className="pt-12">
+                <div className="p-6 bg-zinc-50 border-l-4 border-[#e33127]">
+                  <p className="text-[9px] font-bold text-[#0e2188] leading-relaxed uppercase tracking-wider">
+                    Bản tin kỹ thuật <br /> <span className="text-[#e33127]">Tân Ngọc Lực Steel</span>
+                  </p>
+                </div>
+              </div>
             </div>
+          </aside>
 
-            <h1 className="text-5xl md:text-7xl font-bold uppercase tracking-tighter leading-[1.05] text-[#0e2188]">
-              {post.title}
-            </h1>
-
-            <div className="flex items-center gap-6 pt-6 border-t border-zinc-50">
-              <div className="flex flex-col">
-                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Ngày đăng bản tin</span>
-                <span className="text-sm font-bold text-[#0e2188] uppercase tracking-tight">
-                  {formatDate(post.created_at)}
+          {/* 🟢 NỘI DUNG CHÍNH: Luôn nằm giữa */}
+          <article className="w-full">
+            <header className="mb-20 space-y-8">
+              <div className="flex items-center gap-4">
+                <span className="w-16 h-[3px] bg-[#e33127]"></span>
+                <span className="text-[#e33127] font-black text-xs tracking-[0.5em] uppercase">
+                  {post.category_name || 'TNL NEWS'}
                 </span>
               </div>
-              <div className="h-10 w-[1px] bg-zinc-100"></div>
-              <div className="flex flex-col">
-                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Tác giả</span>
-                <span className="text-sm font-bold text-[#0e2188] uppercase tracking-tight">Tân Ngọc Lực Editor</span>
-              </div>
-            </div>
-          </header>
 
-          {/* Hero Image */}
-          <div className="relative mb-20 rounded-sm overflow-hidden shadow-2xl bg-zinc-100">
-            <img 
-              src={getImageUrl(post.image)} 
-              className="w-full h-auto object-cover transform transition-transform duration-1000 hover:scale-105" 
-              alt={post.title}
+              <h1 className="text-6xl md:text-8xl font-bold uppercase tracking-tighter leading-[0.95] text-[#0e2188]">
+                {post.title}
+              </h1>
+
+              <div className="flex items-center gap-6 pt-8 border-t border-zinc-100">
+                <div className="flex flex-col">
+                  <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Publishing Date</span>
+                  <span className="text-xs font-black text-[#0e2188] uppercase">{formatDate(post.created_at)}</span>
+                </div>
+                <div className="h-8 w-[1px] bg-zinc-200"></div>
+                <div className="flex flex-col">
+                  <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-1">Author Source</span>
+                  <span className="text-xs font-black text-[#0e2188] uppercase">TNL Editor Group</span>
+                </div>
+              </div>
+            </header>
+
+            {/* Ảnh đại diện bài viết */}
+            {post.image && (
+              <div className="relative mb-24 rounded-sm overflow-hidden shadow-[30px_30px_0_0_rgba(14,33,136,0.03)] border-4 border-zinc-50">
+                <img
+                  src={getImageUrl(post.image)}
+                  className="w-full h-auto object-cover"
+                  alt={post.title}
+                />
+              </div>
+            )}
+
+            {/* 🟢 NỘI DUNG CHI TIẾT (Đã nhúng ID vào H2, H3) */}
+            <div
+              className="ql-editor news-content"
+              dangerouslySetInnerHTML={{ __html: processedContent }}
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0e2188]/10 to-transparent pointer-events-none" />
-          </div>
 
-          {/* Article Content */}
-          <div 
-            className="prose prose-zinc prose-lg md:prose-xl max-w-none 
-              prose-headings:text-[#0e2188] prose-headings:uppercase prose-headings:font-bold prose-headings:tracking-tight
-              prose-p:text-zinc-600 prose-p:leading-relaxed prose-p:mb-8 prose-p:font-normal
-              prose-strong:text-[#0e2188] prose-strong:font-bold
-              prose-img:rounded-sm prose-img:shadow-xl prose-img:border prose-img:border-zinc-50
-              prose-blockquote:border-l-[#e33127] prose-blockquote:bg-zinc-50 prose-blockquote:py-2 prose-blockquote:px-8 prose-blockquote:italic
-              prose-a:text-[#e33127] prose-a:no-underline hover:prose-a:underline transition-all
-              prose-li:text-zinc-600"
-            dangerouslySetInnerHTML={{ __html: post.content }}
-          />
-
-          {/* Article Footer */}
-          <footer className="mt-24 pt-12 border-t border-zinc-100 flex flex-col md:flex-row justify-between items-center gap-8">
-            <div className="flex items-center gap-4">
-              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em]">Chia sẻ bài viết</span>
-              <div className="flex gap-4">
-                <div className="w-8 h-8 rounded-full border border-zinc-100 flex items-center justify-center text-zinc-400 hover:text-[#e33127] hover:border-[#e33127] cursor-pointer transition-all">f</div>
-                <div className="w-8 h-8 rounded-full border border-zinc-100 flex items-center justify-center text-zinc-400 hover:text-[#e33127] hover:border-[#e33127] cursor-pointer transition-all">in</div>
+            {/* Footer bài viết */}
+            <footer className="mt-32 pt-16 border-t-4 border-black flex flex-col md:flex-row justify-between items-center gap-10">
+              <div className="flex items-center gap-4">
+                <span className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.3em]">Share via:</span>
+                <div className="flex gap-4">
+                  <button className="w-10 h-10 border-2 border-zinc-100 flex items-center justify-center font-bold hover:bg-[#0e2188] hover:text-white transition-all">FB</button>
+                  <button className="w-10 h-10 border-2 border-zinc-100 flex items-center justify-center font-bold hover:bg-[#0e2188] hover:text-white transition-all">LN</button>
+                </div>
               </div>
-            </div>
-            
-            <Link 
-              href="/news" 
-              className="group flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.3em] text-[#0e2188] hover:text-[#e33127] transition-all"
-            >
-              <span className="w-8 h-[1px] bg-[#e33127] transition-all group-hover:w-12"></span>
-              Quay lại danh sách
-            </Link>
-          </footer>
-        </article>
+
+              <Link
+                href="/news"
+                className="group flex items-center gap-4 text-xs font-black uppercase tracking-[0.4em] text-[#0e2188]"
+              >
+                <span className="w-12 h-[2px] bg-[#e33127] group-hover:w-20 transition-all"></span>
+                Quay lại danh sách
+              </Link>
+            </footer>
+          </article>
+
+        </div>
       </Container>
     </div>
   );
