@@ -73,10 +73,9 @@ export default function LatestNews() {
                   {post.title}
                 </h3>
 
-                <div 
-                  className="text-zinc-500 text-sm leading-relaxed line-clamp-3 font-normal overflow-hidden"
-                  dangerouslySetInnerHTML={{ __html: post.content }}
-                />
+                <p className="text-zinc-500 text-sm leading-relaxed line-clamp-3 font-normal h-[4.5rem] overflow-hidden">
+                  {post.description || "Đang cập nhật nội dung bản tin kỹ thuật từ Tân Ngọc Lực..."}
+                </p>
 
                 {/* Read More Link */}
                 <div className="pt-4 mt-auto">

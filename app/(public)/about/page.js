@@ -1,75 +1,125 @@
 'use client';
+import { useState, useEffect } from 'react';
 import Container from '@/components/public/ui/Container';
-import SectionTitle from '@/components/public/ui/SectionTitle';
-import { MdVerified, MdEngineering, MdHistory, MdMilitaryTech } from 'react-icons/md';
-import NewsBanner from '@/components/public/about/AboutBanner';
-import AboutBanner from '../../../components/public/about/AboutBanner';
+import AboutBanner from '@/components/public/about/AboutBanner';
+
+// 🟢 IMPORT CÁC COMPONENT DÙNG CHUNG CỦA ĐẠI CA VÀO ĐÂY
+import IntroSection from '@/components/public/home/IntroSection';
+import Certificates from '@/components/public/home/Certificates';
+import Partners from '@/components/public/home/Partners';
+
+// Nếu đại ca đã tách VisionMission, CoreValues, Timeline ra component riêng thì import luôn
+import VisionMission from '@/components/public/about/VisionMission';
+import CoreValues from '@/components/public/about/CoreValues';
+import Timeline from '@/components/public/about/Timeline';
+
 export default function AboutPage() {
+  const [sections, setSections] = useState([]);
+  const [certificates, setCertificates] = useState([]);
+  const [partners, setPartners] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // 🟢 CALL API LẤY DỮ LIỆU ĐỘNG (Giữ nguyên logic của đại ca)
+  useEffect(() => {
+    const fetchAboutData = async () => {
+      try {
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'; 
+        const safeFetch = async (endpoint) => {
+          try {
+            const res = await fetch(`${baseUrl}${endpoint}`);
+            if (!res.ok) return []; 
+            const text = await res.text(); 
+            if (text.trim().startsWith('<')) return [];
+            return JSON.parse(text);
+          } catch (e) { return []; }
+        };
+
+        const [resSections, resCerts, resPartners] = await Promise.all([
+          safeFetch('/about-sections'),
+          safeFetch('/certificates'),
+          safeFetch('/partners')
+        ]);
+
+        const rawSections = resSections?.data || resSections || [];
+        
+        const activeAndSortedSections = rawSections
+          .filter(s => s.status === 1 || s.status === true)
+          .sort((a, b) => a.sort_order - b.sort_order)
+          .map(section => {
+             let parsedMeta = section.meta;
+             if (typeof section.meta === 'string') {
+               try { parsedMeta = JSON.parse(section.meta); } 
+               catch (e) { parsedMeta = {}; }
+             }
+             return { ...section, meta: parsedMeta || {} };
+          });
+
+        setSections(activeAndSortedSections);
+        setCertificates(resCerts?.data || resCerts || []);
+        setPartners(resPartners?.data || resPartners || []);
+
+      } catch (error) {
+        console.error('Lỗi tải dữ liệu trang Giới thiệu:', error);
+      } finally {
+        setLoading(false); 
+      }
+    };
+
+    fetchAboutData();
+  }, []);
+
+  // 🟢 RENDER SWITCH: LẮP RÁP CÁC COMPONENT DÙNG CHUNG
+  const renderDynamicSection = (section) => {
+    const { meta } = section;
+    if (!meta) return null;
+
+    switch (section.name) {
+      case 'hero':
+        // Truyền thẳng data vào component IntroSection đại ca đã code sẵn
+        // Lưu ý: Đảm bảo component IntroSection nhận prop tương ứng (vd: data)
+        return <IntroSection key={section.id} data={meta} />;
+
+      // Nếu đại ca đã tạo các component tương ứng, chỉ việc gọi ra:
+      case 'vision_mission':
+        return <VisionMission key={section.id} data={meta} />;
+      case 'core_values':
+        return <CoreValues key={section.id} data={meta.values} />;
+      case 'timeline':
+        return <Timeline key={section.id} data={meta.events} />;
+
+      default:
+        return null;
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-orange-600 font-black italic uppercase tracking-widest text-2xl animate-pulse">
+          // ĐANG NUNG CHẢY DỮ LIỆU THÉP...
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className=" bg-white">
-        <AboutBanner/>
-      <Container>
-        {/* 🔴 PHẦN 1: HERO - TUYÊN NGÔN THƯƠNG HIỆU */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center mb-32">
-          <div className="space-y-8">
-            <span className="text-orange-600 font-black tracking-[0.4em] uppercase text-xs">
-              // THÉP XÂY DỰNG CHẤT LƯỢNG CAO
-            </span>
-            <h1 className="text-8xl font-black italic uppercase leading-[0.85] tracking-tighter text-black">
-              TÂN NGỌC LỰC <br />
-              <span className="text-orange-600">SINCE 2026.</span>
-            </h1>
-            <p className="text-xl font-bold text-gray-600 border-l-8 border-black pl-8 leading-relaxed italic">
-              Chúng tôi không chỉ cung cấp thép, chúng tôi cung cấp nền móng vững chắc cho mọi công trình tầm cỡ quốc gia.
-            </p>
-          </div>
-          <div className="relative">
-            <div className="border-[10px] border-black shadow-[30px_30px_0_0_#000] overflow-hidden">
-              <img 
-                src="https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&q=80&w=1000" 
-                alt="Factory" 
-                className="w-full grayscale hover:grayscale-0 transition-all duration-1000 scale-110" 
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* 🔵 PHẦN 2: GIÁ TRỊ CỐT LÕI (CORE VALUES) */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-32">
-          {[
-            { icon: <MdVerified size={40} />, title: "CHẤT LƯỢNG THÉP", desc: "Mọi sản phẩm đều đạt mác thép SS400, CB300V theo tiêu chuẩn quốc tế." },
-            { icon: <MdEngineering size={40} />, title: "KỸ THUẬT CHÍNH XÁC", desc: "Hồ sơ thông số kỹ thuật (Specs) minh bạch cho từng lô hàng." },
-            { icon: <MdMilitaryTech size={40} />, title: "UY TÍN HÀNG ĐẦU", desc: "Đối tác tin cậy của hàng nghìn nhà thầu xây dựng tại Việt Nam." }
-          ].map((item, idx) => (
-            <div key={idx} className="p-10 border-4 border-black bg-gray-50 shadow-[10px_10px_0_0_#000] hover:bg-black hover:text-white transition-all group">
-              <div className="text-orange-600 group-hover:text-orange-400 mb-6">{item.icon}</div>
-              <h3 className="text-2xl font-black italic uppercase mb-4">{item.title}</h3>
-              <p className="font-bold opacity-70 leading-snug">{item.desc}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* 🟠 PHẦN 3: LỊCH SỬ PHÁT TRIỂN (TIMELINE) */}
-        <div className="bg-black text-white p-16 border-[10px] border-orange-600 shadow-[20px_20px_0_0_#000]">
-          <h2 className="text-5xl font-black italic uppercase mb-16 tracking-tighter text-center">// LỊCH SỬ HÌNH THÀNH</h2>
-          <div className="space-y-12">
-            <div className="flex flex-col md:flex-row gap-8 items-start border-b border-white/20 pb-8">
-              <span className="text-5xl font-black italic text-orange-600">2026</span>
-              <div className="space-y-2">
-                <h4 className="text-2xl font-black italic uppercase">THÀNH LẬP TÂN NGỌC LỰC</h4>
-                <p className="text-gray-400 font-bold">Bắt đầu hành trình cung ứng thép xây dựng chuyên nghiệp tại TP.HCM.</p>
-              </div>
-            </div>
-            <div className="flex flex-col md:flex-row gap-8 items-start">
-              <span className="text-5xl font-black italic text-orange-600">TODAY</span>
-              <div className="space-y-2">
-                <h4 className="text-2xl font-black italic uppercase">DẪN ĐẦU THỊ TRƯỜNG</h4>
-                <p className="text-gray-400 font-bold">Trở thành đơn vị số 1 về cung cấp thép tấm, thép hình và các giải pháp mác thép đặc chủng.</p>
-              </div>
-            </div>
-          </div>
-        </div>
+    <div className="bg-white font-sans">
+      <AboutBanner />
+      
+      {/* 🟢 KHU VỰC RENDER CÁC SECTIONS (Hero, Vision, CoreValues...) */}
+      <Container className="py-24 space-y-32">
+        {sections.map(section => renderDynamicSection(section))}
       </Container>
+
+      {/* 🟢 KHU VỰC RENDER CHỨNG CHỈ (Dùng component có sẵn) */}
+      {certificates.length > 0 && (
+        <Certificates data={certificates} />
+      )}
+
+      {/* 🟢 KHU VỰC RENDER ĐỐI TÁC (Dùng component có sẵn) */}
+      {partners.length > 0 && (
+        <Partners data={partners} />
+      )}
     </div>
   );
 }

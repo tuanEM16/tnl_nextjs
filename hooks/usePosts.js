@@ -1,3 +1,6 @@
+// Thêm 2 thư viện này lên đầu file hooks/usePosts.js nếu chưa có
+import * as XLSX from 'xlsx';
+import { createWorker } from 'tesseract.js';
 import { useEffect, useCallback, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { postService } from '@/services/postService';
@@ -132,6 +135,12 @@ export const usePostForm = (id = null) => {
     description: '',
     content: '',
     status: 1,
+    name: '',
+    layout: 'text',
+    sort_order: 0,
+    meta_title: '',
+    meta_description: '',
+    meta_content: '',
   });
 
   const [categories, setCategories] = useState([]);
@@ -205,6 +214,230 @@ export const usePostForm = (id = null) => {
         toast.success('THÀNH CÔNG!');
         router.push('/admin/posts');
       } catch (error) { }
+    },
+  };
+};
+
+// ... (Các hook cũ của bạn giữ nguyên: usePosts, usePost, usePostForm) ...
+
+// ==================== HOOK EDITOR TOOLS (EXCEL, OCR, UPLOAD ẢNH QUILL) ====================
+export const useEditorTools = (quillRef) => {
+  const [isScanning, setIsScanning] = useState(false);
+
+  // 🟢 HÀM NHẬP EXCEL THÀNH BẢNG HTML
+  const handleExcelImport = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const bstr = evt.target.result;
+      const wb = XLSX.read(bstr, { type: 'binary' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      
+      const range = XLSX.utils.decode_range(ws['!ref']);
+      let tableHtml = '<table style="border-collapse: collapse; width: 100%; border: 4px solid black; margin: 20px 0;">';
+      
+      // Tạo Header (Dòng đầu tiên)
+      tableHtml += '<tr>';
+      for (let C = range.s.c; C <= range.e.c; ++C) {
+        const cellAddress = XLSX.utils.encode_cell({ r: range.s.r, c: C });
+        const cell = ws[cellAddress];
+        tableHtml += `<th style="border: 2px solid black; padding: 8px; background: #f3f4f6; font-weight: 900; text-align: center;">${cell ? cell.v : ''}</th>`;
+      }
+      tableHtml += '</tr>';
+      
+      // Tạo Data Rows
+      for (let R = range.s.r + 1; R <= range.e.r; ++R) {
+        tableHtml += '<tr>';
+        for (let C = range.s.c; C <= range.e.c; ++C) {
+          const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+          const cell = ws[cellAddress];
+          tableHtml += `<td style="border: 2px solid black; padding: 8px; text-align: center;">${cell ? cell.v : ''}</td>`;
+        }
+        tableHtml += '</tr>';
+      }
+      tableHtml += '</table>';
+      
+      // Đẩy vào Quill Editor
+      if (quillRef.current) {
+        const editor = quillRef.current.getEditor();
+        const range_selection = editor.getSelection(true);
+        editor.clipboard.dangerouslyPasteHTML(range_selection.index, tableHtml);
+      }
+    };
+    reader.readAsBinaryString(file);
+    e.target.value = null; // Reset input để có thể chọn lại file cũ
+  };
+
+  // 🟢 HÀM QUÉT ẢNH OCR BÓC TÁCH THÔNG SỐ THÉP
+  const handleImageOCR = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setIsScanning(true);
+    try {
+      const worker = await createWorker('vie', 1, { logger: m => console.log(m) });
+      await worker.setParameters({ tessedit_pageseg_mode: 6 });
+      
+      const { data: { text } } = await worker.recognize(file);
+      await worker.terminate();
+
+      const rows = text.split('\n').map(r => r.trim()).filter(r => r.length > 0);
+      let tableHtml = `<table style="width:100%; border-collapse:collapse; border:4px solid black;">`;
+      tableHtml += `<tr><th>Quy cách</th><th>m</th><th>kg/m</th><th>kg/cây</th></tr>`;
+
+      rows.forEach(row => {
+        // Regex tách chuẩn cho dòng thép (Bám sát theo code của bạn)
+        const match = row.match(/(H[\d\sxXmm\.]+)\s+(\d+)\s+([\d\.]+)\s+([\d\.]+)/);
+        if (match) {
+          const [, spec, m, kgm, kgcay] = match;
+          tableHtml += `<tr><td>${spec}</td><td>${m}</td><td>${kgm}</td><td>${kgcay}</td></tr>`;
+        }
+      });
+      tableHtml += `</table>`;
+
+      if (quillRef.current) {
+        const editor = quillRef.current.getEditor();
+        const range = editor.getSelection(true);
+        editor.clipboard.dangerouslyPasteHTML(range.index, tableHtml);
+      }
+    } catch (err) {
+      console.error('Lỗi OCR:', err);
+    } finally {
+      setIsScanning(false);
+      e.target.value = null;
+    }
+  };
+
+  // 🟢 HÀM XỬ LÝ UPLOAD ẢNH TRỰC TIẾP TRONG QUILL
+  const imageHandler = useCallback(() => {
+    const input = document.createElement('input');
+    input.setAttribute('type', 'file');
+    input.setAttribute('accept', 'image/*');
+    input.click();
+    
+    input.onchange = async () => {
+      const file = input.files[0];
+      if (!file) return;
+      
+      const uploadData = new FormData();
+      uploadData.append('image', file);
+      
+      try {
+        const res = await fetch('http://localhost:5000/api/posts/upload-content', { 
+          method: 'POST', 
+          body: uploadData 
+        });
+        const result = await res.json();
+        
+        if (result.filename && quillRef.current) {
+          const editor = quillRef.current.getEditor();
+          const range = editor.getSelection(true);
+          editor.insertEmbed(range.index, 'image', `http://localhost:5000/uploads/${result.filename}`);
+        }
+      } catch (error) {
+        console.error('Lỗi upload ảnh nội dung:', error);
+      }
+    };
+  }, [quillRef]);
+
+  return { isScanning, handleExcelImport, handleImageOCR, imageHandler };
+};
+// ==================== HOOK FORM ADD/EDIT CHO TRANG GIỚI THIỆU (ABOUT SECTION) ====================
+export const useSectionForm = (id = null) => {
+  const router = useRouter();
+  const imageUrl = process.env.NEXT_PUBLIC_IMAGE_URL;
+
+  // 🟢 State gộp chung cả dữ liệu của bảng `about_section` và `about_section_meta`
+  const [formData, setFormData] = useState({
+    name: '',
+    layout: 'text',
+    sort_order: 0,
+    status: 1,
+    // Các trường bắt đầu bằng meta_ sẽ được Backend bóc ra lưu vào bảng about_section_meta
+    meta_title: '',
+    meta_description: '',
+    meta_content: '',
+  });
+
+  const [imageFile, setImageFile] = useState(null);
+  const [preview, setPreview] = useState('');
+  const [oldImage, setOldImage] = useState('');
+  const [fetching, setFetching] = useState(!!id);
+  const [loading, setLoading] = useState(false);
+
+  // 🟢 (Tùy chọn) Đại ca thay thế bằng service thật sau (VD: aboutService.create, aboutService.update)
+  // const { loading: submitting, request: createRequest } = useApi(aboutService.create);
+  // const { loading: updating, request: updateRequest } = useApi(aboutService.update);
+  // const { request: fetchById } = useApi(aboutService.getById);
+
+  // 🟢 Load dữ liệu cũ khi Sửa (Trang Edit)
+  useEffect(() => {
+    if (!id) return;
+    const loadSection = async () => {
+      try {
+        // MOCK DATA: Chờ ghép API thật
+        // const res = await fetchById(id);
+        // const section = res?.data || res;
+        // setFormData({ ... })
+        setFetching(false);
+      } catch (error) {
+        toast.error('KHÔNG TÌM THẤY DỮ LIỆU SECTION');
+        router.push('/admin/about');
+      } finally {
+        setFetching(false);
+      }
+    };
+    loadSection();
+  }, [id, router]);
+
+  return {
+    formData,
+    fetching,
+    loading, // Nếu dùng useApi thì đổi thành: submitting || updating
+    preview,
+    oldImage,
+    
+    // Hàm xử lý nhập text thông thường
+    handleChange: (e) => {
+      const { name, value } = e.target;
+      setFormData(prev => ({ ...prev, [name]: value }));
+    },
+    
+    // Hàm xử lý chọn ảnh bìa (Cover Asset)
+    handleImageChange: (e) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        setImageFile(file);
+        setPreview(URL.createObjectURL(file));
+      }
+    },
+    
+    // Hàm Submit gửi lên API
+    handleSubmit: async (e) => {
+      e.preventDefault();
+      setLoading(true);
+
+      // Đóng gói dữ liệu bắn lên API
+      const data = new FormData();
+      Object.keys(formData).forEach(key => data.append(key, formData[key]));
+      if (imageFile) data.append('meta_image', imageFile);
+
+      try {
+        // CALL API TẠI ĐÂY:
+        // id ? await updateRequest(id, data) : await createRequest(data);
+        
+        console.log("Dữ liệu chuẩn bị bắn lên API:", Object.fromEntries(data));
+        toast.success(id ? 'CẬP NHẬT THÀNH CÔNG!' : 'TẠO SECTION THÀNH CÔNG!');
+        
+        // Tạo xong thì đá về danh sách
+        setTimeout(() => router.push('/admin/about'), 1000);
+      } catch (error) {
+        toast.error('CÓ LỖI XẢY RA KHI LƯU DỮ LIỆU');
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
     },
   };
 };
