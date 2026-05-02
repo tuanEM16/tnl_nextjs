@@ -75,3 +75,16 @@ export const GLOBAL_STATUS = {
     1: 'HIỂN THỊ (LIVE)',
     0: 'TẠM ẨN (HIDDEN)',
 };
+export const LAYOUT_TYPES = {
+    'text': 'Chỉ Văn Bản (Text)',
+    'image_left': 'Ảnh Bên Trái (Image Left)',
+    'image_right': 'Ảnh Bên Phải (Image Right)',
+    'video': 'Video / Đa Phương Tiện'
+};
+
+export const ABOUT_LAYOUTS = {
+    'hero': 'Khối Hero Banner',
+    'vision_mission': 'Khối Tầm Nhìn & Sứ Mệnh',
+    'core_values': 'Khối Giá Trị Cốt Lõi',
+    'timeline': 'Khối Lịch Sử Hình Thành'
+};

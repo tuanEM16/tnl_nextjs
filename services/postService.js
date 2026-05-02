@@ -10,8 +10,8 @@ export const postService = {
 
     // 🟢 HÀM QUAN TRỌNG: Lấy bài viết theo Slug vị trí (Fix lỗi Not a function)
     getPostByPageSlug: async (slug) => {
-        const res = await api.get(`/posts`, { 
-            params: { post_type: 'page', page_slug: slug } 
+        const res = await api.get(`/posts`, {
+            params: { post_type: 'page', page_slug: slug }
         });
         return res.data;
     },
@@ -29,7 +29,7 @@ export const postService = {
         });
         return res.data;
     },
-uploadEditorImage: async (formData) => {
+    uploadEditorImage: async (formData) => {
         const res = await api.post('/posts/upload-content', formData);
         return res.data; // Trả về { filename: '...' }
     },
@@ -61,4 +61,9 @@ uploadEditorImage: async (formData) => {
     getPageCategories: () => api.get('/post-page-categories').then(res => res.data),
     createPageCategory: (data) => api.post('/post-page-categories', data).then(res => res.data),
     deletePageCategory: (id) => api.delete(`/post-page-categories/${id}`).then(res => res.data),
+    getAboutSections: () => apiClient.get('/about-sections'),
+    getAboutSections: () => api.get('/about-sections').then(res => res.data),
+    updateAboutSection: (id, data) => api.put(`/about-sections/${id}`, data, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    }).then(res => res.data),
 };

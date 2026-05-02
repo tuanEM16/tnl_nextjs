@@ -2,19 +2,19 @@
 
 import { usePosts } from '@/hooks/usePosts';
 import { getImageUrl } from '@/lib/utils';
-import { GLOBAL_STATUS } from '@/types';
+// 🟢 BỔ SUNG IMPORT ABOUT_LAYOUTS
+import { GLOBAL_STATUS, ABOUT_LAYOUTS } from '@/types';
 
 // TRIỆU HỒI VŨ KHÍ NICKELBRONX
 import PageHeader from '@/components/admin/ui/PageHeader';
-import AdminTable from '@/components/admin/ui/AdminTable';
 import AdminModal from '@/components/admin/ui/AdminModal';
 
 import { MdAdd, MdSearch, MdCategory, MdVisibility, MdEdit, MdDelete, MdDragIndicator, MdSettings } from 'react-icons/md';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { Reorder } from 'framer-motion'; // 🟢 Hàng xịn vừa cài
-import { publicService } from '@/services/publicService';
-import { postService } from '../../../../services/postService';
+import { Reorder } from 'framer-motion';
+import { postService } from '@/services/postService';
+
 export default function PostsPage() {
     const postTypeLabels = {
         post: 'TIN TỨC',
@@ -28,7 +28,7 @@ export default function PostsPage() {
         setFilter, handleTypeChange, handleDelete
     } = usePosts({ post_type: 'post', category_id: '', keyword: '' });
 
-    // 🟢 2. QUẢN LÝ TRẠNG THÁI KÉO THẢ (Optimistic UI)
+    // 2. QUẢN LÝ TRẠNG THÁI KÉO THẢ (Optimistic UI)
     const [items, setItems] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [itemToDelete, setItemToDelete] = useState(null);
@@ -39,10 +39,9 @@ export default function PostsPage() {
     }, [posts]);
 
     const handleReorder = async (newOrder) => {
-        setItems(newOrder); // Cập nhật giao diện tạm thời cho mượt (Optimistic)
+        setItems(newOrder);
 
         try {
-            // 🟢 BẮT ĐẦU ĐẤU NỐI THỰC TẾ
             const ids = newOrder.map(item => item.id);
             const res = await postService.updatePostsOrder(ids);
 
@@ -51,7 +50,6 @@ export default function PostsPage() {
             }
         } catch (error) {
             console.error("LỖI KHÔNG LƯU ĐƯỢC VỊ TRÍ:", error);
-            // Nếu lỗi thì hồi lại thứ tự cũ cho chắc
             setItems(posts);
         }
     };
@@ -59,24 +57,20 @@ export default function PostsPage() {
     return (
         <div className="space-y-12 pb-20 font-archivo uppercase text-black">
             {/* 🔴 HEADER */}
-            {/* 🔴 HEADER NICKELBRONX - NÂNG CẤP HỆ THỐNG NÚT */}
             <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b-4 border-black pb-10">
                 <div>
                     <p className="text-[10px] font-black tracking-[0.4em] text-gray-400 uppercase mb-3 italic">Content Management System</p>
                     <h1 className="text-7xl font-black tracking-tighter uppercase leading-none">BÀI VIẾT<span className="text-orange-600">.</span></h1>
                 </div>
                 <div className="flex flex-wrap gap-4">
-                    {/* Nút quản lý Danh mục tin tức (cho bài post) */}
                     <Link href="/admin/posts/categories" className="flex items-center gap-2 border-2 border-black px-4 py-3 text-[10px] font-black hover:bg-black hover:text-white transition-all shadow-[4px_4px_0_0_#000]">
                         <MdCategory size={16} /> DANH MỤC TIN
                     </Link>
 
-                    {/* 🟢 NÚT MỚI: Quản lý Vị trí trang tĩnh (cho bài page) */}
                     <Link href="/admin/posts/page-categories" className="flex items-center gap-2 border-2 border-black px-4 py-3 text-[10px] font-black bg-zinc-100 hover:bg-black hover:text-white transition-all shadow-[4px_4px_0_0_#000]">
                         <MdSettings size={16} /> VỊ TRÍ WEB
                     </Link>
 
-                    {/* Nút thêm mới bài viết tổng quát */}
                     <Link href="/admin/posts/add" className="flex items-center gap-2 bg-black text-white px-8 py-3 text-[10px] font-black shadow-[4px_4px_0_0_#ea580c] hover:bg-orange-600 transition-all">
                         <MdAdd size={18} /> THÊM MỚI
                     </Link>
@@ -116,12 +110,11 @@ export default function PostsPage() {
                         ))}
                     </select>
                 </div>
-                {/* Chỉ hiện lọc vị trí khi Admin chọn xem TRANG TĨNH */}
+                
                 {filters.post_type === 'page' && (
                     <div className="flex flex-col gap-2">
                         <div className="flex justify-between items-center">
                             <span className="text-[9px] font-black text-gray-400 italic">VỊ TRÍ HIỂN THỊ</span>
-                            {/* 🟢 Nút tắt sang trang quản lý vị trí */}
                             <Link href="/admin/posts/page-categories" className="text-orange-600 hover:scale-110 transition-transform">
                                 <MdAdd size={14} />
                             </Link>
@@ -195,12 +188,20 @@ export default function PostsPage() {
                                     <p className="text-[9px] font-black text-gray-400 uppercase italic">ID: {row.id} / SLUG: {row.slug}</p>
                                 </div>
 
-                                <div className="col-span-2 flex flex-col gap-1">
-                                    <span className="text-[10px] font-black bg-black text-white px-2 py-0.5 w-fit uppercase">
-                                        {postTypeLabels[row.post_type]}
-                                    </span>
-                                    <span className="text-[10px] font-black text-orange-600 italic tracking-tighter">
-                                        {/* 🟢 Nếu là TRANG TĨNH thì hiện page_category_name, ngược lại hiện category_name */}
+                                {/* 🟢 PHÂN LOẠI (NÂNG CẤP ĐỂ HIỂN THỊ THÊM KHỐI ABOUT) */}
+                                <div className="col-span-2 flex flex-col items-start gap-1">
+                                    <div className="flex flex-wrap items-center gap-1">
+                                        <span className="text-[10px] font-black bg-black text-white px-2 py-0.5 uppercase">
+                                            {postTypeLabels[row.post_type]}
+                                        </span>
+                                        {/* 🎯 NẾU LÀ ABOUT PAGE THÌ HIỆN THÊM LOẠI KHỐI (HERO, VISION...) */}
+                                        {row.post_type === 'page' && ABOUT_LAYOUTS[row.layout] && (
+                                            <span className="text-[8px] font-black bg-orange-100 text-orange-800 border border-orange-400 px-1.5 py-0.5 uppercase shadow-[2px_2px_0_0_#ea580c]">
+                                                {ABOUT_LAYOUTS[row.layout]}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <span className="text-[10px] font-black text-orange-600 italic tracking-tighter mt-0.5 block">
                                         {row.post_type === 'page'
                                             ? (row.page_category_name || 'CHƯA GÁN VỊ TRÍ')
                                             : (row.category_name || 'CHƯA PHÂN LOẠI')

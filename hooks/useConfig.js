@@ -22,7 +22,7 @@ export const useConfig = () => {
     setPreviews({
       logo: getImageUrl(data?.logo),
       favicon: getImageUrl(data?.favicon),
-      intro_video: videoFilename ? getImageUrl(videoFilename) : '', // 👈 Hiện clip cũ
+      intro_video: videoFilename ? getImageUrl(videoFilename) : '', 
     });
   };
 

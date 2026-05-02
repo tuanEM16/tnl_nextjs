@@ -22,6 +22,19 @@ export const publicService = {
     // 5. LIÊN HỆ
     sendContact: (data) => api.post('/contacts', data).then(res => res.data),
 
+    // 6. CHỨNG CHỈ
+getCertificates: async () => {
+        const res = await api.get('/certificates');
+        return res.data;
+    },
+
+    // 🎯 3. THÊM HÀM NÀY: Lấy danh sách đối tác
+    getPartners: async () => {
+        const res = await api.get('/partners');
+        return res.data;
+    },
+
+
     getPostByPageSlug: async (slug) => {
         try {
             // Đại ca kiểm tra lại URL này có khớp với Route ở Backend không nhé!

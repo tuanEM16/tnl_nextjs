@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { postService } from '@/services/postService';
 import { useApi } from './useApi';
 import toast from 'react-hot-toast';
-
+import { LAYOUT_TYPES, ABOUT_LAYOUTS } from '@/types';
 // ==================== HOOK DANH SÁCH BÀI VIẾT ====================
 export const usePosts = (initialFilters = {
   post_type: 'post',
@@ -123,102 +123,164 @@ export const usePost = (id) => {
 
 // ==================== HOOK FORM ADD/EDIT BÀI VIẾT ====================
 // hooks/usePosts.js (Phần usePostForm)
+
 export const usePostForm = (id = null) => {
-  const router = useRouter();
-  const imageUrl = process.env.NEXT_PUBLIC_IMAGE_URL;
+    const router = useRouter();
+    const imageUrl = process.env.NEXT_PUBLIC_IMAGE_URL;
 
-  const [formData, setFormData] = useState({
-    title: '',
-    post_type: 'post',
-    category_id: '',
-    page_category_id: '', // 🟢 Thêm cột này để lưu vào DB
-    description: '',
-    content: '',
-    status: 1,
-    name: '',
-    layout: 'text',
-    sort_order: 0,
-    meta_title: '',
-    meta_description: '',
-    meta_content: '',
-  });
+    // 1. Khởi tạo State Form
+    const [formData, setFormData] = useState({
+        title: '',
+        post_type: 'post',
+        category_id: '',
+        page_category_id: '',
+        description: '',
+        content: '', // Đây là nơi sẽ chứa chuỗi JSON nếu là trang Giới thiệu
+        status: 1,
+        layout: 'text',
+        sort_order: 0,
+        meta_title: '',
+        meta_description: '',
+        meta_content: '',
+        meta: {}, // Object tạm để quản lý dữ liệu UI trang Giới thiệu
+    });
 
-  const [categories, setCategories] = useState([]);
-  const [pageCategories, setPageCategories] = useState([]); // 🟢 State chứa các slot trang tĩnh
-  const [imageFile, setImageFile] = useState(null);
-  const [preview, setPreview] = useState('');
-  const [fetching, setFetching] = useState(!!id);
+    const [categories, setCategories] = useState([]);
+    const [pageCategories, setPageCategories] = useState([]); 
+    const [imageFile, setImageFile] = useState(null);
+    const [preview, setPreview] = useState('');
+    const [fetching, setFetching] = useState(!!id);
 
-  const { loading: submitting, request: createRequest } = useApi(postService.create);
-  const { loading: updating, request: updateRequest } = useApi(postService.update);
-  const { request: fetchById } = useApi(postService.getById);
+    const { loading: submitting, request: createRequest } = useApi(postService.create);
+    const { loading: updating, request: updateRequest } = useApi(postService.update);
+    const { request: fetchById } = useApi(postService.getById);
 
-  // 🟢 Load toàn bộ danh mục để Admin chọn
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [resCat, resPageCat] = await Promise.all([
-          postService.getCategories(),
-          postService.getPageCategories()
-        ]);
-        setCategories(resCat?.data || resCat || []);
-        setPageCategories(resPageCat?.data || resPageCat || []);
-      } catch (error) { console.error('Lỗi tải danh mục'); }
+    // 2. Load danh mục ban đầu
+    useEffect(() => {
+        const loadData = async () => {
+            try {
+                const [resCat, resPageCat] = await Promise.all([
+                    postService.getCategories(),
+                    postService.getPageCategories()
+                ]);
+                setCategories(resCat?.data || resCat || []);
+                setPageCategories(resPageCat?.data || resPageCat || []);
+            } catch (error) { console.error('Lỗi tải danh mục'); }
+        };
+        loadData();
+    }, []);
+
+    // 3. Nhận diện trang Giới thiệu dựa trên post_type và slug danh mục
+    const selectedPageCat = pageCategories.find(c => c.id?.toString() === formData.page_category_id?.toString());
+    const isAboutPage = formData.post_type === 'page' && selectedPageCat && 
+        (selectedPageCat.slug?.includes('gioi-thieu') || selectedPageCat.name?.toLowerCase().includes('giới'));
+
+    // 4. Load bài cũ và giải nén JSON nếu là trang Giới thiệu[cite: 1]
+    useEffect(() => {
+        if (!id) return;
+        const loadPost = async () => {
+            try {
+                const res = await fetchById(id);
+                const post = res?.data || res;
+                
+                let parsedMeta = {};
+                // Nếu là trang giới thiệu, bóc tách JSON từ cột content[cite: 1]
+                if (post.post_type === 'page' && post.content) {
+                    try {
+                        parsedMeta = JSON.parse(post.content);
+                    } catch (e) { parsedMeta = {}; }
+                }
+
+                setFormData({
+                    ...post,
+                    category_id: post.category_id?.toString() || '',
+                    page_category_id: post.page_category_id?.toString() || '',
+                    layout: post.layout || 'text',
+                    meta: parsedMeta, // Đưa dữ liệu đã parse vào meta để UI hiển thị[cite: 1]
+                });
+                if (post.image) setPreview(`${imageUrl}/${post.image}`);
+            } catch (error) { router.push('/admin/posts'); }
+            finally { setFetching(false); }
+        };
+        loadPost();
+    }, [id, fetchById, router, imageUrl]);
+
+    // 5. Hàm cập nhật Meta và đóng gói ngược lại JSON vào content[cite: 1]
+    const updateMeta = (newMeta) => {
+        setFormData(prev => ({
+            ...prev,
+            meta: newMeta,
+            content: JSON.stringify(newMeta) // Đồng bộ JSON vào cột content[cite: 1]
+        }));
     };
-    loadData();
-  }, []);
 
-  // 🟢 Load dữ liệu cũ khi Sửa
-  useEffect(() => {
-    if (!id) return;
-    const loadPost = async () => {
-      try {
-        const res = await fetchById(id);
-        const post = res?.data || res;
-        setFormData({
-          title: post.title || '',
-          post_type: post.post_type || 'post',
-          category_id: post.category_id?.toString() || '',
-          page_category_id: post.page_category_id?.toString() || '', // 🟢 Gán dữ liệu vị trí
-          description: post.description || '',
-          content: post.content || '',
-          status: post.status ?? 1,
-        });
-        if (post.image) setPreview(`${imageUrl}/${post.image}`);
-      } catch (error) { router.push('/admin/posts'); }
-      finally { setFetching(false); }
+    return {
+        formData, categories, pageCategories, fetching, isAboutPage,
+        loading: submitting || updating, preview,
+        
+        handleChange: (e) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value })),
+
+        handleContentChange: (value) => {
+            // Nếu không phải About Page, nội dung HTML sẽ được lưu bình thường[cite: 1]
+            if (!isAboutPage) {
+                const targetField = formData.post_type === 'page' ? 'meta_content' : 'content';
+                setFormData(prev => ({ ...prev, [targetField]: value }));
+            }
+        },
+
+        handleImageChange: (e) => {
+            const file = e.target.files?.[0];
+            if (file) { setImageFile(file); setPreview(URL.createObjectURL(file)); }
+        },
+        
+        // CÁC HÀM THAO TÁC META DATA (Dành riêng cho trang Giới thiệu)[cite: 1]
+        handleMetaChange: (e) => updateMeta({ ...(formData.meta || {}), [e.target.name]: e.target.value }),
+        
+        handleAboutQuillChange: (name, value) => updateMeta({ ...(formData.meta || {}), [name]: value }),
+        
+        handleArrayChange: (arrayName, index, field, value) => {
+            const newArray = [...((formData.meta || {})[arrayName] || [])];
+            newArray[index] = { ...newArray[index], [field]: value };
+            updateMeta({ ...(formData.meta || {}), [arrayName]: newArray });
+        },
+
+        handleAddArrayItem: (arrayName, defaultItem) => {
+            const newArray = [...((formData.meta || {})[arrayName] || []), { ...defaultItem, id: Date.now() }];
+            updateMeta({ ...(formData.meta || {}), [arrayName]: newArray });
+        },
+
+        handleRemoveArrayItem: (arrayName, index) => {
+            const newArray = [...((formData.meta || {})[arrayName] || [])];
+            newArray.splice(index, 1);
+            updateMeta({ ...(formData.meta || {}), [arrayName]: newArray });
+        },
+
+        // 6. Gửi dữ liệu (Submit)
+        handleSubmit: async (e) => {
+            e.preventDefault();
+            const data = new FormData();
+            
+            // Chỉ append các trường thực sự có trong Database để tránh lỗi "Unknown column"[cite: 1]
+            const dbFields = [
+                'title', 'post_type', 'category_id', 'page_category_id', 
+                'description', 'content', 'status', 'layout', 'sort_order',
+                'meta_title', 'meta_description', 'meta_content'
+            ];
+
+            dbFields.forEach(key => {
+                if (formData[key] !== undefined) data.append(key, formData[key]);
+            });
+
+            if (imageFile) data.append('image', imageFile);
+
+            try {
+                id ? await updateRequest(id, data) : await createRequest(data);
+                toast.success('LƯU NỘI DUNG THÀNH CÔNG!');
+                router.push('/admin/posts');
+            } catch (error) { toast.error('CÓ LỖI XẢY RA!'); }
+        },
     };
-    loadPost();
-  }, [id, fetchById, router, imageUrl]);
-
-  return {
-    formData,
-    categories,
-    pageCategories, // 🟢 Trả về để Form render Select Box
-    fetching,
-    loading: submitting || updating,
-    preview,
-    handleChange: (e) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value })),
-    handleImageChange: (e) => {
-      const file = e.target.files?.[0];
-      if (file) { setImageFile(file); setPreview(URL.createObjectURL(file)); }
-    },
-    handleSubmit: async (e) => {
-      e.preventDefault();
-      const data = new FormData();
-      Object.keys(formData).forEach(key => data.append(key, formData[key]));
-      if (imageFile) data.append('image', imageFile);
-
-      try {
-        id ? await updateRequest(id, data) : await createRequest(data);
-        toast.success('THÀNH CÔNG!');
-        router.push('/admin/posts');
-      } catch (error) { }
-    },
-  };
 };
-
-// ... (Các hook cũ của bạn giữ nguyên: usePosts, usePost, usePostForm) ...
 
 // ==================== HOOK EDITOR TOOLS (EXCEL, OCR, UPLOAD ẢNH QUILL) ====================
 export const useEditorTools = (quillRef) => {
