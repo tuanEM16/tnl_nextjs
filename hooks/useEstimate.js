@@ -1,14 +1,15 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
-import { adminEstimateService } from '@/services/adminEstimateService';
+import { estimateService } from '@/services/estimateService';
 import toast from 'react-hot-toast';
 
-export const useAdminEstimate = (type) => { 
+export const useEstimate = (type) => { 
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const service = adminEstimateService[type];
+  const service = estimateService[type];
 
   const fetchData = useCallback(async () => {
+    if (!service) return;
     setLoading(true);
     try {
       const res = await service.getAll();

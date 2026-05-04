@@ -7,7 +7,21 @@ export const publicEstimateService = {
   },
   
   calculate: async (data) => {
-    const res = await api.post('/estimates/calculate', data);
-    return res.data;
+    try {
+      const res = await api.post('/estimates/calculate', data);
+      
+      // Đảm bảo items có total_price hợp lệ
+      if (res.data?.items && Array.isArray(res.data.items)) {
+        res.data.items = res.data.items.map(item => ({
+          ...item,
+          total_price: item.total_price || 0
+        }));
+      }
+      
+      return res.data;
+    } catch (error) {
+      console.error('Lỗi tính toán dự toán:', error);
+      throw error;
+    }
   }
 };

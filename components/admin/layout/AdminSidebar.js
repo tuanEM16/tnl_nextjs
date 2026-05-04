@@ -5,8 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { configService } from '@/services/configService';
-import { MdSettingsSuggest, MdDashboard, MdInventory2, MdCategory, MdArticle, MdViewCarousel, MdMenu, MdContactPhone, MdPeople, MdSettings,MdVerified, MdHandshake } from 'react-icons/md';
-// 🟢 1. Dùng máy hàn đường dẫn chuẩn
+import { MdSettingsSuggest, MdDashboard, MdInventory2, MdCategory, MdArticle, MdViewCarousel, MdMenu, MdContactPhone, MdPeople, MdSettings, MdVerified, MdHandshake, MdCalculate } from 'react-icons/md';
 import { getImageUrl } from '@/lib/utils'; 
 
 export default function AdminSidebar() {
@@ -18,18 +17,14 @@ export default function AdminSidebar() {
     logo: ''
   });
 
-// 🟢 CẬP NHẬT DANH SÁCH MENU (Thêm 2 ông thần mới vào)
   const menuItems = [
     { label: 'TỔNG QUAN', href: '/admin/dashboard', icon: <MdDashboard size={20} /> },
+    { label: 'DỰ TOÁN', href: '/admin/estimates', icon: <MdCalculate size={20} /> },
     { label: 'SẢN PHẨM', href: '/admin/products', icon: <MdInventory2 size={20} /> },
     { label: 'DANH MỤC', href: '/admin/categories', icon: <MdCategory size={20} /> },
     { label: 'BÀI VIẾT', href: '/admin/posts', icon: <MdArticle size={20} /> },
-    
-    // --- 2 MỤC MỚI ĐÂY ĐẠI CA ---
     { label: 'CHỨNG CHỈ', href: '/admin/certificates', icon: <MdVerified size={20} /> },
     { label: 'ĐỐI TÁC', href: '/admin/partners', icon: <MdHandshake size={20} /> },
-    // ----------------------------
-
     { label: 'BANNER', href: '/admin/banners', icon: <MdViewCarousel size={20} /> },
     { label: 'QUẢN LÝ MENU', href: '/admin/menus', icon: <MdMenu size={20} /> },
     { label: 'LIÊN HỆ', href: '/admin/contacts', icon: <MdContactPhone size={20} /> },
@@ -45,7 +40,7 @@ export default function AdminSidebar() {
         if (data) {
           setConfig({
             site_name: data.site_name || 'TÂN NGỌC LỰC',
-            logo: data.logo || '' //
+            logo: data.logo || ''
           });
         }
       } catch (error) {
@@ -53,7 +48,7 @@ export default function AdminSidebar() {
       }
     };
     fetchSidebarConfig();
-  }, [pathname]); // Cập nhật khi chuyển trang để đồng bộ logo mới nhất
+  }, [pathname]);
 
   return (
     <aside
@@ -63,17 +58,15 @@ export default function AdminSidebar() {
         collapsed ? 'w-20' : 'w-72'
       }`}
       style={{
-        background: 'linear-gradient(180deg, #0B1F4F 0%, #1a3a8a 100%)' // Đổi màu gradient cho chuyên nghiệp hơn
+        background: 'linear-gradient(180deg, #0B1F4F 0%, #1a3a8a 100%)' 
       }}
     >
-      {/* 🔴 Logo Area */}
       <div className={`transition-all duration-300 flex flex-col items-center ${
         collapsed ? 'p-4' : 'p-8'
       } bg-white border-b-4 border-black`}>
         <div className={`mb-4 flex items-center justify-center overflow-hidden transition-all duration-300 ${
           collapsed ? 'w-10 h-10' : 'w-24 h-16'
         }`}>
-          {/* 🟢 3. Hiển thị Logo từ Backend */}
           {config.logo ? (
             <img 
               src={getImageUrl(config.logo)} 
@@ -96,7 +89,6 @@ export default function AdminSidebar() {
         )}
       </div>
 
-      {/* 🔵 Navigation */}
       <nav className={`flex-1 py-6 px-4 space-y-1 overflow-y-auto ${collapsed ? 'px-2' : ''}`}>
         {menuItems.map((item) => {
           const isActive = pathname.startsWith(item.href);
@@ -123,7 +115,6 @@ export default function AdminSidebar() {
         })}
       </nav>
 
-      {/* ⚪ Footer */}
       <div className={`p-6 border-t border-white/10 ${collapsed ? 'hidden' : ''}`}>
         <div className="flex items-center gap-2 mb-2">
           <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>

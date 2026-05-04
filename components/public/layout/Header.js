@@ -22,6 +22,7 @@ export default function Header() {
     { label: 'Sản phẩm', href: '/products' },
     { label: 'Giới thiệu', href: '/about' },
     { label: 'Dự án', href: '/projects' },
+    { label: 'Dự toán', href: '/estimate' },
     { label: 'Tin tức', href: '/news' },
     { label: 'Liên hệ', href: '/contact' },
   ];
@@ -78,8 +79,8 @@ export default function Header() {
               </div>
             </Link>
 
-            {/* NAVIGATION - Armenia.travel style: Uppercase, tracking-widest, clean */}
-            <nav className="hidden lg:flex items-center gap-10">
+            {/* NAVIGATION */}
+            <nav className="hidden lg:flex items-center gap-8 xl:gap-10">
               {navLinks.map((link) => (
                 <Link
                   key={link.href}
@@ -96,7 +97,7 @@ export default function Header() {
             </nav>
 
             {/* ACTION AREA */}
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-4 xl:gap-6">
               {!loading && (
                 <a
                   href={`tel:${config.hotline || config.phone}`}

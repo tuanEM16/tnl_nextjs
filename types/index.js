@@ -9,6 +9,7 @@ export const BANNER_PAGES = {
     project: 'DỰ ÁN',
     news: 'TRUYỀN THÔNG',
     contact: 'LIÊN HỆ',
+    estimate: 'DỰ TOÁN',
 };
 
 // ==========================================
