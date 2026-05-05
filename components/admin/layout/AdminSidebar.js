@@ -23,6 +23,7 @@ export default function AdminSidebar() {
     { label: 'SẢN PHẨM', href: '/admin/products', icon: <MdInventory2 size={20} /> },
     { label: 'DANH MỤC', href: '/admin/categories', icon: <MdCategory size={20} /> },
     { label: 'BÀI VIẾT', href: '/admin/posts', icon: <MdArticle size={20} /> },
+    { label: 'Bản đồ Dự án', href: '/admin/project-locations', icon: '🗺️' },
     { label: 'CHỨNG CHỈ', href: '/admin/certificates', icon: <MdVerified size={20} /> },
     { label: 'ĐỐI TÁC', href: '/admin/partners', icon: <MdHandshake size={20} /> },
     { label: 'BANNER', href: '/admin/banners', icon: <MdViewCarousel size={20} /> },

@@ -1,5 +1,4 @@
 import api from '@/lib/api';
-
 export const publicService = {
     // 1. CẤU HÌNH & BANNER
     getConfig: () => api.get('/config').then(res => res.data),
@@ -14,7 +13,7 @@ export const publicService = {
     // Đại ca giữ lại thằng này vì Backend thường quản lý dự án trong bảng posts
     getProjects: () => api.get('/posts?post_type=project').then(res => res.data),
     getProjectBySlug: (slug) => api.get(`/posts/slug/${slug}`).then(res => res.data),
-
+    getProjectLocations: () => api.get('/project-locations'),
     // 4. TIN TỨC (NEWS/POSTS)
     getPosts: (params) => api.get('/posts', { params }).then(res => res.data),
     getPostBySlug: (slug) => api.get(`/posts/slug/${slug}`).then(res => res.data),
@@ -23,7 +22,7 @@ export const publicService = {
     sendContact: (data) => api.post('/contacts', data).then(res => res.data),
 
     // 6. CHỨNG CHỈ
-getCertificates: async () => {
+    getCertificates: async () => {
         const res = await api.get('/certificates');
         return res.data;
     },

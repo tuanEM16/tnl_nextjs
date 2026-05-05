@@ -29,9 +29,9 @@ export default function ProjectPage() {
     );
 
     return (
+        
         <main className="bg-white min-h-screen font-sans">
             <ProjectBanner />
-            
             <section className="py-24 lg:py-32">
                 <Container>
                     {/* Section Header */}
@@ -50,7 +50,7 @@ export default function ProjectPage() {
                     {project.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-16">
                             {project.map((item) => (
-                                <Link key={item.id} href={`/project/${item.slug}`} className="group block">
+                                <Link key={item.id} href={`/projects/${item.slug}`} className="group block">
                                     <div className="flex flex-col h-full bg-white transition-all duration-500">
                                         {/* Image Container */}
                                         <div className="relative aspect-[16/10] overflow-hidden rounded-sm bg-zinc-100 shadow-sm group-hover:shadow-2xl transition-all duration-700">

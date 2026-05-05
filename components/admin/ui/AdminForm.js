@@ -33,7 +33,7 @@ export default function AdminForm({
                             {field.type === 'select' ? (
                                 <select
                                     name={field.name}
-                                    value={formData[field.name]}
+                                   value={formData[field.name] ?? ''}
                                     onChange={onChange}
                                     className="w-full border-2 border-black p-4 font-black text-xs outline-none bg-gray-50 focus:bg-orange-50 transition-all cursor-pointer shadow-[4px_4px_0_0_rgba(0,0,0,0.1)]"
                                     required={field.required}

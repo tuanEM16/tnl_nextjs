@@ -69,28 +69,28 @@ export default function ChatBox() {
 
     return (
         <>
-            {/* ── Bong bóng chào mừng (Hiện khi chưa mở chat) ── */}
+            {/* ── Bong bóng chào mừng ── */}
             {!isOpen && (
                 <div 
                     onClick={() => setIsOpen(true)}
                     style={{
                         position: 'fixed',
-                        bottom: '38px',
-                        right: '96px',
+                        bottom: '50px',
+                        right: '110px', // Đẩy sang trái để nhường chỗ cho robot to
                         zIndex: 9998,
                         background: '#ffffff',
                         padding: '10px 16px',
                         borderRadius: '20px 20px 0px 20px',
                         boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
                         color: '#c8371a',
-                        fontSize: '13px',
+                        fontSize: '14px',
                         fontWeight: '700',
                         cursor: 'pointer',
                         animation: 'tnlFloat 3s ease-in-out infinite',
                         border: '1px solid #f0f0f0',
                     }}
                 >
-                    👋 Bạn cần tư vấn?
+                    👋 Xin chào, tôi là trợ lý AI!
                 </div>
             )}
 
@@ -103,47 +103,53 @@ export default function ChatBox() {
                     bottom:       '24px',
                     right:        '24px',
                     zIndex:       9999,
-                    width:        '60px',
-                    height:       '60px',
-                    borderRadius: '50%',
-                    background:   '#c8371a',
-                    border:       'none',
+                    width:        isOpen ? '60px' : '90px',  // 🟢 Phóng to robot lên 90px
+                    height:       isOpen ? '60px' : '90px',
+                    borderRadius: isOpen ? '50%' : '0',      // 🟢 Bỏ bo tròn khi là robot
+                    background:   isOpen ? '#c8371a' : 'transparent', // 🟢 Bỏ background
+                    border:       'none',                    // 🟢 Bỏ viền xung quanh
                     cursor:       'pointer',
-                    boxShadow:    '0 4px 16px rgba(200,55,26,0.4)',
+                    boxShadow:    isOpen ? '0 4px 16px rgba(200,55,26,0.4)' : 'none', // 🟢 Bỏ bóng của nút
                     display:      'flex',
                     alignItems:   'center',
                     justifyContent: 'center',
-                    transition:   'transform 0.2s, background 0.2s',
-                    // Kích hoạt hiệu ứng gợn sóng khi khung chat đang đóng
-                    animation:    isOpen ? 'none' : 'tnlPulse 2s infinite',
+                    transition:   'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                    padding:      0,
                 }}
                 onMouseEnter={e => {
                     e.currentTarget.style.transform = 'scale(1.08)';
-                    e.currentTarget.style.animation = 'none'; // Tắt gợn sóng khi hover vào
                 }}
                 onMouseLeave={e => {
                     e.currentTarget.style.transform = 'scale(1)';
-                    if (!isOpen) e.currentTarget.style.animation = 'tnlPulse 2s infinite';
                 }}
             >
                 {isOpen ? (
-                    // Icon X
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round">
+                    // Icon X khi đã mở chat
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round">
                         <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
                     </svg>
                 ) : (
-                    // Icon chat với hiệu ứng lắc nhẹ
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ animation: 'tnlWiggle 3s infinite' }}>
-                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                    </svg>
+                    // 🟢 Avatar Robot lơ lửng không nền
+                    <img 
+                        src="/images/robot-chat.png" 
+                        alt="Robot tư vấn" 
+                        style={{ 
+                            width: '100%', 
+                            height: '100%', 
+                            objectFit: 'contain', // Để hiển thị toàn bộ robot không bị cắt
+                            animation: 'tnlWiggle 3s infinite',
+                            transformOrigin: 'bottom center',
+                            filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.25))' // 🟢 Đổ bóng trực tiếp lên hình robot
+                        }} 
+                    />
                 )}
 
-                {/* Badge số tin chưa đọc — hiện khi đóng */}
+                {/* Badge số tin chưa đọc */}
                 {!isOpen && messages.length > 1 && (
                     <span style={{
                         position:   'absolute',
-                        top:        '-2px',
-                        right:      '-2px',
+                        top:        '0px',
+                        right:      '0px',
                         background: '#facc15',
                         color:      '#78350f',
                         fontSize:   '12px',
@@ -154,7 +160,8 @@ export default function ChatBox() {
                         display:    'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        border:     '2px solid #fff'
+                        border:     '2px solid #fff',
+                        zIndex:     10
                     }}>
                         {messages.length - 1}
                     </span>
@@ -190,25 +197,29 @@ export default function ChatBox() {
                         gap:         '10px',
                     }}>
                         <div style={{
-                            width:        '36px',
-                            height:       '36px',
+                            width:        '38px',
+                            height:       '38px',
                             borderRadius: '50%',
-                            background:   'rgba(255,255,255,0.2)',
+                            background:   '#ffffff',
                             display:      'flex',
                             alignItems:   'center',
                             justifyContent: 'center',
-                            flexShrink:   0
+                            flexShrink:   0,
+                            overflow:     'hidden',
+                            border:       '1px solid rgba(255,255,255,0.4)'
                         }}>
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round">
-                                <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
-                            </svg>
+                            <img 
+                                src="/images/robot-chat.png" 
+                                alt="Robot tư vấn" 
+                                style={{ width: '100%', height: '100%', objectFit: 'contain', paddingTop: '4px' }} 
+                            />
                         </div>
                         <div style={{ flex: 1 }}>
                             <div style={{ color: '#fff', fontWeight: '600', fontSize: '14px', lineHeight: 1.2 }}>
                                 Trợ lý Tân Ngọc Lực
                             </div>
                             <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: '12px' }}>
-                                Tư vấn thép xây dựng
+                                Luôn sẵn sàng hỗ trợ
                             </div>
                         </div>
                         <button
@@ -390,25 +401,18 @@ export default function ChatBox() {
 
             {/* CSS Animation Definitions */}
             <style>{`
-                /* Hiệu ứng gợn sóng (radar) cho nút chat */
-                @keyframes tnlPulse {
-                    0% { box-shadow: 0 0 0 0 rgba(200, 55, 26, 0.6); }
-                    70% { box-shadow: 0 0 0 16px rgba(200, 55, 26, 0); }
-                    100% { box-shadow: 0 0 0 0 rgba(200, 55, 26, 0); }
-                }
-                
                 /* Hiệu ứng nhấp nhô cho bong bóng chào mừng */
                 @keyframes tnlFloat {
                     0%, 100% { transform: translateY(0); }
                     50% { transform: translateY(-6px); }
                 }
 
-                /* Hiệu ứng lắc nhẹ icon chat */
+                /* Hiệu ứng lắc nhẹ robot */
                 @keyframes tnlWiggle {
                     0%, 10% { transform: rotate(0deg); }
-                    15% { transform: rotate(-10deg); }
-                    20% { transform: rotate(10deg); }
-                    25% { transform: rotate(-10deg); }
+                    15% { transform: rotate(-6deg); }
+                    20% { transform: rotate(6deg); }
+                    25% { transform: rotate(-6deg); }
                     30%, 100% { transform: rotate(0deg); }
                 }
 
