@@ -1,5 +1,6 @@
 'use client';
-import { useState, useEffect, useMemo } from 'react'; // Thêm useMemo
+import { useState, useEffect, useMemo, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { usePublicPosts } from '@/hooks/public/usePublicPosts';
 import { getImageUrl, formatDate } from '@/lib/utils';
 import { postService } from '@/services/postService';
@@ -7,10 +8,25 @@ import Container from '@/components/public/ui/Container';
 import Link from 'next/link';
 import NewsBanner from '@/components/public/news/NewsBanner';
 
-export default function NewsPage() {
+// 🟢 CÔNG CỤ THÔNG DỊCH SLUG (Phòng trường hợp API danh mục thiếu field slug)
+const generateSlug = (str) => {
+    if (!str) return '';
+    return str.toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "") 
+        .replace(/đ/g, "d").replace(/Đ/g, "d")           
+        .replace(/[^a-z0-9]/g, "-")                      
+        .replace(/-+/g, "-").replace(/^-|-$/g, "");      
+};
+
+function NewsContent() {
   const [activeCategory, setActiveCategory] = useState(null);
   const [categories, setCategories] = useState([]);
 
+  // 🟢 1. KHAI BÁO ĂNG-TEN BẮT URL
+  const searchParams = useSearchParams();
+  const categoryQuery = searchParams.get('category');
+
+  // Load danh mục từ API
   useEffect(() => {
     const loadCategories = async () => {
       try {
@@ -24,6 +40,26 @@ export default function NewsPage() {
     loadCategories();
   }, []);
 
+  // 🟢 2. XỬ LÝ LỌC TỰ ĐỘNG THEO URL MENU TRUYỀN XUỐNG
+  useEffect(() => {
+    if (categories.length > 0) {
+      if (categoryQuery) {
+        const matchedCategory = categories.find(cat => {
+          const catSlug = cat.slug || generateSlug(cat.name);
+          return String(cat.id) === categoryQuery || catSlug === categoryQuery;
+        });
+        
+        if (matchedCategory) {
+          setActiveCategory(matchedCategory.id);
+        } else {
+          setActiveCategory(null);
+        }
+      } else {
+        setActiveCategory(null);
+      }
+    }
+  }, [categoryQuery, categories]);
+
   // 🎯 Siết lại filter bằng useMemo cho lỳ đòn
   const queryFilters = useMemo(() => {
     const params = { post_type: 'post', limit: 100 };
@@ -33,53 +69,49 @@ export default function NewsPage() {
 
   const { posts, loading } = usePublicPosts(queryFilters);
 
-  if (loading) return (
-    <div className="py-40 text-center font-black animate-pulse text-zinc-400">
-      // ĐANG ĐỌC TIN TỨC THÉP...
-    </div>
-  );
-
   return (
-    <div className="bg-gray-50 min-h-screen">
-      <NewsBanner />
+    <Container className="py-16 md:py-24">
+      {/* Header Truyền Thông */}
+      <div className="mb-10 border-l-8 border-black pl-8">
+        <span className="text-orange-600 font-black tracking-widest uppercase text-xs">// KÊNH THÔNG TIN</span>
+        <h1 className="text-6xl md:text-7xl font-black italic uppercase tracking-tighter mt-2">
+          TRUYỀN THÔNG
+        </h1>
+      </div>
 
-      <Container className="py-16 md:py-24">
-        {/* Header Truyền Thông */}
-        <div className="mb-10 border-l-8 border-black pl-8">
-          <span className="text-orange-600 font-black tracking-widest uppercase text-xs">// KÊNH THÔNG TIN</span>
-          <h1 className="text-6xl md:text-7xl font-black italic uppercase tracking-tighter mt-2">
-            TRUYỀN THÔNG
-          </h1>
-        </div>
-
-        {/* Bộ lọc Pills - Đỉnh cao của đại ca */}
-        <div className="flex flex-wrap gap-3 mb-12">
+      {/* Bộ lọc Pills - Đỉnh cao của đại ca */}
+      <div className="flex flex-wrap gap-3 mb-12">
+        <button
+          onClick={() => setActiveCategory(null)}
+          className={`px-6 py-2 font-black text-xs uppercase tracking-widest transition-all border-2 border-black ${
+            activeCategory === null
+              ? 'bg-orange-600 text-white border-orange-600 shadow-[4px_4px_0_0_#000] -translate-x-1 -translate-y-1'
+              : 'bg-white text-black hover:bg-zinc-100'
+          }`}
+        >
+          Tất cả
+        </button>
+        {categories.map((cat) => (
           <button
-            onClick={() => setActiveCategory(null)}
+            key={cat.id}
+            onClick={() => setActiveCategory(cat.id)}
             className={`px-6 py-2 font-black text-xs uppercase tracking-widest transition-all border-2 border-black ${
-              activeCategory === null
+              activeCategory === cat.id
                 ? 'bg-orange-600 text-white border-orange-600 shadow-[4px_4px_0_0_#000] -translate-x-1 -translate-y-1'
                 : 'bg-white text-black hover:bg-zinc-100'
             }`}
           >
-            Tất cả
+            {cat.name}
           </button>
-          {categories.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setActiveCategory(cat.id)}
-              className={`px-6 py-2 font-black text-xs uppercase tracking-widest transition-all border-2 border-black ${
-                activeCategory === cat.id
-                  ? 'bg-orange-600 text-white border-orange-600 shadow-[4px_4px_0_0_#000] -translate-x-1 -translate-y-1'
-                  : 'bg-white text-black hover:bg-zinc-100'
-              }`}
-            >
-              {cat.name}
-            </button>
-          ))}
-        </div>
+        ))}
+      </div>
 
-        {/* Grid bài viết Neubrutalism */}
+      {/* Grid bài viết Neubrutalism */}
+      {loading ? (
+        <div className="py-40 text-center font-black animate-pulse text-zinc-400 tracking-widest uppercase">
+          // ĐANG ĐỌC TIN TỨC THÉP...
+        </div>
+      ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
           {posts.length > 0 ? (
             posts.map((post) => (
@@ -115,7 +147,23 @@ export default function NewsPage() {
             </div>
           )}
         </div>
-      </Container>
+      )}
+    </Container>
+  );
+}
+
+// 🟢 3. COMPONENT GỐC: Gói Suspense bắt buộc của Next.js
+export default function NewsPage() {
+  return (
+    <div className="bg-gray-50 min-h-screen">
+      <NewsBanner />
+      <Suspense fallback={
+        <div className="py-40 text-center font-black animate-pulse text-orange-600 tracking-widest uppercase">
+          ĐANG TẢI TRUNG TÂM TIN TỨC...
+        </div>
+      }>
+        <NewsContent />
+      </Suspense>
     </div>
   );
 }

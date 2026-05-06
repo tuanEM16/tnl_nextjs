@@ -5,7 +5,7 @@ import { getImageUrl, formatDate } from '@/lib/utils';
 import Container from '@/components/public/ui/Container';
 import NewsBanner from '@/components/public/news/NewsBanner';
 import Link from 'next/link';
-
+import { useTrackView } from '@/hooks/public/useTrackView';
 import 'react-quill-new/dist/quill.snow.css';
 
 // Component con hiển thị bài viết liên quan (cùng danh mục)
@@ -20,7 +20,6 @@ function RelatedPosts({ categoryId, currentId }) {
   const filtered = (posts || [])
     .filter((p) => p.id !== currentId)
     .slice(0, 3);
-
   if (loading) {
     return (
       <section className="mt-20 border-t-2 border-zinc-200 pt-16">
@@ -74,7 +73,7 @@ export default function NewsDetailPage({ params }) {
   const { slug } = use(params);
   const { project: post, loading } = useProjectDetail(slug);
   const [headings, setHeadings] = useState([]);
-
+useTrackView({ page_type: 'post', ref_id: post?.id, ref_slug: post?.slug }); // 🟢 Thêm đây
   // Xử lý nội dung & mục lục (giữ nguyên)
   const processedContent = useMemo(() => {
     if (!post?.content) return '';

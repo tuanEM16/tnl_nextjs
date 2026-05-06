@@ -89,3 +89,22 @@ export const ABOUT_LAYOUTS = {
     'core_values': 'Khối Giá Trị Cốt Lõi',
     'timeline': 'Khối Lịch Sử Hình Thành'
 };
+// constants dùng chung giữa add/edit/list
+export const POSITIONS = [
+    { value: 'mainmenu',   label: 'Menu chính (Header)' },
+    { value: 'footermenu', label: 'Menu phụ (Footer)' },
+];
+
+export const TYPES = [
+    { value: 'custom',   label: 'Link tùy chỉnh' },
+    { value: 'category', label: 'Danh mục sản phẩm' },
+    { value: 'page',     label: 'Trang tĩnh' },
+    { value: 'project',  label: 'Dự án' },
+    { value: 'post',     label: 'Tin tức' },
+];
+
+export const EMPTY_FORM = {
+    name: '', link: '', type: 'custom',
+    parent_id: 0, sort_order: 0,
+    position: 'mainmenu', status: 1, table_id: null
+};

@@ -4,11 +4,14 @@ import Container from '@/components/public/ui/Container';
 import { useEstimateOptions, useCalculateEstimate } from '@/hooks/public/usePublicEstimate';
 import { usePublicConfig } from '@/hooks/public/usePublicConfig';
 import EstimateBanner from '@/components/public/estimate/EstimateBanner';
+import { useTrackView } from '@/hooks/public/useTrackView';
+
 
 export default function EstimatePage() {
   const { options, loading: loadingOptions } = useEstimateOptions();
   const { calculate, result, loading: calculating } = useCalculateEstimate();
   const { config, loading: configLoading } = usePublicConfig();
+useTrackView({ page_type: 'estimate' });
 
   const [formData, setFormData] = useState({
     length: 20,

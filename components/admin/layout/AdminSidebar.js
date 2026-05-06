@@ -19,6 +19,7 @@ export default function AdminSidebar() {
 
   const menuItems = [
     { label: 'TỔNG QUAN', href: '/admin/dashboard', icon: <MdDashboard size={20} /> },
+    { label: 'Analytics', href: '/admin/analytics', icon: '📊' },
     { label: 'DỰ TOÁN', href: '/admin/estimates', icon: <MdCalculate size={20} /> },
     { label: 'SẢN PHẨM', href: '/admin/products', icon: <MdInventory2 size={20} /> },
     { label: 'DANH MỤC', href: '/admin/categories', icon: <MdCategory size={20} /> },

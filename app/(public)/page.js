@@ -12,7 +12,7 @@ import VideoScrollSection from '@/components/public/home/VideoScrollSection';
 import { postService } from '@/services/postService';
 import { configService } from '@/services/configService';
 import { categoryService } from '@/services/categoryService';
-
+import TrackPageView from '@/components/public/home/TrackPageView';
 export default async function HomePage() {
     const [
         introRes,
@@ -34,21 +34,23 @@ export default async function HomePage() {
         postService.getAll({ post_type: 'certificate' })
     ]);
 
-    const config      = configRes?.data || {};
-    const introData   = introRes?.data?.[0] || null;
+
+    const config = configRes?.data || {};
+    const introData = introRes?.data?.[0] || null;
     const projectData = allProjectsRes?.data || [];
-    const newsData    = newsRes?.data || [];
-    const catData     = categoryRes?.data || [];
+    const newsData = newsRes?.data || [];
+    const catData = categoryRes?.data || [];
     const productData = productRes?.data || [];
     const partnerData = partnerRes?.data || [];
-    const certData    = certRes?.data || [];
+    const certData = certRes?.data || [];
 
-    const introVideo   = config.meta?.find(m => m.meta_key === 'intro_video')?.meta_value || '';
-    const leftImages   = [projectData[0]?.image, newsData[0]?.image, catData[0]?.image].filter(Boolean);
-    const rightImages  = [projectData[1]?.image, newsData[1]?.image, catData[1]?.image].filter(Boolean);
+    const introVideo = config.meta?.find(m => m.meta_key === 'intro_video')?.meta_value || '';
+    const leftImages = [projectData[0]?.image, newsData[0]?.image, catData[0]?.image].filter(Boolean);
+    const rightImages = [projectData[1]?.image, newsData[1]?.image, catData[1]?.image].filter(Boolean);
 
     return (
         <>
+            <TrackPageView page_type="home" />
             <SEO title="Trang chủ - Tân Ngọc Lực Steel" config={config} />
 
             <div className="space-y-0">
@@ -103,7 +105,7 @@ export default async function HomePage() {
                     CTA cuối trang — sau khi đã hiểu và tin tưởng */}
                 <Contact config={config} />
 
-  
+
 
             </div>
         </>

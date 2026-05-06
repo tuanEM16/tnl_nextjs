@@ -6,12 +6,12 @@ import Container from '@/components/public/ui/Container';
 import { useProjectDetail } from '@/hooks/public/usePublicPosts'; 
 import ProjectBanner from '@/components/public/project/ProjectBanner';
 import ProjectMap from '@/components/public/project/ProjectMap';
-
+import { useTrackView } from '@/hooks/public/useTrackView';
 export default function ProjectDetail({ params }) {
   const { slug } = use(params);
-  
   // 🟢 ĐỊNH NGHĨA BIẾN PROJECT Ở ĐÂY ĐỂ HẾT LỖI "NOT DEFINED"
   const { project, loading } = useProjectDetail(slug); 
+  useTrackView({ page_type: 'project', ref_id: project?.id, ref_slug: project?.slug });
 
   if (loading) return (
     <div className="py-40 text-center font-black animate-pulse uppercase">
