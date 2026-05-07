@@ -15,10 +15,18 @@ import 'swiper/css/pagination';
 export default function ProjectBanner() {
   const { banners, loading } = usePublicBanners('project');
 
-  if (loading || banners.length === 0) return <div className="h-[80vh] bg-[#0e2188] animate-pulse" />;
+  if (loading || banners.length === 0) return (
+    <div 
+      className="h-[80vh] min-h-[600px] w-full animate-pulse" 
+      style={{ background: 'linear-gradient(135deg, #0e2188 0%, #e33127 85%, #4a0000 100%)' }}
+    />
+  );
 
   return (
-    <section className="relative h-[80vh] min-h-[600px] w-full bg-[#0e2188] overflow-hidden font-sans">
+    <section 
+      className="relative h-[80vh] min-h-[600px] w-full overflow-hidden font-sans"
+      style={{ background: 'linear-gradient(135deg, #0e2188 0%, #e33127 85%, #4a0000 100%)' }}
+    >
       <Swiper
         modules={[Autoplay, EffectFade, Pagination]}
         effect="fade"
@@ -35,30 +43,35 @@ export default function ProjectBanner() {
         {banners.map((banner) => (
           <SwiperSlide key={banner.id} className="relative overflow-hidden">
             {/* Background Image với hiệu ứng Scale nhẹ */}
-            <div className="absolute inset-0">
+            <div className="absolute inset-0 z-0">
               <img
                 src={getImageUrl(banner.image)}
                 alt={banner.name}
                 className="w-full h-full object-cover transform scale-105"
               />
-              {/* Lớp phủ Navy Gradient theo phong cách armenia.travel */}
-              <div className="absolute inset-0 bg-gradient-to-r from-[#0e2188] via-[#0e2188]/60 to-transparent"></div>
+              {/* Lớp phủ Gradient đồng bộ phong cách Footer */}
+              <div 
+                className="absolute inset-0"
+                style={{ 
+                  background: 'linear-gradient(135deg, rgba(14,33,136,0.85) 0%, rgba(227,49,39,0.65) 85%, rgba(74,0,0,0.8) 100%)' 
+                }}
+              ></div>
             </div>
 
             {/* Content - Dạt trái kịch khung, Typography chuẩn chỉ */}
-            <div className="relative h-full w-full flex items-center">
+            <div className="relative z-10 h-full w-full flex items-center">
               <Container className="!mx-0 !max-w-none !pl-6 md:!pl-16 lg:!pl-24">
                 <div className="max-w-5xl space-y-8">
                   {/* Tag Category: Màu đỏ #e33127, Tracking rộng */}
                   <div className="flex items-center gap-4">
                     <span className="w-12 h-[2px] bg-[#e33127]"></span>
-                    <span className="text-[#e33127] font-bold text-xs tracking-[0.4em] uppercase">
+                    <span className="text-[#e33127] font-bold text-xs tracking-[0.4em] uppercase drop-shadow-md">
                       {banner.name}
                     </span>
                   </div>
 
                   {/* Title: Bold, Uppercase, Tighter tracking, Font size cực đại */}
-                  <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold text-white uppercase leading-[1.05] tracking-tighter">
+                  <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold text-white uppercase leading-[1.05] tracking-tighter drop-shadow-lg">
                     {banner.description || 'CÔNG TRÌNH TIÊU BIỂU'}
                   </h1>
 
@@ -88,7 +101,7 @@ export default function ProjectBanner() {
         .project-bullet {
           width: 40px;
           height: 2px;
-          background: rgba(255,255,255,0.2);
+          background: rgba(255,255,255,0.3);
           display: inline-block;
           margin: 0 6px;
           cursor: pointer;
@@ -102,6 +115,7 @@ export default function ProjectBanner() {
           bottom: 40px !important;
           text-align: right !important;
           padding-right: 6% !important;
+          z-index: 20 !important;
         }
         @media (max-width: 768px) {
           .swiper-pagination {

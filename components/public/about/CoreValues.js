@@ -7,76 +7,77 @@ import {
   MdLightbulb, 
   MdStar 
 } from 'react-icons/md';
+import Container from '../ui/Container';
 
-/**
- * Component hiển thị các giá trị cốt lõi.
- * @param {Array} data - Mảng các giá trị được truyền từ metaData.values trong bảng 'post'.
- */
 export default function CoreValues({ data }) {
-  // Đảm bảo data là một mảng để tránh lỗi khi thực hiện map()
   const values = Array.isArray(data) ? data : [];
-  
-  // Nếu không có dữ liệu hoặc mảng rỗng, component sẽ không hiển thị gì
   if (values.length === 0) return null;
 
-  // Hàm render icon dựa trên tên icon lưu trong database
   const renderIcon = (iconName) => {
     switch(iconName?.toLowerCase()) {
-      case 'quality': return <MdVerified size={40} />;
-      case 'engineering': return <MdEngineering size={40} />;
-      case 'military': return <MdMilitaryTech size={40} />;
-      case 'innovation': return <MdLightbulb size={40} />;
-      case 'star': return <MdStar size={40} />;
-      default: return <MdHandshake size={40} />;
+      case 'quality': return <MdVerified size={32} />;
+      case 'engineering': return <MdEngineering size={32} />;
+      case 'military': return <MdMilitaryTech size={32} />;
+      case 'innovation': return <MdLightbulb size={32} />;
+      case 'star': return <MdStar size={32} />;
+      default: return <MdHandshake size={32} />;
     }
   };
 
   return (
-    <div className="mb-32 font-archivo">
-      {/* 🔴 TIÊU ĐỀ KHỐI */}
-      <div className="text-center mb-16">
-        <span className="text-orange-600 font-black tracking-widest uppercase text-xs border-2 border-orange-600 px-4 py-2 inline-block mb-4 shadow-[4px_4px_0_0_#ea580c]">
-          // NỀN TẢNG VỮNG CHẮC
-        </span>
-        <h2 className="text-5xl md:text-6xl font-black italic uppercase tracking-tighter text-black">
-          GIÁ TRỊ CỐT LÕI
-        </h2>
-      </div>
-
-      {/* 🔴 DANH SÁCH GIÁ TRỊ (Dạng Grid) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 max-w-7xl mx-auto px-4 md:px-0">
-        {values.map((item, idx) => (
-          <div 
-            key={idx} 
-            className="relative p-8 md:p-10 border-4 border-black bg-white shadow-[12px_12px_0_0_#000] hover:bg-black hover:-translate-y-2 hover:shadow-[12px_12px_0_0_#ea580c] transition-all duration-300 group flex flex-col h-full overflow-hidden cursor-default"
-          >
-            {/* Số thứ tự chìm (Watermark) tạo phong cách Brutalism */}
-            <div className="absolute -top-6 -right-4 text-[160px] font-black text-gray-100 group-hover:text-zinc-800 transition-colors z-0 pointer-events-none select-none leading-none">
-              {String(idx + 1).padStart(2, '0')}
-            </div>
-
-            <div className="relative z-10 flex flex-col h-full">
-              {/* Icon bọc trong khối vuông */}
-              <div className="text-black group-hover:text-white mb-8 transition-colors bg-orange-100 group-hover:bg-orange-600 w-fit p-4 border-2 border-black group-hover:border-orange-600">
-                {renderIcon(item.icon)}
-              </div>
-
-              {/* Tiêu đề giá trị[cite: 1] */}
-              <h3 className="text-2xl md:text-3xl font-black italic uppercase mb-6 leading-none text-black group-hover:text-white transition-colors">
-                {item.title}
-              </h3>
-
-              {/* Nội dung mô tả (Hỗ trợ HTML từ ReactQuill)[cite: 1] */}
-              <div className="mt-auto">
-                <div 
-                  className="font-bold text-gray-500 group-hover:text-gray-300 leading-relaxed text-sm md:text-base transition-colors [&>p]:mb-4 last:[&>p]:mb-0 [&_strong]:text-black group-hover:[&_strong]:text-orange-400"
-                  dangerouslySetInnerHTML={{ __html: item.desc || '' }}
-                />
-              </div>
-            </div>
+    <section className="py-24 md:py-32 bg-white font-sans">
+      <Container>
+        {/* 🔴 HEADER SECTION: Premium Minimalism */}
+        <div className="text-center mb-20 space-y-4">
+          <div className="flex items-center justify-center gap-3">
+            <span className="w-12 h-[2px] bg-[#e33127]"></span>
+            <span className="text-[#e33127] font-bold text-xs tracking-[0.4em] uppercase">
+              Our Foundation
+            </span>
           </div>
-        ))}
-      </div>
-    </div>
+          <h2 className="text-4xl md:text-6xl font-bold uppercase tracking-tighter text-[#0e2188]">
+            GIÁ TRỊ <span className="text-zinc-300">CỐT LÕI</span>
+          </h2>
+        </div>
+
+        {/* 🔴 GRID 3 CỘT: Sạch sẽ, tinh tế */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 lg:gap-16">
+          {values.map((item, idx) => (
+            <div 
+              key={idx} 
+              className="relative group p-10 md:p-12 bg-white border border-zinc-100 rounded-sm hover:shadow-2xl hover:shadow-zinc-200 transition-all duration-500 overflow-hidden flex flex-col h-full"
+            >
+              {/* Số thứ tự watermark - Chỉnh mỏng nhẹ hơn */}
+              <div className="absolute top-0 right-0 text-[120px] font-bold text-zinc-50 group-hover:text-zinc-100 transition-colors pointer-events-none select-none leading-none -mr-4 -mt-4 opacity-50">
+                {String(idx + 1).padStart(2, '0')}
+              </div>
+
+              <div className="relative z-10 flex flex-col h-full">
+                {/* Icon Container: Màu đỏ thương hiệu, nền mờ nhẹ */}
+                <div className="text-[#e33127] mb-10 w-16 h-16 rounded-sm bg-zinc-50 flex items-center justify-center group-hover:bg-[#e33127] group-hover:text-white transition-all duration-500 shadow-sm">
+                  {renderIcon(item.icon)}
+                </div>
+
+                {/* Tiêu đề: Navy Blue, Bold, Tracking hẹp */}
+                <h3 className="text-2xl font-bold uppercase tracking-tight text-[#0e2188] mb-6 leading-tight group-hover:text-[#e33127] transition-colors duration-500">
+                  {item.title}
+                </h3>
+
+                {/* Nội dung mô tả: Dòng kẻ mờ hơn, chữ zinc mỏng */}
+                <div className="mt-auto">
+                  <div 
+                    className="font-medium text-zinc-500 leading-relaxed text-sm md:text-base transition-colors prose prose-zinc prose-strong:text-[#0e2188]"
+                    dangerouslySetInnerHTML={{ __html: item.desc || '' }}
+                  />
+                </div>
+              </div>
+
+              {/* Decorative line on hover */}
+              <div className="absolute bottom-0 left-0 w-0 h-[3px] bg-[#e33127] group-hover:w-full transition-all duration-700"></div>
+            </div>
+          ))}
+        </div>
+      </Container>
+    </section>
   );
 }

@@ -17,7 +17,12 @@ export default function Footer() {
   if (loading) return <footer className="bg-[#0e2188] h-40"></footer>;
 
   return (
-    <footer className="bg-[#0e2188] text-white pt-24 pb-12 relative overflow-hidden">
+    <footer className="min-h-screen flex items-center justify-center text-white"
+      style={{ 
+        // Đẩy màu đỏ xuống tận 75% để nhường 3/4 màn hình phía trên cho màu xanh
+        background: 'linear-gradient(135deg, #0e2188 0%, #e33127 85%, #4a0000 100%)' 
+      }}
+    >
       {/* Decorative Accent Line */}
       <div className="absolute top-0 left-0 w-full h-[4px] bg-[#e33127]" />
 

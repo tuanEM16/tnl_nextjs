@@ -28,7 +28,12 @@ export default function HeroBanner() {
     }
   });
 
-  if (bannerLoading || banners.length === 0) return <div className="h-screen bg-[#0e2188]" />;
+  if (bannerLoading || banners.length === 0) return (
+    <div 
+      className="h-screen w-full" 
+      style={{ background: 'linear-gradient(135deg, #0e2188 0%, #e33127 85%, #4a0000 100%)' }} 
+    />
+  );
 
   return (
     <section className="relative bg-white font-sans select-none">
@@ -36,27 +41,20 @@ export default function HeroBanner() {
       {/* 🔴 BANNER CHÍNH: "Rèm thép" (z-10) */}
 
       <motion.div
-
         initial={false}
-
         animate={{
-
-          clipPath: isExpanded
+           clipPath: isExpanded
 
             ? "inset(0% 0% 0% 0% round 0px 0px 0px 0px)"
 
             : "inset(0% 0% 17% 0% round 0px 0px 200px 200px)"
-
         }}
-
         transition={{
-
           duration: 1.8,
-
           ease: [0.25, 0.1, 0.25, 1]
-
         }}
-        className="relative h-screen w-full bg-[#0e2188] overflow-hidden z-10 shadow-2xl"
+        className="relative h-screen w-full overflow-hidden z-10 shadow-2xl"
+        style={{ background: 'linear-gradient(135deg, #0e2188 0%, #e33127 85%, #4a0000 100%)' }}
       >
         <Swiper
           modules={[Autoplay, EffectFade, Parallax, Pagination]}
@@ -76,24 +74,30 @@ export default function HeroBanner() {
                   alt={banner.name}
                   className="w-full h-full object-cover scale-105"
                 />
-                <div className="absolute inset-0 bg-gradient-to-r from-[#0e2188]/90 via-[#0e2188]/40 to-transparent"></div>
+                {/* Áp dụng phong cách Gradient mờ từ Footer để giữ độ tương phản tốt cho nội dung */}
+                <div 
+                  className="absolute inset-0"
+                  style={{ 
+                    background: 'linear-gradient(135deg, rgba(14,33,136,0.85) 0%, rgba(227,49,39,0.65) 85%, rgba(74,0,0,0.8) 100%)' 
+                  }}
+                ></div>
               </div>
 
               <div className="relative z-10 h-full w-full flex items-center">
                 <Container className="!mx-0 !max-w-none !pl-6 md:!pl-16 lg:!pl-24">
                   <div className="max-w-5xl space-y-8">
-                    {/* Accent: Đổi cam sang đỏ #e33127, bỏ Italic, tracking rộng */}
-                    <div data-swiper-parallax="-200" className="flex items-center gap-4 text-[#e33127] font-bold text-xs tracking-[0.5em] uppercase">
+                    {/* Accent: Đỏ #e33127, tracking rộng */}
+                    <div data-swiper-parallax="-200" className="flex items-center gap-4 text-[#e33127] font-bold text-xs tracking-[0.5em] uppercase drop-shadow-md">
                       <span className="w-12 h-[2px] bg-[#e33127]"></span>
                       {banner.name}
                     </div>
 
-                    {/* Headline: Bỏ italic, dùng Bold gọn gàng chuẩn armenia.travel */}
+                    {/* Headline: Bold gọn gàng */}
                     <h1 data-swiper-parallax="-400" className="text-5xl md:text-8xl font-bold text-white uppercase leading-[1.05] tracking-tighter">
                       {banner.description || 'TÂN NGỌC LỰC'}
                     </h1>
 
-                    {/* Button: Đổi style từ Shadow Industrial sang Premium Minimalist */}
+                    {/* Button: Premium Minimalist */}
                     <div data-swiper-parallax="-600" className="pt-6">
                       <Link href={banner.link || '/contact'}>
                         <button className="group relative overflow-hidden bg-[#e33127] text-white px-12 py-5 font-bold uppercase text-[11px] tracking-[0.2em] rounded-sm transition-all hover:bg-white hover:text-[#0e2188]">

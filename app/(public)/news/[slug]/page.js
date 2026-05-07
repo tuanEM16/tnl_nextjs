@@ -9,58 +9,80 @@ import { useTrackView } from '@/hooks/public/useTrackView';
 import 'react-quill-new/dist/quill.snow.css';
 
 // Component con hiển thị bài viết liên quan (cùng danh mục)
+// Component RelatedPosts - Style Premium (Armenia Travel)
 function RelatedPosts({ categoryId, currentId }) {
   const { posts, loading } = usePublicPosts({
     post_type: 'post',
     category_id: categoryId,
-    limit: 4, // lấy dư 1 chút để lọc
+    limit: 4,
   });
 
-  // Lọc bỏ bài hiện tại, chỉ lấy tối đa 3 bài
   const filtered = (posts || [])
     .filter((p) => p.id !== currentId)
     .slice(0, 3);
+
   if (loading) {
     return (
-      <section className="mt-20 border-t-2 border-zinc-200 pt-16">
-        <h2 className="text-3xl font-black uppercase italic tracking-tighter mb-10">
-          Bài viết liên quan
-        </h2>
-        <p className="text-zinc-400 text-center py-10 uppercase font-bold text-sm animate-pulse">
-          Đang tải...
-        </p>
+      <section className="mt-32 pt-20 border-t border-zinc-100">
+        <div className="flex items-center gap-4 mb-12">
+            <div className="w-10 h-[2px] bg-[#e33127]"></div>
+            <h2 className="text-3xl font-bold uppercase tracking-tight text-[#0e2188]">Đang tải...</h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="space-y-4">
+              <div className="aspect-[16/10] bg-zinc-50 animate-pulse rounded-sm" />
+              <div className="h-4 bg-zinc-50 animate-pulse w-1/3" />
+              <div className="h-6 bg-zinc-50 animate-pulse w-full" />
+            </div>
+          ))}
+        </div>
       </section>
     );
   }
 
-  if (!filtered.length) return null; // không có bài liên quan thì không hiển thị
+  if (!filtered.length) return null;
 
   return (
-    <section className="mt-20 border-t-2 border-zinc-200 pt-16">
-      <h2 className="text-3xl font-black uppercase italic tracking-tighter mb-10">
-        Bài viết liên quan
-      </h2>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+    <section className="mt-32 pt-20 border-t border-zinc-100">
+      <div className="flex items-center gap-4 mb-12">
+        <div className="w-10 h-[2px] bg-[#e33127]"></div>
+        <h2 className="text-3xl font-bold uppercase tracking-tight text-[#0e2188]">
+          Bài viết liên quan
+        </h2>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-10 lg:gap-12">
         {filtered.map((p) => (
           <Link
             key={p.id}
             href={`/news/${p.slug}`}
-            className="group bg-white border-2 border-black shadow-[6px_6px_0_0_#000] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all"
+            className="group flex flex-col h-full transition-all duration-500"
           >
-            <div className="aspect-video overflow-hidden border-b-2 border-black bg-gray-100">
+            {/* Hình ảnh - Grayscale sang Color khi hover */}
+            <div className="relative aspect-[16/10] overflow-hidden rounded-sm bg-zinc-50 border border-zinc-100 mb-6 shadow-sm group-hover:shadow-2xl group-hover:shadow-zinc-200 transition-all duration-700">
               <img
                 src={getImageUrl(p.image)}
                 alt={p.title}
-                className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500 group-hover:scale-105"
+                className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-1000 group-hover:scale-110"
               />
+              <div className="absolute inset-0 bg-[#0e2188]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             </div>
-            <div className="p-4">
-              <span className="text-[10px] font-black text-orange-600 uppercase">
-                {formatDate(p.created_at)}
-              </span>
-              <h4 className="text-lg font-black uppercase leading-tight mt-1 group-hover:text-orange-600 transition-colors">
+
+            {/* Thông tin bài viết */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold text-[#e33127] uppercase tracking-[0.2em]">
+                  {formatDate(p.created_at)}
+                </span>
+              </div>
+              <h4 className="text-lg font-bold uppercase leading-tight text-[#0e2188] group-hover:text-[#e33127] transition-colors duration-300 line-clamp-2">
                 {p.title}
               </h4>
+              <div className="pt-2 flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-y-2 group-hover:translate-y-0">
+                <span className="text-[9px] font-bold uppercase tracking-widest text-[#0e2188]">Xem chi tiết</span>
+                <div className="w-6 h-[1px] bg-[#e33127]"></div>
+              </div>
             </div>
           </Link>
         ))}

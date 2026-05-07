@@ -12,14 +12,11 @@ function ProductsContent() {
   const { categories } = usePublicCategories();
   const { products, loading, updateFilter } = usePublicProducts();
   
-  // 1. ĐỌC URL TỪ TRÊN THANH ĐỊA CHỈ
   const searchParams = useSearchParams();
   const categoryQuery = searchParams.get('category');
 
-  // 2. TỰ ĐỘNG GỌI HÀM LỌC KHI URL THAY ĐỔI
   useEffect(() => {
     if (categoryQuery && categories.length > 0) {
-      // Tìm ID chuẩn từ slug hoặc ID trên URL
       const matchedCategory = categories.find(
         (c) => c.slug === categoryQuery || String(c.id) === categoryQuery
       );
@@ -32,53 +29,63 @@ function ProductsContent() {
     } else if (!categoryQuery) {
       updateFilter('category_id', null);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categoryQuery, categories]); 
 
   return (
-    <section className="pb-20">
+    <section className="py-20 lg:py-32 bg-white font-sans">
       <Container>
-        {/* Đã bỏ <aside>, cho danh sách sản phẩm bung full width */}
-        <div className="space-y-12">
-          <div className="flex justify-between items-end border-b-4 border-black pb-4">
-              <div className="flex flex-col">
-                <span className="text-orange-600 font-black text-[10px] tracking-[0.3em] uppercase">// INVENTORY LIST</span>
-                <h2 className="text-4xl font-black italic uppercase tracking-tighter leading-none mt-1">
-                  KHO HÀNG NIÊM YẾT
+        <div className="space-y-16">
+          {/* 🔴 HEADER SECTION: Premium Minimalism */}
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-zinc-100 pb-10">
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                    <span className="w-12 h-[2px] bg-[#e33127]"></span>
+                    <span className="text-[#e33127] font-bold text-xs tracking-[0.4em] uppercase">Inventory List</span>
+                </div>
+                <h2 className="text-5xl md:text-6xl font-bold uppercase tracking-tighter leading-none text-[#0e2188]">
+                  KHO HÀNG <span className="text-zinc-300">NIÊM YẾT</span>
                 </h2>
               </div>
-              <span className="text-xs font-black bg-black text-white px-4 py-2 italic shadow-[4px_4px_0_0_#ea580c]">
-                {products.length} MÃ HÀNG
-              </span>
+              
+              <div className="flex items-center gap-4">
+                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Sẵn có trong kho</span>
+                <span className="text-2xl font-bold text-[#0e2188] italic tracking-tighter">
+                  {products.length.toString().padStart(2, '0')} <span className="text-xs uppercase not-italic text-zinc-400">Mã hàng</span>
+                </span>
+              </div>
           </div>
 
-          {/* GRID HIỂN THỊ CẬP NHẬT THÀNH 4 CỘT (Do đã bỏ sidebar) */}
+          {/* 🟢 PRODUCT GRID: 4 Columns desktop */}
           {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10">
               {[...Array(8)].map((_, i) => (
-                <div key={i} className="aspect-[3/4] bg-gray-100 animate-pulse border-2 border-black/5"></div>
+                <div key={i} className="space-y-4">
+                    <div className="aspect-square bg-zinc-50 animate-pulse rounded-sm"></div>
+                    <div className="h-4 bg-zinc-50 animate-pulse w-2/3"></div>
+                    <div className="h-6 bg-zinc-50 animate-pulse w-full"></div>
+                </div>
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10">
               {products.map(item => (
                 <ProductCard key={item.id} product={item} />
               ))}
             </div>
           )}
 
-          {/* TRƯỜNG HỢP KHÔNG CÓ HÀNG */}
+          {/* 🟡 EMPTY STATE */}
           {products.length === 0 && !loading && (
-            <div className="py-32 text-center border-4 border-dashed border-gray-100 flex flex-col items-center justify-center space-y-4">
-              <div className="text-6xl opacity-10">🏗️</div>
-              <p className="font-black italic text-gray-300 tracking-widest uppercase text-xl">
-                CHƯA CÓ DỮ LIỆU SẢN PHẨM PHÙ HỢP
+            <div className="py-32 text-center border border-dashed border-zinc-100 rounded-sm flex flex-col items-center justify-center space-y-6">
+              <div className="w-16 h-16 rounded-full bg-zinc-50 flex items-center justify-center text-3xl opacity-50">🏗️</div>
+              <p className="font-bold text-zinc-300 tracking-[0.2em] uppercase text-sm italic">
+                Chưa có dữ liệu sản phẩm trong mục này
               </p>
               <button 
                 onClick={() => updateFilter('category_id', null)}
-                className="text-orange-600 font-black uppercase text-xs border-b-2 border-orange-600 hover:text-black hover:border-black transition-all"
+                className="group flex items-center gap-3 text-[#e33127] font-bold uppercase text-[10px] tracking-widest transition-all"
               >
-                XÓA BỘ LỌC ĐỂ QUAY LẠI
+                <span className="border-b border-[#e33127] pb-1 group-hover:text-[#0e2188] group-hover:border-[#0e2188]">Xóa bộ lọc để quay lại</span>
               </button>
             </div>
           )}
@@ -96,8 +103,12 @@ export default function ProductsPage() {
         title="KHO THÉP NIÊM YẾT | TÂN NGỌC LỰC" 
         description="Cung cấp các dòng thép tấm, thép hình, thép xây dựng chất lượng cao. Báo giá nhanh chóng, vận chuyển tận công trình tại Tây Ninh." 
       />
-      {/* Next.js yêu cầu code có useSearchParams() phải được bọc trong Suspense */}
-      <Suspense fallback={<div className="py-40 text-center font-black animate-pulse text-[#0e2188] tracking-widest uppercase">ĐANG KẾT NỐI KHO DỮ LIỆU...</div>}>
+      <Suspense fallback={
+        <div className="py-60 flex flex-col items-center justify-center bg-white">
+            <div className="w-10 h-10 border-2 border-zinc-100 border-t-[#e33127] rounded-full animate-spin mb-4"></div>
+            <p className="font-bold text-[#0e2188] uppercase tracking-[0.3em] text-[10px]">Đang kết nối kho dữ liệu...</p>
+        </div>
+      }>
         <ProductsContent />
       </Suspense>
     </main>

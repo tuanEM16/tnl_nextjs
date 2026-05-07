@@ -16,10 +16,18 @@ export default function NewsBanner() {
   // 🟢 Bốc banner dành riêng cho trang 'news'
   const { banners, loading } = usePublicBanners('news');
 
-  if (loading || banners.length === 0) return <div className="h-[75vh] bg-[#0e2188] animate-pulse" />;
+  if (loading || banners.length === 0) return (
+    <div 
+      className="h-[75vh] w-full animate-pulse" 
+      style={{ background: 'linear-gradient(135deg, #0e2188 0%, #e33127 85%, #4a0000 100%)' }}
+    />
+  );
 
   return (
-    <section className="relative h-[75vh] min-h-[600px] w-full bg-[#0e2188] overflow-hidden font-sans">
+    <section 
+      className="relative h-[75vh] min-h-[600px] w-full overflow-hidden font-sans"
+      style={{ background: 'linear-gradient(135deg, #0e2188 0%, #e33127 85%, #4a0000 100%)' }}
+    >
       <Swiper
         modules={[Autoplay, EffectFade, Pagination]}
         effect="fade"
@@ -36,37 +44,42 @@ export default function NewsBanner() {
         {banners.map((banner) => (
           <SwiperSlide key={banner.id} className="relative overflow-hidden">
             
-            {/* 🟢 Background Image với lớp phủ Brand Color */}
-            <div className="absolute inset-0">
+            {/* 🟢 Background Image với lớp phủ Gradient đồng bộ */}
+            <div className="absolute inset-0 z-0">
               <img 
                 src={getImageUrl(banner.image)} 
                 alt={banner.name} 
                 className="w-full h-full object-cover" 
               />
-              {/* Lớp phủ Gradient Navy sang trọng theo phong cách cao cấp */}
-              <div className="absolute inset-0 bg-gradient-to-r from-[#0e2188] via-[#0e2188]/60 to-transparent"></div>
+              {/* Lớp phủ Gradient mờ dựa trên màu của Footer */}
+              <div 
+                className="absolute inset-0"
+                style={{ 
+                  background: 'linear-gradient(135deg, rgba(14,33,136,0.85) 0%, rgba(227,49,39,0.65) 85%, rgba(74,0,0,0.8) 100%)' 
+                }}
+              ></div>
             </div>
 
             {/* 🔴 CONTENT - Layout dạt trái kịch khung */}
-            <div className="relative h-full w-full flex items-center">
+            <div className="relative z-10 h-full w-full flex items-center">
               <Container className="!mx-0 !max-w-none !pl-6 md:!pl-16 lg:!pl-24">
                 <div className="max-w-4xl space-y-8">
                   {/* Label phong cách Armenia Travel: Chữ mảnh, tracking rộng */}
                   <div className="flex items-center gap-4">
                     <span className="w-12 h-[2px] bg-[#e33127]"></span>
-                    <span className="text-[#e33127] font-bold text-xs tracking-[0.4em] uppercase">
+                    <span className="text-[#e33127] font-bold text-xs tracking-[0.4em] uppercase drop-shadow-md">
                       {banner.name}
                     </span>
                   </div>
                   
                   {/* Tiêu đề tin tức: Bold, Uppercase, Hùng hồn */}
-                  <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold text-white uppercase leading-[1.1] tracking-tighter">
+                  <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold text-white uppercase leading-[1.1] tracking-tighter drop-shadow-lg">
                     {banner.description || 'TIN TỨC & SỰ KIỆN'}
                   </h1>
 
                   {/* Mô tả ngắn: Tinh tế với border đặc trưng */}
                   <div className="max-w-xl border-l-4 border-[#e33127] pl-8">
-                    <p className="text-zinc-300 text-lg md:text-xl font-medium leading-relaxed italic opacity-90">
+                    <p className="text-zinc-200 text-lg md:text-xl font-medium leading-relaxed italic opacity-90">
                       Cập nhật những diễn biến mới nhất về <br/> 
                       thị trường thép và công nghệ xây dựng.
                     </p>
@@ -104,7 +117,7 @@ export default function NewsBanner() {
         .news-bullet {
           width: 8px;
           height: 8px;
-          background: rgba(255,255,255,0.3);
+          background: rgba(255,255,255,0.4);
           display: inline-block;
           margin: 0 6px;
           border-radius: 50%;
@@ -119,6 +132,7 @@ export default function NewsBanner() {
           bottom: 40px !important;
           text-align: left !important;
           padding-left: 6rem !important;
+          z-index: 20 !important;
         }
         @media (max-width: 768px) {
           .swiper-pagination { padding-left: 2rem !important; }

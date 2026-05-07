@@ -97,3 +97,19 @@ export const useProjectDetail = (slug) => {
 
   return { project, loading };
 };
+// Hook lấy danh sách dự án + total (dùng cho projectsCount)
+export const useProjects = (params = {}) => {
+  const [data, setData] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    publicService.getPosts({ post_type: 'project', ...params }).then(res => {
+      setData(res?.data || res || []);
+      setTotal(res?.total || res?.data?.length || res?.length || 0);
+      setLoading(false);
+    });
+  }, [JSON.stringify(params)]);
+
+  return { data, total, loading };
+};

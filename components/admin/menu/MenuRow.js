@@ -2,16 +2,25 @@
 import { useState } from 'react';
 import { MdDragIndicator, MdEdit, MdDelete, MdExpandMore, MdExpandLess } from 'react-icons/md';
 
-export default function MenuRow({ item, level = 0, allMenus, onEdit, onDelete }) {
+export default function MenuRow({ item, level = 0, allMenus, onEdit, onDelete, provided }) {
     const [expanded, setExpanded] = useState(true);
     const children = allMenus.filter(m => parseInt(m.parent_id) === item.id);
 
     return (
         <>
-            <tr className={`border-b border-black/10 hover:bg-orange-50 transition-colors ${!item.status ? 'opacity-40' : ''}`}>
+            <tr 
+                ref={provided?.innerRef} 
+                {...provided?.draggableProps}
+                className={`border-b border-black/10 hover:bg-orange-50 transition-colors ${!item.status ? 'opacity-40' : ''}`}
+            >
                 <td className="px-4 py-3">
                     <div className="flex items-center gap-2" style={{ paddingLeft: `${level * 24}px` }}>
-                        <MdDragIndicator size={16} className="text-gray-300 cursor-grab" />
+                        
+                        {/* Gắn dragHandleProps vào khu vực icon để nắm kéo */}
+                        <div {...provided?.dragHandleProps} className="cursor-grab active:cursor-grabbing flex items-center">
+                            <MdDragIndicator size={16} className="text-gray-300 hover:text-black" />
+                        </div>
+
                         {children.length > 0 && (
                             <button onClick={() => setExpanded(e => !e)} className="text-gray-400 hover:text-black">
                                 {expanded ? <MdExpandLess size={16} /> : <MdExpandMore size={16} />}

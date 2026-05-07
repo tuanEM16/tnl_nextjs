@@ -25,7 +25,7 @@ export default async function HomePage() {
         certRes
     ] = await Promise.all([
         postService.getAll({ post_type: 'page', page_slug: 'trang_chu' }),
-        postService.getAll({ post_type: 'project', limit: 10 }),
+        postService.getAll({ post_type: 'project' }),
         configService.getAll(),
         postService.getAll({ post_type: 'post', limit: 3 }),
         categoryService.getAll({ limit: 10 }),
@@ -37,12 +37,16 @@ export default async function HomePage() {
 
     const config = configRes?.data || {};
     const introData = introRes?.data?.[0] || null;
-    const projectData = allProjectsRes?.data || [];
+    const allProjectsList = allProjectsRes?.data || [];
+    const projectData = allProjectsList.slice(0, 10);
     const newsData = newsRes?.data || [];
     const catData = categoryRes?.data || [];
     const productData = productRes?.data || [];
     const partnerData = partnerRes?.data || [];
     const certData = certRes?.data || [];
+    
+    // Lấy tổng số projects từ API response (giống cách trang about)
+    const totalProjects = allProjectsRes?.total || allProjectsList.length;
 
     const introVideo = config.meta?.find(m => m.meta_key === 'intro_video')?.meta_value || '';
     const leftImages = [projectData[0]?.image, newsData[0]?.image, catData[0]?.image].filter(Boolean);
@@ -64,7 +68,7 @@ export default async function HomePage() {
                     <IntroSection
                         data={introData}
                         config={config}
-                        projectsCount={allProjectsRes?.total || projectData.length}
+                        projectsCount={totalProjects}
                     />
                 )}
 

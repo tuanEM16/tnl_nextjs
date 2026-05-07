@@ -58,6 +58,10 @@ export const menuService = {
      * 7. Cập nhật thứ tự (Reorder)
      * @param {Array} items - Mảng chứa cấu trúc menu mới
      */
+    // Thêm hàm này vào menuService.js
+    updateOrder: async (ids) => {
+        return await axiosClient.post('/menus/update-order', { ids });
+    },
     reorder: async (items) => {
         const res = await api.post('/menus/reorder', { items });
         return res.data;

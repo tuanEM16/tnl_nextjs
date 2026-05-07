@@ -2,61 +2,154 @@
 import { usePublicBanners } from '@/hooks/public/usePublicBanners';
 import { getImageUrl } from '@/lib/utils';
 import Container from '../ui/Container';
+import Link from 'next/link';
+
+// Triệu hồi động cơ Swiper
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Autoplay, EffectFade, Pagination } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/effect-fade';
+import 'swiper/css/pagination';
 
 export default function ContactBanner() {
     const { banners, loading } = usePublicBanners('contact');
-    
-    if (loading || banners.length === 0) return <div className="h-[75vh] bg-[#0e2188] animate-pulse" />;
-    const banner = banners[0];
+
+    // CHỈ EARLY RETURN KHI ĐANG LOAD DỮ LIỆU.
+    if (loading) return (
+        <div
+            className="h-[75vh] min-h-[600px] w-full animate-pulse"
+            style={{ background: 'linear-gradient(135deg, #0e2188 0%, #e33127 85%, #4a0000 100%)' }}
+        />
+    );
+
+    // Fallback data static mặc định khi không bốc được data động (tránh trống trang)
+    const defaultBannerContent = {
+        id: 'static-contact-banner',
+        name: 'LIÊN HỆ',
+        description: 'KẾT NỐI VỚI CHÚNG TÔI',
+        image: '/static/banners/contact_default.jpg',
+        link: '/contact'
+    };
+
+    // Xác định danh sách sẽ hiển thị thực tế: data động hoặc data tĩnh fallback
+    const displayList = banners && banners.length > 0 ? banners : [defaultBannerContent];
 
     return (
-        <section className="relative h-[75vh] min-h-[600px] w-full bg-[#0e2188] overflow-hidden flex items-center font-sans">
-            {/* Background Image & Premium Overlay */}
-            <div className="absolute inset-0">
-                <img 
-                    src={getImageUrl(banner.image)} 
-                    alt={banner.name} 
-                    className="w-full h-full object-cover transition-transform duration-[10000ms] scale-105" 
-                />
-                <div className="absolute inset-0 bg-gradient-to-r from-[#0e2188] via-[#0e2188]/70 to-transparent"></div>
-            </div>
+        <section
+            className="relative h-[75vh] min-h-[600px] w-full overflow-hidden font-sans"
+            style={{ background: 'linear-gradient(135deg, #0e2188 0%, #e33127 85%, #4a0000 100%)' }}
+        >
+            <Swiper
+                modules={[Autoplay, EffectFade, Pagination]}
+                effect="fade"
+                fadeEffect={{ crossFade: true }}
+                autoplay={{ delay: 6000, disableOnInteraction: false }}
+                loop={displayList.length > 1} // Loop dựa trên độ dài của danh sách hiển thị
+                pagination={{
+                    clickable: true,
+                    bulletClass: 'contact-bullet',
+                    bulletActiveClass: 'contact-bullet-active'
+                }}
+                className="h-full w-full"
+            >
+                {displayList.map((banner) => (
+                    <SwiperSlide key={banner.id} className="relative overflow-hidden">
 
-            {/* Content Area - Left Aligned */}
-            <div className="relative w-full">
-                <Container className="!mx-0 !max-w-none !pl-6 md:!pl-16 lg:!pl-24">
-                    <div className="max-w-4xl space-y-8 text-left">
-                        {/* Accent Tag */}
-                        <div className="flex items-center gap-4">
-                            <span className="w-12 h-[2px] bg-[#e33127]"></span>
-                            <span className="text-[#e33127] font-bold text-xs tracking-[0.4em] uppercase">
-                                {banner.name || 'Contact Us'}
-                            </span>
+                        {/* 🟢 Background Image */}
+                        <div className="absolute inset-0 z-0">
+                            <img
+                                src={getImageUrl(banner.image)}
+                                alt={banner.name}
+                                className="w-full h-full object-cover"
+                            />
+                            {/* Lớp phủ Gradient đồng bộ */}
+                            <div
+                                className="absolute inset-0"
+                                style={{
+                                    background: 'linear-gradient(135deg, rgba(14,33,136,0.85) 0%, rgba(227,49,39,0.65) 85%, rgba(74,0,0,0.8) 100%)'
+                                }}
+                            ></div>
                         </div>
 
-                        {/* Heading */}
-                        <h1 className="text-6xl md:text-8xl lg:text-9xl font-bold text-white uppercase leading-[1.05] tracking-tighter">
-                            {banner.description || 'KẾT NỐI VỚI CHÚNG TÔI'}
-                        </h1>
+                        {/* 🔴 CONTENT - dạt trái */}
+                        <div className="relative z-10 h-full w-full flex items-center">
+                            <Container className="!mx-0 !max-w-none !pl-6 md:!pl-16 lg:!pl-24">
+                                <div className="max-w-4xl space-y-8">
+                                    {/* text dynamic / static từ object banner */}
+                                    <div className="flex items-center gap-4">
+                                        <span className="w-12 h-[2px] bg-[#e33127]"></span>
+                                        <span className="text-[#e33127] font-bold text-xs tracking-[0.4em] uppercase drop-shadow-md">
+                                            {banner.name}
+                                        </span>
+                                    </div>
 
-                        {/* Minimalist Accent Line */}
-                        <div className="relative pt-4">
-                            <div className="w-24 h-[4px] bg-[#e33127] rounded-sm"></div>
+                                    {/* description logic unchanged - use fallback for extra safety here */}
+                                    <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold text-white uppercase leading-[1.1] tracking-tighter drop-shadow-lg">
+                                        {banner.description || 'KẾT NỐI VỚI CHÚNG TÔI'}
+                                    </h1>
+
+                                    {/* Mô tả ngắn */}
+                                    <div className="max-w-xl border-l-4 border-[#e33127] pl-8">
+                                        <p className="text-zinc-200 text-lg md:text-xl font-medium leading-relaxed italic opacity-90">
+                                            Đội ngũ chuyên gia Tân Ngọc Lực luôn sẵn sàng <br />
+                                            lắng nghe và giải đáp mọi thắc mắc.
+                                        </p>
+                                    </div>
+
+                                    {/* buttons unchanged - use banner.link */}
+                                    <div className="flex flex-wrap gap-6 pt-6">
+                                        <Link href={banner.link || '#'}>
+                                            <button className="bg-[#e33127] text-white px-12 py-5 font-bold uppercase text-[11px] tracking-[0.2em] rounded-sm transition-all hover:bg-white hover:text-[#0e2188] shadow-xl shadow-black/20">
+                                                XEM CHI TIẾT
+                                            </button>
+                                        </Link>
+
+                                        <Link href="/contact">
+                                            <button className="border border-white/30 text-white px-12 py-5 font-bold uppercase text-[11px] tracking-[0.2em] rounded-sm transition-all hover:bg-white hover:text-[#0e2188] backdrop-blur-sm">
+                                                NHẬN BÁO GIÁ
+                                            </button>
+                                        </Link>
+                                    </div>
+                                </div>
+                            </Container>
                         </div>
+                    </SwiperSlide>
+                ))}
+            </Swiper>
 
-                        <p className="max-w-2xl text-zinc-300 text-lg md:text-xl font-medium leading-relaxed opacity-90 italic">
-                            Đội ngũ chuyên gia Tân Ngọc Lực luôn sẵn sàng lắng nghe <br />
-                            và giải đáp mọi thắc mắc về giải pháp thép tối ưu.
-                        </p>
-                    </div>
-                </Container>
-            </div>
-
-            {/* Bottom Decorative Text */}
+            {/* Decorative Text Bottom Right */}
             <div className="absolute bottom-12 right-12 hidden xl:block pointer-events-none z-10 select-none">
-                <p className="text-white/5 font-bold text-[120px] leading-none uppercase tracking-tighter">
-                    SUPPORT
+                <p className="text-white/5 font-bold text-8xl tracking-tighter uppercase">
+                    LIÊN_HỆ
                 </p>
             </div>
+
+            {/* Styles unchanged */}
+            <style jsx global>{`
+        .contact-bullet {
+          width: 8px;
+          height: 8px;
+          background: rgba(255,255,255,0.4);
+          display: inline-block;
+          margin: 0 6px;
+          border-radius: 50%;
+          cursor: pointer;
+          transition: all 0.3s ease;
+        }
+        .contact-bullet-active {
+          background: #e33127;
+          transform: scale(1.5);
+        }
+        .swiper-pagination {
+          bottom: 40px !important;
+          text-align: left !important;
+          padding-left: 6rem !important;
+          z-index: 20 !important;
+        }
+        @media (max-width: 768px) {
+          .swiper-pagination { padding-left: 2rem !important; }
+        }
+      `}</style>
         </section>
     );
 }
