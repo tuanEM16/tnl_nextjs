@@ -8,15 +8,21 @@ const nextConfig = {
         port: '5000',
         pathname: '/**',
       },
-    ],
-
-    dangerouslyAllowLocalIP: true, 
-
-    localPatterns: [
       {
-        pathname: '**',
+        protocol: 'https',
+        hostname: 'tnl-nodejs.onrender.com',
+        pathname: '/**',
       },
     ],
+  },
+
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: `https://tnl-nodejs.onrender.com/api/:path*`,
+      },
+    ];
   },
 };
 

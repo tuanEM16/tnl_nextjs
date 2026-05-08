@@ -79,9 +79,6 @@ export const useAuthTranslations = () => {
     return { language, setLanguage, t: trans[language] };
 };
 
-// hooks/useAuthForms.js
-
-// ... (useAuthTranslations giữ nguyên) ...
 
 // ==================== CONFIGS (Bản chống lỗi data) ====================
 // hooks/useAuthForms.js
