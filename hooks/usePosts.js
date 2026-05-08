@@ -386,7 +386,7 @@ export const useEditorTools = (quillRef) => {
       uploadData.append('image', file);
       
       try {
-        const res = await fetch('http://localhost:5000/api/posts/upload-content', { 
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/posts/upload-content`, {
           method: 'POST', 
           body: uploadData 
         });
@@ -395,7 +395,7 @@ export const useEditorTools = (quillRef) => {
         if (result.filename && quillRef.current) {
           const editor = quillRef.current.getEditor();
           const range = editor.getSelection(true);
-          editor.insertEmbed(range.index, 'image', `http://localhost:5000/uploads/${result.filename}`);
+          editor.insertEmbed(range.index, 'image', `${process.env.NEXT_PUBLIC_IMAGE_URL}/uploads/${result.filename}`);
         }
       } catch (error) {
         console.error('Lỗi upload ảnh nội dung:', error);
