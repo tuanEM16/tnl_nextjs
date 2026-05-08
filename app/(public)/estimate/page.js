@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState,useMemo } from 'react';
 import Container from '@/components/public/ui/Container';
 import { useEstimateOptions, useCalculateEstimate } from '@/hooks/public/usePublicEstimate';
 import { usePublicConfig } from '@/hooks/public/usePublicConfig';
@@ -40,6 +40,33 @@ useTrackView({ page_type: 'estimate' });
 
   const formatCurrency = (val) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
 
+  // 🟢 THÊM ĐOẠN NÀY ĐỂ GỘP NHÓM TÌM GIÁ MIN - MAX
+  const summarizedPriceRules = useMemo(() => {
+    if (!options?.priceRules || options.priceRules.length === 0) return [];
+
+    // Gom nhóm theo tên hạng mục (item_name)
+    const grouped = options.priceRules.reduce((acc, rule) => {
+      const key = rule.item_name;
+      if (!acc[key]) {
+        acc[key] = {
+          item_name: rule.item_name,
+          unit: rule.unit,
+          min: rule.unit_price,
+          max: rule.unit_price,
+          materials: [rule.material_name] // Lưu mảng vật liệu để hiển thị
+        };
+      } else {
+        acc[key].min = Math.min(acc[key].min, rule.unit_price);
+        acc[key].max = Math.max(acc[key].max, rule.unit_price);
+        if (!acc[key].materials.includes(rule.material_name)) {
+          acc[key].materials.push(rule.material_name);
+        }
+      }
+      return acc;
+    }, {});
+
+    return Object.values(grouped);
+  }, [options?.priceRules]);
   if (loadingOptions || configLoading) {
     return <div className="py-32 text-center font-black tracking-widest text-[#0e2188]">ĐANG TẢI DỮ LIỆU...</div>;
   }
@@ -256,16 +283,26 @@ useTrackView({ page_type: 'estimate' });
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-zinc-200 text-sm">
-                        {options?.priceRules?.length > 0 ? (
-                          options.priceRules.map((rule, idx) => (
+                        {summarizedPriceRules.length > 0 ? (
+                          summarizedPriceRules.map((rule, idx) => (
                             <tr key={idx} className="hover:bg-zinc-50 transition-colors">
                               <td className="px-4 py-3 text-zinc-800 font-medium">
                                 {rule.item_name}
-                                <span className="block text-xs text-zinc-400 mt-1">{rule.usage_name}</span>
                               </td>
-                              <td className="px-4 py-3 text-zinc-600">{rule.material_name}</td>
+                              <td className="px-4 py-3 text-zinc-600">
+                                {/* Nếu có nhiều loại vật liệu thì hiển thị chữ Nhiều tùy chọn, trỏ chuột vào sẽ thấy chi tiết */}
+                                <span title={rule.materials.join(', ')}>
+                                  {rule.materials.length > 1 ? 'Nhiều tùy chọn' : rule.materials[0]}
+                                </span>
+                              </td>
                               <td className="px-4 py-3 text-right font-bold text-[#e33127] whitespace-nowrap">
-                                {formatCurrency(rule.unit_price)} <span className="text-zinc-500 text-xs font-normal">/ {rule.unit}</span>
+                                {/* Nếu giá min = max thì in 1 giá, ngược lại in từ A - B */}
+                                {rule.min === rule.max ? (
+                                  formatCurrency(rule.min)
+                                ) : (
+                                  `${formatCurrency(rule.min)} - ${formatCurrency(rule.max)}`
+                                )}
+                                <span className="text-zinc-500 text-xs font-normal ml-1">/ {rule.unit}</span>
                               </td>
                             </tr>
                           ))

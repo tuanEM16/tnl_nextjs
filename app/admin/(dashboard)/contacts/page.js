@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react'; // 🟢 Nhớ import useEffect nhé
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useContacts } from '@/hooks/useContacts';
 import { CONTACT_STATUS } from '@/types';
@@ -13,15 +13,12 @@ import AdminModal from '@/components/admin/ui/AdminModal';
 import { MdDelete, MdEmail, MdPhone, MdHourglassEmpty, MdSearch, MdVisibility } from 'react-icons/md';
 
 export default function ContactListPage() {
-    // 🟢 1. State để gõ phím (phải cực nhanh)
     const [searchTerm, setSearchTerm] = useState('');
-    // 🟢 2. State để search (đã delay 500ms)
     const [query, setQuery] = useState('');
-    
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [itemToDelete, setItemToDelete] = useState(null);
 
-    // 🟢 3. CƠ CHẾ GIẢM GIẬT (DEBOUNCE)
+    // DEBOUNCE TÌM KIẾM
     useEffect(() => {
         const handler = setTimeout(() => {
             setQuery(searchTerm);
@@ -29,67 +26,75 @@ export default function ContactListPage() {
         return () => clearTimeout(handler);
     }, [searchTerm]);
 
-    // 🟢 4. DÙNG 'query' ĐỂ GỌI API (Chỉ gọi khi query thay đổi)
     const { contacts, loading, deleteContact } = useContacts({ keyword: query });
 
     const columns = [
         {
-            header: 'KHÁCH HÀNG',
+            header: 'Khách hàng',
             render: (row) => (
-                <span className="font-black text-2xl tracking-tighter block text-black group-hover:text-orange-600 transition-colors">
+                <div className="font-semibold text-base text-gray-900 group-hover:text-[#0e2188] transition-colors">
                     {row.name}
-                </span>
-            )
-        },
-        {
-            header: 'LIÊN LẠC',
-            render: (row) => (
-                <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-xs font-black"><MdPhone className="text-orange-600" /> {row.phone}</div>
-                    <div className="flex items-center gap-2 text-[10px] text-gray-400 italic lowercase"><MdEmail /> {row.email}</div>
                 </div>
             )
         },
         {
-            header: 'THỜI GIAN',
+            header: 'Thông tin liên lạc',
             render: (row) => (
-                <div className="text-[10px] font-black text-gray-400 italic">
+                <div className="space-y-1.5">
+                    <div className="flex items-center gap-2 text-sm text-gray-700 font-medium">
+                        <MdPhone className="text-gray-400" size={16} /> {row.phone}
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                        <MdEmail className="text-gray-400" size={16} /> {row.email}
+                    </div>
+                </div>
+            )
+        },
+        {
+            header: 'Thời gian',
+            render: (row) => (
+                <div className="text-sm font-medium text-gray-600">
                     {formatDate(row.created_at)}
                 </div>
             )
         },
         {
-            header: 'TRẠNG THÁI',
+            header: 'Trạng thái',
             className: 'text-center',
             cellClassName: 'text-center',
             render: (row) => (
                 row.status === 0 ? (
-                    <span className="inline-flex items-center gap-1 px-3 py-1 bg-orange-600 text-white text-[9px] font-black italic shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
-                        <MdHourglassEmpty /> NEW REQUEST
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-50 text-red-700 text-xs font-semibold border border-red-100">
+                        <MdHourglassEmpty size={14} /> Mới
                     </span>
                 ) : (
-                    <span className="px-3 py-1 bg-gray-100 text-gray-400 text-[9px] font-black italic border border-black/5">
-                        {CONTACT_STATUS[row.status] || 'PROCESSED'}
+                    <span className="inline-flex items-center px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-100">
+                        {CONTACT_STATUS[row.status] || 'Đã xử lý'}
                     </span>
                 )
             )
         },
         {
-            header: 'QUẢN LÝ',
+            header: 'Thao tác',
             className: 'text-right',
             render: (row) => (
-                <div className="flex justify-end gap-6 text-black">
-                    <Link href={`/admin/contacts/${row.id}/show`} className="hover:text-orange-600 transition-transform hover:scale-125">
-                        <MdVisibility size={22} />
+                <div className="flex justify-end gap-3 text-gray-400">
+                    <Link 
+                        href={`/admin/contacts/${row.id}/show`} 
+                        className="p-2 bg-gray-50 rounded-lg hover:text-[#0e2188] hover:bg-blue-50 transition-colors"
+                        title="Xem chi tiết"
+                    >
+                        <MdVisibility size={20} />
                     </Link>
                     <button
                         onClick={() => {
                             setItemToDelete(row);
                             setIsModalOpen(true);
                         }}
-                        className="hover:text-red-600 transition-transform hover:scale-125"
+                        className="p-2 bg-gray-50 rounded-lg hover:text-red-600 hover:bg-red-50 transition-colors"
+                        title="Xóa liên hệ"
                     >
-                        <MdDelete size={22} />
+                        <MdDelete size={20} />
                     </button>
                 </div>
             )
@@ -97,40 +102,43 @@ export default function ContactListPage() {
     ];
 
     return (
-        <div className="space-y-12 pb-20 font-archivo uppercase">
-            <PageHeader title="LIÊN HỆ" subTitle="Customer Inquiry Line" />
+        <div className="space-y-8 pb-12 font-sans">
+            <PageHeader title="Quản lý Liên hệ" subTitle="Danh sách khách hàng yêu cầu tư vấn và báo giá" />
 
-            {/* 🔴 THANH TÌM KIẾM NICKELBRONX */}
-            <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none">
-                    <MdSearch size={28} className="text-black group-focus-within:text-orange-600 transition-colors" />
+            {/* 🔴 THANH TÌM KIẾM - MODERN STYLE */}
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                <div className="relative group max-w-2xl">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <MdSearch size={24} className="text-gray-400 group-focus-within:text-[#0e2188] transition-colors" />
+                    </div>
+                    <input
+                        type="text"
+                        placeholder="Tìm kiếm theo tên, email hoặc số điện thoại..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 pl-12 pr-12 text-sm text-gray-900 outline-none focus:bg-white focus:ring-2 focus:ring-[#0e2188]/20 focus:border-[#0e2188] transition-all placeholder:text-gray-400"
+                    />
+                    {searchTerm && (
+                        <button
+                            onClick={() => setSearchTerm('')}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-semibold text-gray-500 hover:text-[#e33127]"
+                        >
+                            Xóa
+                        </button>
+                    )}
                 </div>
-                <input
-                    type="text"
-                    placeholder="TÌM THEO TÊN, EMAIL HOẶC SỐ ĐIỆN THOẠI KHÁCH HÀNG..."
-                    // 🟢 DÙNG searchTerm Ở ĐÂY ĐỂ GÕ CHO MƯỢT
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full bg-white border-4 border-black p-6 pl-16 font-black text-sm tracking-widest outline-none focus:bg-orange-50 transition-all shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] placeholder:text-gray-300"
-                />
-                {searchTerm && (
-                    <button
-                        onClick={() => setSearchTerm('')}
-                        className="absolute right-6 top-1/2 -translate-y-1/2 font-black text-[10px] hover:text-orange-600 underline decoration-2"
-                    >
-                        CLEAR SEARCH
-                    </button>
-                )}
             </div>
 
-            <AdminTable columns={columns} data={contacts} loading={loading} />
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <AdminTable columns={columns} data={contacts} loading={loading} />
+            </div>
 
             <AdminModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 onConfirm={() => deleteContact(itemToDelete.id, itemToDelete.name)}
-                title="XÓA YÊU CẦU"
-                message={`BẠN CÓ CHẮC CHẮN MUỐN LOẠI BỎ YÊU CẦU LIÊN HỆ CỦA: ${itemToDelete?.name}?`}
+                title="Xác nhận xóa"
+                message={`Bạn có chắc chắn muốn xóa yêu cầu liên hệ của khách hàng: ${itemToDelete?.name}? Hành động này không thể hoàn tác.`}
             />
         </div>
     );

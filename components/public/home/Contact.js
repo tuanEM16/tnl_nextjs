@@ -1,4 +1,5 @@
 'use client';
+import { motion } from 'framer-motion';
 import Container from '../ui/Container';
 import { MdArrowForward } from 'react-icons/md';
 import Link from 'next/link';
@@ -6,14 +7,33 @@ import Link from 'next/link';
 export default function Contact({ config }) {
     const mapIframe = config?.map_iframe || config?.map_embed || "";
 
+    const containerVariants = {
+        hidden: { opacity: 0 },
+        visible: {
+            opacity: 1,
+            transition: { staggerChildren: 0.2 }
+        }
+    };
+
+    const slideLeft = {
+        hidden: { opacity: 0, x: -50 },
+        visible: { opacity: 1, x: 0, transition: { duration: 1.2, ease: "easeOut" } }
+    };
+
     return (
         <section className="py-32 bg-white font-sans overflow-hidden border-t border-zinc-100">
             <Container>
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24 items-center">
                     
                     {/* LEFT COLUMN: CONTENT & CTA */}
-                    <div className="lg:col-span-5 space-y-12">
-                        <div className="space-y-6">
+                    <motion.div 
+                        variants={containerVariants}
+                        initial="hidden"
+                        whileInView="visible"
+                        viewport={{ once: true, amount: 0.2 }}
+                        className="lg:col-span-5 space-y-12"
+                    >
+                        <motion.div variants={slideLeft} className="space-y-6">
                             <div className="flex items-center gap-3">
                                 <span className="w-12 h-[2px] bg-[#e33127]"></span>
                                 <span className="text-[#e33127] font-bold text-xs tracking-[0.4em] uppercase">
@@ -29,10 +49,10 @@ export default function Contact({ config }) {
                             <p className="max-w-md text-zinc-500 text-lg leading-relaxed">
                                 Kết nối với đội ngũ kỹ thuật <span className="text-[#0e2188] font-semibold">Tân Ngọc Lực</span> để nhận giải pháp và báo giá tối ưu nhất cho công trình của bạn.
                             </p>
-                        </div>
+                        </motion.div>
 
-                        {/* CTA BUTTON - Premium Style */}
-                        <div>
+                        {/* CTA BUTTON */}
+                        <motion.div variants={slideLeft}>
                             <Link
                                 href="/contact"
                                 className="inline-flex items-center gap-8 bg-[#e33127] text-white px-10 py-6 rounded-sm font-bold text-sm uppercase tracking-[0.2em] transition-all duration-500 hover:bg-[#0e2188] hover:gap-12 shadow-xl shadow-red-500/10 group"
@@ -40,10 +60,10 @@ export default function Contact({ config }) {
                                 Gửi yêu cầu ngay
                                 <MdArrowForward size={20} className="group-hover:translate-x-2 transition-transform" />
                             </Link>
-                        </div>
+                        </motion.div>
 
                         {/* Quick Contact Info */}
-                        <div className="pt-8 border-t border-zinc-100 grid grid-cols-2 gap-8">
+                        <motion.div variants={slideLeft} className="pt-8 border-t border-zinc-100 grid grid-cols-2 gap-8">
                             <div>
                                 <span className="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2">Hotline</span>
                                 <span className="text-[#0e2188] font-bold">{config?.hotline || "0900.xxx.xxx"}</span>
@@ -52,16 +72,26 @@ export default function Contact({ config }) {
                                 <span className="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2">Email</span>
                                 <span className="text-[#0e2188] font-bold">{config?.email || "contact@tanngocluc.vn"}</span>
                             </div>
-                        </div>
-                    </div>
+                        </motion.div>
+                    </motion.div>
 
                     {/* RIGHT COLUMN: MAP */}
-                    <div className="lg:col-span-7 relative">
-                        {/* Subtle Background Accent */}
-                        <div className="absolute -top-10 -right-10 w-64 h-64 bg-[#0e2188]/5 rounded-full -z-10 blur-3xl" />
+                    <motion.div 
+                        initial={{ opacity: 0, x: 50 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true, amount: 0.2 }}
+                        transition={{ duration: 1.5, ease: "easeOut" }}
+                        className="lg:col-span-7 relative"
+                    >
+                        <motion.div 
+                            initial={{ scale: 0 }}
+                            whileInView={{ scale: 1 }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 1.2, delay: 0.6 }}
+                            className="absolute -top-10 -right-10 w-64 h-64 bg-[#0e2188]/5 rounded-full -z-10 blur-3xl" 
+                        />
                         
                         <div className="relative aspect-video w-full rounded-sm overflow-hidden bg-zinc-50 shadow-2xl shadow-[#0e2188]/10 border border-zinc-100 group">
-                            {/* Map Overlay for Style */}
                             <div className="absolute inset-0 border-[12px] border-white pointer-events-none z-10" />
                             
                             <div
@@ -69,12 +99,17 @@ export default function Contact({ config }) {
                                 dangerouslySetInnerHTML={{ __html: mapIframe }}
                             />
                             
-                            {/* Decorative Corner */}
-                            <div className="absolute bottom-6 right-6 z-20 bg-[#0e2188] p-4 text-white hidden md:block">
+                            <motion.div 
+                                initial={{ opacity: 0, y: 30 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ duration: 0.8, delay: 1.0, ease: "easeOut" }}
+                                className="absolute bottom-6 right-6 z-20 bg-[#0e2188] p-4 text-white hidden md:block"
+                            >
                                 <p className="text-[10px] font-bold uppercase tracking-widest leading-none">Văn phòng đại diện</p>
-                            </div>
+                            </motion.div>
                         </div>
-                    </div>
+                    </motion.div>
 
                 </div>
             </Container>

@@ -1,28 +1,31 @@
 'use client';
+import { useState, useEffect } from 'react';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { MdTrendingUp, MdTrendingDown, MdRemove, MdRefresh, MdVisibility, MdSwapHoriz, MdContactPhone, MdArticle, MdMap, MdRequestQuote, MdInfo } from 'react-icons/md';
 
 // ── COLORS CHO BIỂU ĐỒ TRÒN ───────────────────────────────────────────────────
-const PIE_COLORS = ['#000000', '#ea580c', '#3b82f6', '#22c55e', '#a855f7', '#64748b'];
+const PIE_COLORS = ['#0e2188', '#e33127', '#3b82f6', '#10b981', '#8b5cf6', '#94a3b8'];
 
 // ── BIỂU ĐỒ TRÒN THUẦN SVG ────────────────────────────────────────────────────
 const PieChart = ({ data }) => {
+    const [tooltip, setTooltip] = useState(null);
     const total = data.reduce((sum, d) => sum + (Number(d.value) || 0), 0);
     let currentAngle = 0;
 
     if (total === 0) return (
-        <div className="flex items-center justify-center h-40 font-black italic text-gray-300 text-[10px] tracking-widest">
-            NO_DATA_SIGNAL
+        <div className="flex items-center justify-center h-40 font-medium text-gray-400 text-sm">
+            Chưa có dữ liệu
         </div>
     );
 
     return (
-        <div className="flex flex-col items-center gap-6 mt-4">
-            <svg viewBox="-1 -1 2 2" className="w-32 h-32 -rotate-90 overflow-visible drop-shadow-[4px_4px_0_rgba(0,0,0,0.2)]">
+        <div className="flex flex-col items-center gap-6 mt-4 relative w-full">
+            <svg viewBox="-1 -1 2 2" className="w-32 h-32 -rotate-90 overflow-visible">
                 {data.map((d, i) => {
                     const value = Number(d.value) || 0;
                     if (value === 0) return null;
                     const percentage = value / total;
+                    const percentText = Math.round(percentage * 100);
                     const angle = percentage * Math.PI * 2;
                     const startX = Math.cos(currentAngle);
                     const startY = Math.sin(currentAngle);
@@ -31,8 +34,32 @@ const PieChart = ({ data }) => {
                     const endY = Math.sin(currentAngle);
                     const largeArcFlag = percentage > 0.5 ? 1 : 0;
                     
+                    const handleMouseMove = (e) => {
+                        setTooltip({
+                            x: e.clientX,
+                            y: e.clientY,
+                            label: d.label,
+                            value: d.value,
+                            percent: percentText,
+                            color: d.color
+                        });
+                    };
+
+                    const handleMouseLeave = () => setTooltip(null);
+
                     if (percentage === 1) {
-                        return <circle key={i} cx="0" cy="0" r="1" fill={d.color} stroke="#000" strokeWidth="0.05" />
+                        return (
+                            <circle 
+                                key={i} 
+                                cx="0" 
+                                cy="0" 
+                                r="1" 
+                                fill={d.color} 
+                                className="hover:opacity-80 transition-opacity cursor-pointer"
+                                onMouseMove={handleMouseMove}
+                                onMouseLeave={handleMouseLeave}
+                            />
+                        );
                     }
 
                     const pathData = [
@@ -42,15 +69,39 @@ const PieChart = ({ data }) => {
                         `Z`
                     ].join(' ');
 
-                    return <path key={i} d={pathData} fill={d.color} stroke="#000" strokeWidth="0.05" className="hover:opacity-80 transition-opacity cursor-pointer" />;
+                    return (
+                        <path 
+                            key={i} 
+                            d={pathData} 
+                            fill={d.color} 
+                            className="hover:opacity-85 transition-opacity cursor-pointer stroke-white stroke-[0.03]" 
+                            onMouseMove={handleMouseMove}
+                            onMouseLeave={handleMouseLeave}
+                        />
+                    );
                 })}
             </svg>
-            <div className="flex flex-wrap justify-center gap-3 w-full px-2">
+
+            {/* Custom Tooltip */}
+            {tooltip && (
+                <div 
+                    className="fixed z-50 bg-gray-900 text-white text-xs px-3 py-2 rounded-lg shadow-xl pointer-events-none transform -translate-x-1/2 -translate-y-[130%]"
+                    style={{ left: tooltip.x, top: tooltip.y }}
+                >
+                    <div className="flex items-center gap-2 mb-1">
+                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: tooltip.color }}></span>
+                        <span className="font-semibold">{tooltip.label}</span>
+                    </div>
+                    <p className="text-gray-300 pl-4">{tooltip.value} lượt xem ({tooltip.percent}%)</p>
+                </div>
+            )}
+
+            <div className="flex flex-wrap justify-center gap-4 w-full px-2">
                 {data.map((d, i) => d.value > 0 && (
-                    <div key={i} className="flex items-center gap-1.5 text-[9px] font-black uppercase">
-                        <span className="w-3 h-3 border-2 border-black" style={{ backgroundColor: d.color }}></span>
-                        <span className="line-clamp-1 max-w-[90px]" title={d.label}>{d.label}</span>
-                        <span className="text-gray-400">({d.value})</span>
+                    <div key={i} className="flex items-center gap-2 text-xs font-medium text-gray-600">
+                        <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: d.color }}></span>
+                        <span className="line-clamp-1 max-w-[100px]" title={d.label}>{d.label}</span>
+                        <span className="text-gray-400 font-normal">({d.value})</span>
                     </div>
                 ))}
             </div>
@@ -61,26 +112,28 @@ const PieChart = ({ data }) => {
 // ── STAT CARD ─────────────────────────────────────────────────────────────────
 const StatCard = ({ label, value, sub, icon: Icon, accent = false, change }) => {
     const TrendIcon = change > 0 ? MdTrendingUp : change < 0 ? MdTrendingDown : MdRemove;
-    const trendColor = change > 0 ? 'text-green-600' : change < 0 ? 'text-red-600' : 'text-gray-400';
+    const trendColor = change > 0 ? 'text-emerald-600 bg-emerald-50' : change < 0 ? 'text-red-600 bg-red-50' : 'text-gray-500 bg-gray-100';
 
     return (
-        <div className={`border-[6px] border-black p-8 shadow-[12px_12px_0_0_#000] hover:translate-x-3 hover:translate-y-3 hover:shadow-none transition-all duration-200 ${accent ? 'bg-orange-600' : 'bg-white'}`}>
-            <div className="flex justify-between items-start mb-8">
-                <p className={`text-[10px] font-black tracking-[0.2em] uppercase ${accent ? 'text-white' : 'text-gray-400'}`}>{label}</p>
-                {Icon && <Icon size={28} className={accent ? 'text-white' : 'text-black'} />}
+        <div className={`rounded-2xl p-6 border transition-all duration-300 hover:shadow-md hover:-translate-y-1 ${accent ? 'bg-[#0e2188] border-[#0e2188] text-white shadow-lg shadow-[#0e2188]/20' : 'bg-white border-gray-100 shadow-sm'}`}>
+            <div className="flex justify-between items-start mb-4">
+                <div className={`p-3 rounded-xl ${accent ? 'bg-white/10 text-white' : 'bg-gray-50 text-gray-500'}`}>
+                    {Icon && <Icon size={24} />}
+                </div>
+                {change !== null && change !== undefined && (
+                    <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${trendColor}`}>
+                        <TrendIcon size={14} />
+                        {change > 0 ? '+' : ''}{change}%
+                    </div>
+                )}
             </div>
-            <div className="flex items-end justify-between">
-                <span className={`text-6xl font-black tracking-tighter leading-none ${accent ? 'text-white' : 'text-black'}`}>
+            <div>
+                <span className="text-3xl font-bold tracking-tight block mb-1">
                     {String(value ?? '—').padStart(2, '0')}
                 </span>
-                <div className="flex flex-col items-end gap-1">
-                    {change !== null && change !== undefined && (
-                        <div className={`flex items-center gap-1 text-xs font-black italic ${accent ? 'text-white' : trendColor}`}>
-                            <TrendIcon size={14} />
-                            {change > 0 ? '+' : ''}{change}%
-                        </div>
-                    )}
-                    {sub && <span className={`text-[9px] font-black italic ${accent ? 'text-orange-200' : 'text-gray-400'}`}>{sub}</span>}
+                <div className="flex flex-col gap-0.5">
+                    <p className={`text-sm font-medium ${accent ? 'text-blue-100' : 'text-gray-500'}`}>{label}</p>
+                    {sub && <span className={`text-xs ${accent ? 'text-blue-200' : 'text-gray-400'}`}>{sub}</span>}
                 </div>
             </div>
         </div>
@@ -89,11 +142,11 @@ const StatCard = ({ label, value, sub, icon: Icon, accent = false, change }) => 
 
 // ── NGUỒN TRAFFIC ─────────────────────────────────────────────────────────────
 const SOURCE_COLORS = {
-    Google: 'bg-blue-600',
-    Facebook: 'bg-blue-900',
+    Google: 'bg-blue-500',
+    Facebook: 'bg-blue-700',
     Zalo: 'bg-blue-400',
-    Direct: 'bg-black',
-    Other: 'bg-gray-500',
+    Direct: 'bg-gray-800',
+    Other: 'bg-gray-400',
 };
 
 // ── TRANG CHÍNH ───────────────────────────────────────────────────────────────
@@ -131,66 +184,67 @@ export default function AnalyticsPage() {
     ].filter(d => d.value > 0);
 
     return (
-        <div className="space-y-12 pb-20 font-archivo uppercase">
+        <div className="space-y-8 pb-12 font-sans">
 
             {/* ── HEADER ── */}
-            <header className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6 border-b-[6px] border-black pb-10">
+            <header className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
                 <div>
-                    <div className="bg-black text-orange-600 w-fit px-4 py-1 text-[10px] font-black tracking-[0.3em] italic mb-4 shadow-[4px_4px_0_0_#ea580c]">
-                        ANALYTICS // INTELLIGENCE_CENTER
-                    </div>
-                    <h1 className="text-6xl md:text-7xl font-black tracking-tighter leading-[0.85] text-black uppercase">
-                        DATA<br /><span className="text-orange-600">REPORT</span>
+                    <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+                        Báo cáo & Phân tích
                     </h1>
+                    <p className="text-sm text-gray-500 mt-1">
+                        Theo dõi lưu lượng truy cập và hiệu suất website của bạn.
+                    </p>
                 </div>
 
-                <div className="flex items-center gap-4">
-                    <div className="flex border-[4px] border-black overflow-hidden shadow-[6px_6px_0_0_#000]">
+                <div className="flex items-center gap-3">
+                    <div className="bg-gray-100 p-1 rounded-xl flex items-center shadow-inner">
                         {periodOptions.map(d => (
                             <button
                                 key={d}
                                 onClick={() => setDays(d)}
-                                className={`px-5 py-3 text-xs font-black transition-colors border-r-[3px] border-black last:border-r-0 ${days === d ? 'bg-black text-white' : 'bg-white text-black hover:bg-orange-50'}`}
+                                className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${days === d ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                             >
-                                {d}D
+                                {d} ngày
                             </button>
                         ))}
                     </div>
                     <button
                         onClick={refetch}
                         disabled={loading}
-                        className="p-4 border-[4px] border-black bg-white shadow-[6px_6px_0_0_#000] hover:translate-x-2 hover:translate-y-2 hover:shadow-none transition-all disabled:opacity-50"
+                        className="p-2.5 bg-white border border-gray-200 text-gray-600 rounded-xl shadow-sm hover:bg-gray-50 hover:text-[#0e2188] transition-all disabled:opacity-50"
+                        title="Làm mới dữ liệu"
                     >
-                        <MdRefresh size={22} className={loading ? 'animate-spin' : ''} />
+                        <MdRefresh size={20} className={loading ? 'animate-spin' : ''} />
                     </button>
                 </div>
             </header>
 
             {loading && !summary ? (
-                <div className="flex items-center gap-6 py-20 justify-center">
-                    <div className="w-14 h-14 border-[8px] border-black border-t-orange-600 animate-spin shadow-[6px_6px_0_0_#000]" />
-                    <p className="font-black italic text-xs tracking-[0.4em] animate-pulse">SYNCING_DATA_FEED...</p>
+                <div className="flex flex-col items-center justify-center min-h-[40vh] space-y-4">
+                    <div className="w-10 h-10 border-4 border-gray-200 border-t-[#0e2188] rounded-full animate-spin"></div>
+                    <p className="text-gray-500 font-medium text-sm">Đang đồng bộ dữ liệu...</p>
                 </div>
             ) : (
                 <>
                     {/* ── STAT CARDS ── */}
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                         <StatCard
                             label="Tổng lượt xem"
                             value={summary?.total_views ?? 0}
                             icon={MdVisibility}
                             change={summary?.view_change}
-                            sub={`SO VỚI ${days} NGÀY TRƯỚC`}
+                            sub={`So với ${days} ngày trước`}
                         />
                         <StatCard
                             label="Xem sản phẩm"
                             value={summary?.product_views ?? 0}
                             icon={MdVisibility}
-                            sub="PRODUCT_PAGE_HITS"
+                            sub="Lượt truy cập trang chi tiết"
                         />
                         <StatCard
-                            label="Trang khác"
-                            sub="HOME · NEWS · PROJECT"
+                            label="Trang thông tin"
+                            sub="Trang chủ, Tin tức, Dự án..."
                             value={(summary?.total_views ?? 0) - (summary?.product_views ?? 0)}
                             icon={MdVisibility}
                         />
@@ -199,18 +253,18 @@ export default function AnalyticsPage() {
                             value={`${summary?.conversions?.conversion_rate ?? '0.0'}%`}
                             icon={MdSwapHoriz}
                             accent
-                            sub="XEM → BÁO GIÁ/LIÊN HỆ"
+                            sub="Lượt xem → Báo giá/Liên hệ"
                         />
                     </div>
 
                     {/* ── 2 PIE CHARTS + TRAFFIC SOURCES ── */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
                         {/* Pie 1: Sản phẩm */}
-                        <div className="bg-white border-[6px] border-black p-6 shadow-[12px_12px_0_0_#000] flex flex-col">
-                            <div className="flex justify-between items-center mb-6 border-b-4 border-black pb-4">
-                                <h3 className="text-sm font-black italic tracking-widest">TỶ TRỌNG SẢN PHẨM</h3>
-                                <span className="text-[9px] font-black text-gray-400 italic">TOP_VIEWS</span>
+                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col">
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="text-base font-bold text-gray-900">Tỷ trọng Sản phẩm</h3>
+                                <span className="text-xs font-medium text-gray-400 bg-gray-100 px-2.5 py-1 rounded-full">Lượt xem</span>
                             </div>
                             <div className="flex-1 flex items-center justify-center">
                                 <PieChart data={productPieData} />
@@ -218,10 +272,10 @@ export default function AnalyticsPage() {
                         </div>
 
                         {/* Pie 2: Trang khác */}
-                        <div className="bg-white border-[6px] border-black p-6 shadow-[12px_12px_0_0_#000] flex flex-col">
-                            <div className="flex justify-between items-center mb-6 border-b-4 border-black pb-4">
-                                <h3 className="text-sm font-black italic tracking-widest">TỶ TRỌNG TRANG KHÁC</h3>
-                                <span className="text-[9px] font-black text-gray-400 italic">CATEGORIES</span>
+                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col">
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="text-base font-bold text-gray-900">Tỷ trọng Trang khác</h3>
+                                <span className="text-xs font-medium text-gray-400 bg-gray-100 px-2.5 py-1 rounded-full">Phân bổ</span>
                             </div>
                             <div className="flex-1 flex items-center justify-center">
                                 <PieChart data={otherPagesPieData} />
@@ -229,111 +283,116 @@ export default function AnalyticsPage() {
                         </div>
 
                         {/* Traffic sources */}
-                        <div className="bg-white border-[6px] border-black p-6 shadow-[12px_12px_0_0_#ea580c] flex flex-col">
-                            <div className="flex justify-between items-center mb-6 border-b-4 border-black pb-4">
-                                <h3 className="text-sm font-black italic tracking-widest">NGUỒN TRAFFIC</h3>
-                                <span className="text-[9px] font-black text-gray-400 italic">SOURCES</span>
+                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col">
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="text-base font-bold text-gray-900">Nguồn Traffic</h3>
+                                <span className="text-xs font-medium text-gray-400 bg-gray-100 px-2.5 py-1 rounded-full">Kênh dẫn</span>
                             </div>
                             {summary?.traffic_sources?.length > 0 ? (
-                                <div className="space-y-4">
+                                <div className="space-y-5">
                                     {summary.traffic_sources.map((src, i) => {
                                         const pct = Math.round((parseInt(src.total) / totalTrafficSrc) * 100);
-                                        const color = SOURCE_COLORS[src.source] || 'bg-gray-500';
+                                        const color = SOURCE_COLORS[src.source] || 'bg-gray-400';
                                         return (
                                             <div key={i}>
-                                                <div className="flex justify-between items-center mb-1">
-                                                    <span className="text-[11px] font-black">{src.source}</span>
-                                                    <span className="text-[11px] font-black text-gray-500">{src.total} ({pct}%)</span>
+                                                <div className="flex justify-between items-center mb-2">
+                                                    <span className="text-sm font-medium text-gray-700">{src.source}</span>
+                                                    <span className="text-sm font-semibold text-gray-900">{src.total} <span className="text-gray-400 font-normal text-xs ml-1">({pct}%)</span></span>
                                                 </div>
-                                                <div className="w-full h-3 bg-gray-100 border border-black overflow-hidden">
-                                                    <div className={`h-full ${color} transition-all duration-700`} style={{ width: `${pct}%` }} />
+                                                <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                                                    <div className={`h-full ${color} rounded-full transition-all duration-700`} style={{ width: `${pct}%` }} />
                                                 </div>
                                             </div>
                                         );
                                     })}
                                 </div>
                             ) : (
-                                <div className="flex items-center justify-center flex-1 text-[10px] font-black italic text-gray-300 tracking-widest">
-                                    NO_TRAFFIC_DATA
+                                <div className="flex items-center justify-center flex-1 text-sm font-medium text-gray-400">
+                                    Chưa có dữ liệu nguồn
                                 </div>
                             )}
                         </div>
                     </div>
 
                     {/* ── CONVERSION DETAIL + TOP PRODUCTS ── */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
                         {/* Conversion breakdown */}
-                        <div className="bg-black text-white border-[6px] border-black p-8 shadow-[12px_12px_0_0_#ea580c] space-y-6">
-                            <h3 className="text-sm font-black italic tracking-widest text-orange-600 border-b-4 border-white/20 pb-4">
-                                CONVERSION_FUNNEL
-                            </h3>
-                            {[
-                                { label: 'Xem sản phẩm', val: summary?.conversions?.product_views, icon: MdVisibility },
-                                { label: 'Gửi liên hệ', val: summary?.conversions?.contact_requests, icon: MdContactPhone },
-                                { label: 'Xem báo giá', val: summary?.estimate_views, icon: MdRequestQuote },
-                                { label: 'Xem dự án', val: summary?.project_views, icon: MdMap },
-                                { label: 'Xem tin tức', val: summary?.post_views, icon: MdArticle },
-                                { label: 'Xem giới thiệu', val: summary?.about_views, icon: MdInfo },
-                            ].map((item, i) => (
-                                <div key={i} className={`flex justify-between items-center pb-4 border-b border-white/10 ${item.highlight ? 'border-orange-600' : ''}`}>
-                                    <div className="flex items-center gap-3">
-                                        <item.icon size={16} className={item.highlight ? 'text-orange-600' : 'text-gray-400'} />
-                                        <span className={`text-[10px] font-black tracking-widest ${item.highlight ? 'text-orange-600' : 'text-gray-400'}`}>
-                                            {item.label}
+                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col">
+                            <h3 className="text-base font-bold text-gray-900 mb-6">Hành trình Chuyển đổi</h3>
+                            
+                            <div className="space-y-0 relative before:absolute before:inset-0 before:ml-4 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-gray-200 before:to-transparent">
+                                {[
+                                    { label: 'Xem sản phẩm', val: summary?.conversions?.product_views, icon: MdVisibility, color: 'text-blue-500', bg: 'bg-blue-50' },
+                                    { label: 'Xem báo giá', val: summary?.estimate_views, icon: MdRequestQuote, color: 'text-indigo-500', bg: 'bg-indigo-50' },
+                                    { label: 'Xem dự án', val: summary?.project_views, icon: MdMap, color: 'text-emerald-500', bg: 'bg-emerald-50' },
+                                    { label: 'Xem tin tức', val: summary?.post_views, icon: MdArticle, color: 'text-purple-500', bg: 'bg-purple-50' },
+                                    { label: 'Xem giới thiệu', val: summary?.about_views, icon: MdInfo, color: 'text-gray-500', bg: 'bg-gray-100' },
+                                    { label: 'Gửi liên hệ', val: summary?.conversions?.contact_requests, icon: MdContactPhone, color: 'text-[#e33127]', bg: 'bg-red-50', highlight: true },
+                                ].map((item, i) => (
+                                    <div key={i} className="relative flex items-center justify-between py-3 z-10 bg-white">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${item.bg}`}>
+                                                <item.icon size={16} className={item.color} />
+                                            </div>
+                                            <span className={`text-sm font-medium ${item.highlight ? 'text-gray-900 font-bold' : 'text-gray-600'}`}>
+                                                {item.label}
+                                            </span>
+                                        </div>
+                                        <span className={`text-lg font-bold ${item.highlight ? 'text-[#e33127]' : 'text-gray-900'}`}>
+                                            {String(item.val ?? 0).padStart(2, '0')}
                                         </span>
                                     </div>
-                                    <span className={`text-2xl font-black ${item.highlight ? 'text-orange-600' : 'text-white'}`}>
-                                        {String(item.val ?? 0).padStart(2, '0')}
-                                    </span>
-                                </div>
-                            ))}
-                            <div className="pt-2 text-center">
-                                <span className="text-4xl font-black text-orange-600">{summary?.conversions?.conversion_rate ?? '0.0'}%</span>
-                                <p className="text-[9px] font-black italic text-gray-500 mt-1">CONVERSION_RATE</p>
+                                ))}
+                            </div>
+
+                            <div className="mt-6 pt-6 border-t border-gray-100 text-center bg-gray-50 rounded-xl">
+                                <span className="text-3xl font-bold text-[#0e2188]">{summary?.conversions?.conversion_rate ?? '0.0'}%</span>
+                                <p className="text-xs font-medium text-gray-500 mt-1 pb-4">Tỷ lệ chuyển đổi tổng thể</p>
                             </div>
                         </div>
 
                         {/* Top products */}
-                        <div className="lg:col-span-2 bg-white border-[6px] border-black shadow-[12px_12px_0_0_#000] overflow-hidden">
-                            <div className="bg-black text-white px-8 py-4 flex justify-between items-center">
-                                <span className="text-[10px] font-black italic tracking-widest">TOP_PRODUCTS // MOST_VIEWED</span>
-                                <span className="text-orange-600 text-[10px] font-black">{days}D</span>
+                        <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                            <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                                <h3 className="text-base font-bold text-gray-900">Sản phẩm xem nhiều nhất</h3>
+                                <span className="text-xs font-semibold text-[#0e2188] bg-blue-50 px-3 py-1 rounded-full">{days} Ngày qua</span>
                             </div>
-                            <div className="divide-y-[4px] divide-black">
+                            
+                            <div className="divide-y divide-gray-100">
                                 {topProducts.length > 0 ? topProducts.map((p, i) => (
-                                    <div key={i} className="px-8 py-5 flex items-center justify-between hover:bg-orange-50 transition-colors">
-                                        <div className="flex items-center gap-6">
-                                            <span className="text-4xl font-black text-black/10 w-10 shrink-0">
-                                                {String(i + 1).padStart(2, '0')}
+                                    <div key={i} className="px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
+                                        <div className="flex items-center gap-4">
+                                            <span className={`text-lg font-bold w-6 text-center ${i < 3 ? 'text-[#e33127]' : 'text-gray-300'}`}>
+                                                {i + 1}
                                             </span>
                                             <div>
-                                                <div className="font-black text-sm text-black leading-tight">
+                                                <div className="font-semibold text-sm text-gray-900">
                                                     {p.product_name || p.ref_slug || 'Không rõ'}
                                                 </div>
                                                 {p.category_name && (
-                                                    <div className="text-[10px] font-bold text-gray-400 mt-0.5">
+                                                    <div className="text-xs font-medium text-gray-500 mt-0.5">
                                                         {p.category_name}
                                                     </div>
                                                 )}
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-3 shrink-0">
-                                            <div className="text-right">
-                                                <span className="text-2xl font-black text-black">{p.views}</span>
-                                                <p className="text-[9px] font-black italic text-gray-400">VIEWS</p>
-                                            </div>
-                                            <div className="w-24 h-2 bg-gray-100 border border-black overflow-hidden">
+                                        <div className="flex items-center gap-6 shrink-0">
+                                            <div className="w-24 h-2 bg-gray-100 rounded-full overflow-hidden hidden sm:block">
                                                 <div
-                                                    className="h-full bg-orange-600"
+                                                    className="h-full bg-[#0e2188] rounded-full"
                                                     style={{ width: `${Math.min((p.views / (topProducts[0]?.views || 1)) * 100, 100)}%` }}
                                                 />
+                                            </div>
+                                            <div className="text-right w-16">
+                                                <span className="text-base font-bold text-gray-900">{p.views}</span>
+                                                <p className="text-[10px] font-medium text-gray-400 uppercase">Lượt xem</p>
                                             </div>
                                         </div>
                                     </div>
                                 )) : (
-                                    <div className="px-8 py-16 text-center text-[10px] font-black italic text-gray-300 tracking-widest">
-                                        NO_PRODUCT_DATA — START TRACKING BY ADDING useTrackView TO PRODUCT PAGES
+                                    <div className="px-6 py-16 text-center text-sm font-medium text-gray-400">
+                                        Chưa có dữ liệu lượt xem sản phẩm. Cần gắn tracking vào trang chi tiết.
                                     </div>
                                 )}
                             </div>

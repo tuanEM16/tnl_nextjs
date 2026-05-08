@@ -61,7 +61,6 @@ export const postService = {
     getPageCategories: () => api.get('/post-page-categories').then(res => res.data),
     createPageCategory: (data) => api.post('/post-page-categories', data).then(res => res.data),
     deletePageCategory: (id) => api.delete(`/post-page-categories/${id}`).then(res => res.data),
-    getAboutSections: () => apiClient.get('/about-sections'),
     getAboutSections: () => api.get('/about-sections').then(res => res.data),
     updateAboutSection: (id, data) => api.put(`/about-sections/${id}`, data, {
         headers: { 'Content-Type': 'multipart/form-data' }

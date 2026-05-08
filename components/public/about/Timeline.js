@@ -11,16 +11,16 @@ export default function Timeline({ data }) {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
-      transition: { staggerChildren: 0.2, delayChildren: 0.1 }
+      transition: { staggerChildren: 0.4, delayChildren: 0.2 }
     }
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 30 },
+    hidden: { opacity: 0, x: 50 },
     visible: {
       opacity: 1,
-      y: 0,
-      transition: { duration: 0.6, ease: "easeOut" }
+      x: 0,
+      transition: { duration: 1.2, ease: "easeOut" }
     }
   };
 
@@ -35,10 +35,10 @@ export default function Timeline({ data }) {
       <Container>
         {/* HEADER SECTION */}
         <motion.div 
-          initial={{ opacity: 0, y: -20 }}
+          initial={{ opacity: 0, y: -50 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
+          transition={{ duration: 1.5, ease: "easeOut" }}
           className="mb-24 space-y-6"
         >
           <div className="flex items-center gap-4">
@@ -47,7 +47,7 @@ export default function Timeline({ data }) {
               initial={{ scaleX: 0 }}
               whileInView={{ scaleX: 1 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.8, delay: 0.2 }}
+              transition={{ duration: 1.2, delay: 0.4 }}
               style={{ originX: 0 }}
             />
             <span className="text-[#e33127] font-bold text-xs tracking-[0.4em] uppercase font-medium">
@@ -158,17 +158,17 @@ export default function Timeline({ data }) {
             initial={{ scaleY: 0 }}
             whileInView={{ scaleY: 1 }}
             viewport={{ once: true }}
-            transition={{ duration: 1, delay: 0.5 }}
+            transition={{ duration: 1.5, delay: 0.8 }}
             style={{ originY: 0 }}
           />
         </motion.div>
 
         {/* Bottom Statistics or CTA can be added here */}
         <motion.div 
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.8, delay: 0.6 }}
+          transition={{ duration: 1.2, delay: 1.0, ease: "easeOut" }}
           className="mt-24 pt-16 border-t border-zinc-200"
         >
           <div className="flex flex-col md:flex-row gap-12 justify-between items-center">

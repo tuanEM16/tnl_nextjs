@@ -8,7 +8,7 @@ import { formatDate } from '@/lib/utils';
 import PageHeader from '@/components/admin/ui/PageHeader';
 import AdminModal from '@/components/admin/ui/AdminModal';
 
-import { MdDelete, MdCheckCircle, MdEmail, MdPhone, MdAccessTime, MdMessage } from 'react-icons/md';
+import { MdDelete, MdCheckCircle, MdEmail, MdPhone, MdAccessTime, MdMessage, MdPersonOutline } from 'react-icons/md';
 
 export default function ContactDetailPage() {
     const { id } = useParams();
@@ -19,96 +19,135 @@ export default function ContactDetailPage() {
 
     // 2. MÀN HÌNH CHỜ
     if (loading && !contact) return (
-        <div className="p-20 font-black italic animate-pulse uppercase tracking-[0.3em] text-center">
-            RETRIEVING MESSAGE PAYLOAD...
+        <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
+            <div className="w-10 h-10 border-4 border-gray-200 border-t-[#0e2188] rounded-full animate-spin"></div>
+            <p className="text-gray-500 font-medium text-sm">Đang tải thông tin liên hệ...</p>
         </div>
     );
 
     if (!contact) return null;
 
     return (
-        <div className="max-w-5xl space-y-12 pb-20 font-archivo uppercase">
+        <div className="max-w-5xl space-y-8 pb-12 font-sans">
             {/* 🔴 HEADER DÙNG CHUNG */}
             <PageHeader 
-                title="MESSAGE DETAIL" 
-                subTitle={`Inquiry ID: #${id}`} 
-                btnText="QUAY LẠI" 
+                title="Chi tiết Liên hệ" 
+                subTitle={`Mã yêu cầu: #${id}`} 
+                btnText="Quay lại danh sách" 
                 btnHref="/admin/contacts" 
                 isBack={true} 
             />
 
-            <div className="flex flex-col lg:flex-row gap-12">
+            <div className="flex flex-col lg:flex-row gap-8 items-start">
+                
                 {/* CỘT TRÁI: THÔNG TIN KHÁCH HÀNG (40%) */}
-                <div className="lg:w-2/5 space-y-6">
-                    <div className="border-4 border-black bg-white p-8 shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] space-y-8">
-                        <div className="space-y-1">
-                            <p className="text-[10px] font-black text-gray-400 italic tracking-widest">SENDER IDENTITY</p>
-                            <h2 className="text-4xl font-black tracking-tighter text-black">{contact.name}</h2>
+                <div className="w-full lg:w-5/12 space-y-6">
+                    <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6 md:p-8 relative overflow-hidden">
+                        {/* Background subtle accent */}
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50/50 rounded-full -translate-y-16 translate-x-16 pointer-events-none"></div>
+
+                        <div className="flex items-center gap-4 border-b border-gray-100 pb-6 mb-6">
+                            <div className="w-14 h-14 bg-gray-50 rounded-full flex items-center justify-center text-gray-400 shrink-0">
+                                <MdPersonOutline size={32} />
+                            </div>
+                            <div>
+                                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Người gửi</p>
+                                <h2 className="text-2xl font-bold text-gray-900 leading-tight">{contact.name}</h2>
+                            </div>
                         </div>
 
-                        <div className="space-y-4 border-t-2 border-black pt-6">
-                            <div className="flex items-center gap-4">
-                                <div className="bg-orange-600 text-white p-2 border-2 border-black shadow-[3px_3px_0_0_#000]"><MdPhone size={20}/></div>
+                        <div className="space-y-5 relative z-10">
+                            <div className="flex items-start gap-4">
+                                <div className="mt-0.5 p-2 bg-blue-50 text-[#0e2188] rounded-lg shrink-0">
+                                    <MdPhone size={18}/>
+                                </div>
                                 <div>
-                                    <p className="text-[9px] font-black text-gray-400 italic">PHONE NUMBER</p>
-                                    <p className="font-black text-xl tracking-tight">{contact.phone}</p>
+                                    <p className="text-xs font-medium text-gray-500 mb-0.5">Số điện thoại</p>
+                                    <p className="font-semibold text-gray-900 text-lg tracking-tight">{contact.phone}</p>
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-4">
-                                <div className="bg-black text-white p-2 border-2 border-black shadow-[3px_3px_0_0_rgba(0,0,0,0.2)]"><MdEmail size={20}/></div>
+                            <div className="flex items-start gap-4">
+                                <div className="mt-0.5 p-2 bg-gray-50 text-gray-600 rounded-lg shrink-0">
+                                    <MdEmail size={18}/>
+                                </div>
                                 <div>
-                                    <p className="text-[9px] font-black text-gray-400 italic">EMAIL ADDRESS</p>
-                                    <p className="font-bold text-sm lowercase underline decoration-2">{contact.email || 'N/A'}</p>
+                                    <p className="text-xs font-medium text-gray-500 mb-0.5">Email liên hệ</p>
+                                    <p className="font-medium text-gray-900">{contact.email || 'Không cung cấp'}</p>
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-4">
-                                <div className="bg-gray-200 text-black p-2 border-2 border-black shadow-[3px_3px_0_0_rgba(0,0,0,0.1)]"><MdAccessTime size={20}/></div>
+                            <div className="flex items-start gap-4">
+                                <div className="mt-0.5 p-2 bg-gray-50 text-gray-600 rounded-lg shrink-0">
+                                    <MdAccessTime size={18}/>
+                                </div>
                                 <div>
-                                    <p className="text-[9px] font-black text-gray-400 italic">RECEIVED AT</p>
-                                    <p className="font-black text-sm">{formatDate(contact.created_at)}</p>
+                                    <p className="text-xs font-medium text-gray-500 mb-0.5">Thời gian gửi</p>
+                                    <p className="font-medium text-gray-900">{formatDate(contact.created_at)}</p>
                                 </div>
                             </div>
                         </div>
 
                         {/* STATUS BADGE */}
-                        <div className={`p-4 border-4 border-black text-center font-black italic shadow-[6px_6px_0_0_#000] ${
-                            contact.status === 0 ? 'bg-yellow-400' : 'bg-green-500 text-white'
+                        <div className={`mt-8 py-3 px-4 rounded-xl text-center font-semibold text-sm border flex items-center justify-center gap-2 ${
+                            contact.status === 0 
+                            ? 'bg-red-50 border-red-100 text-red-600' 
+                            : 'bg-emerald-50 border-emerald-100 text-emerald-600'
                         }`}>
-                            {contact.status === 0 ? 'STATUS: NEW REQUEST' : 'STATUS: PROCESSED'}
+                            {contact.status === 0 ? (
+                                <>Trạng thái: <span>Mới / Chưa xử lý</span></>
+                            ) : (
+                                <>Trạng thái: <span>Đã xử lý</span></>
+                            )}
                         </div>
                     </div>
                 </div>
 
                 {/* CỘT PHẢI: NỘI DUNG TIN NHẮN (60%) */}
-                <div className="lg:w-3/5 space-y-8">
-                    <div className="relative border-4 border-black p-12 bg-white shadow-[12px_12px_0px_0px_rgba(234,88,12,0.1)] min-h-[300px]">
-                        <div className="absolute -top-5 left-8 bg-black text-white px-6 py-2 text-[10px] font-black uppercase tracking-widest italic border-2 border-white/20">
-                            <MdMessage className="inline mr-2" size={14}/> Message Payload
+                <div className="w-full lg:w-7/12 flex flex-col gap-6">
+                    
+                    {/* Message Box */}
+                    <div className="bg-white border border-gray-100 rounded-2xl shadow-sm p-6 md:p-8 flex-1 flex flex-col">
+                        <div className="flex items-center gap-2 text-gray-400 border-b border-gray-100 pb-4 mb-6">
+                            <MdMessage size={20} />
+                            <h3 className="font-semibold text-sm uppercase tracking-wider">Nội dung yêu cầu</h3>
                         </div>
-                        <p className="text-3xl font-medium leading-[1.2] tracking-tighter text-black italic normal-case">
-                            "{contact.content}"
-                        </p>
+                        
+                        <div className="flex-1 bg-gray-50/50 rounded-xl p-6 border border-gray-100 relative">
+                            {/* Quote icon decorative */}
+                            <div className="absolute top-4 left-4 text-4xl text-gray-200 font-serif leading-none select-none opacity-50">"</div>
+                            
+                            <p className="text-gray-700 text-lg leading-relaxed relative z-10 pt-2 pl-4 whitespace-pre-wrap">
+                                {contact.content}
+                            </p>
+                            
+                            <div className="absolute bottom-4 right-4 text-4xl text-gray-200 font-serif leading-none select-none opacity-50 rotate-180">"</div>
+                        </div>
                     </div>
 
                     {/* ACTION PANEL */}
-                    <div className="flex gap-6">
+                    <div className="flex flex-col sm:flex-row gap-4">
                         {contact.status === 0 && (
                             <button 
                                 onClick={() => handleUpdateStatus(1)}
                                 disabled={loading}
-                                className="flex-1 flex items-center justify-center gap-3 bg-black text-white py-8 text-xs font-black uppercase tracking-[0.4em] shadow-[8px_8px_0px_0px_#ea580c] hover:-translate-y-1 hover:shadow-[12px_12px_0px_0px_#ea580c] transition-all active:translate-x-1 active:translate-y-1 active:shadow-none disabled:opacity-50"
+                                className="flex-1 flex items-center justify-center gap-2 bg-[#0e2188] hover:bg-blue-800 text-white py-3.5 rounded-xl font-semibold shadow-sm hover:shadow-md transition-all disabled:opacity-70 disabled:cursor-not-allowed"
                             >
-                                <MdCheckCircle size={24}/> ĐÁNH DẤU ĐÃ XỬ LÝ
+                                <MdCheckCircle size={20}/> 
+                                <span>Đánh dấu đã xử lý</span>
                             </button>
                         )}
                         <button 
                             onClick={() => setIsDeleteModalOpen(true)}
                             disabled={loading}
-                            className="px-12 border-4 border-black py-8 text-xs font-black uppercase tracking-[0.4em] hover:bg-red-600 hover:text-white transition-all active:bg-red-800 disabled:opacity-50"
+                            className={`flex items-center justify-center gap-2 border py-3.5 px-6 rounded-xl font-semibold transition-all disabled:opacity-70 disabled:cursor-not-allowed ${
+                                contact.status === 0 
+                                ? 'border-gray-200 text-gray-600 hover:bg-red-50 hover:text-red-600 hover:border-red-100' 
+                                : 'flex-1 bg-white border-red-200 text-red-600 hover:bg-red-50'
+                            }`}
                         >
-                            <MdDelete size={24}/>
+                            <MdDelete size={20}/>
+                            <span>Xóa yêu cầu</span>
                         </button>
                     </div>
                 </div>
@@ -119,8 +158,8 @@ export default function ContactDetailPage() {
                 isOpen={isDeleteModalOpen}
                 onClose={() => setIsDeleteModalOpen(false)}
                 onConfirm={handleDelete}
-                title="TIÊU HỦY DỮ LIỆU"
-                message={`BẠN CÓ CHẮC CHẮN MUỐN XÓA VĨNH VIỄN YÊU CẦU CỦA ${contact.name}? HÀNH ĐỘNG NÀY SẼ GỠ BỎ HOÀN TOÀN KHỎI DATABASE.`}
+                title="Xác nhận xóa"
+                message={`Bạn có chắc chắn muốn xóa vĩnh viễn yêu cầu liên hệ của khách hàng "${contact.name}"? Hành động này không thể hoàn tác.`}
             />
         </div>
     );

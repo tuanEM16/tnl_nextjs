@@ -1,17 +1,42 @@
 'use client';
 import { MdVisibility, MdTrackChanges } from 'react-icons/md';
+import { motion } from 'framer-motion';
 import Container from '../ui/Container';
 
 export default function VisionMission({ data }) {
   if (!data) return null;
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.3 }
+    }
+  };
+
+  const slideLeft = {
+    hidden: { opacity: 0, x: -50 },
+    visible: { opacity: 1, x: 0, transition: { duration: 1.2, ease: "easeOut" } }
+  };
+
+  const slideRight = {
+    hidden: { opacity: 0, x: 50 },
+    visible: { opacity: 1, x: 0, transition: { duration: 1.2, ease: "easeOut" } }
+  };
+
   return (
     <section className="py-24 md:py-32 bg-white font-sans overflow-hidden">
       <Container>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16">
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.2 }}
+          className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16"
+        >
           
           {/* 🔴 TẦM NHÌN (Vision) - Premium Dark Style */}
-          <div className="relative group p-10 md:p-16 bg-[#0e2188] rounded-sm shadow-2xl transition-all duration-500 hover:-translate-y-2">
+          <motion.div variants={slideLeft} className="relative group p-10 md:p-16 bg-[#0e2188] rounded-sm shadow-2xl transition-all duration-500 hover:-translate-y-2">
             {/* Icon Block */}
             <div className="w-16 h-16 bg-white/10 rounded-sm flex items-center justify-center mb-10 group-hover:bg-[#e33127] transition-colors duration-500">
               <MdVisibility size={32} className="text-white" />
@@ -37,10 +62,10 @@ export default function VisionMission({ data }) {
 
             {/* Decorative corner accent */}
             <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 -mr-12 -mt-12 rotate-45 pointer-events-none"></div>
-          </div>
+          </motion.div>
 
           {/* ⚪ SỨ MỆNH (Mission) - Premium Light Style */}
-          <div className="relative group p-10 md:p-16 bg-zinc-50 border border-zinc-100 rounded-sm shadow-xl transition-all duration-500 hover:-translate-y-2">
+          <motion.div variants={slideRight} className="relative group p-10 md:p-16 bg-zinc-50 border border-zinc-100 rounded-sm shadow-xl transition-all duration-500 hover:-translate-y-2">
             {/* Icon Block */}
             <div className="w-16 h-16 bg-[#0e2188]/5 rounded-sm flex items-center justify-center mb-10 group-hover:bg-[#e33127] transition-colors duration-500">
               <MdTrackChanges size={32} className="text-[#0e2188] group-hover:text-white" />
@@ -66,9 +91,9 @@ export default function VisionMission({ data }) {
 
             {/* Decorative line bottom */}
             <div className="absolute bottom-0 left-0 w-0 h-[4px] bg-[#e33127] group-hover:w-full transition-all duration-700"></div>
-          </div>
+          </motion.div>
 
-        </div>
+        </motion.div>
       </Container>
     </section>
   );

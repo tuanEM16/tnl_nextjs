@@ -8,7 +8,8 @@ import { categoryService } from '@/services/categoryService';
 import { contactService } from '@/services/contactService';
 import {
   MdInventory, MdCategory, MdArticle, MdContactPhone,
-  MdArrowForward, MdSettings, MdNotificationsActive, MdMarkEmailUnread, MdHistory, MdAccessTime
+  MdArrowForward, MdSettings, MdNotificationsActive, MdMarkEmailUnread, MdHistory, MdAccessTime,
+  MdAddCircleOutline, MdEditDocument
 } from 'react-icons/md';
 import Link from 'next/link';
 
@@ -21,11 +22,11 @@ export default function DashboardPage() {
     contacts: 0,
     unreadContacts: 0
   });
-  const [recentContacts, setRecentContacts] = useState([]); // 🟢 Thêm danh sách liên hệ mới nhất
+  const [recentContacts, setRecentContacts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState('');
 
-  // 1. ĐỒNG HỒ HỆ THỐNG (Tăng độ "ngầu" cho Command Center)
+  // 1. ĐỒNG HỒ HỆ THỐNG
   useEffect(() => {
     const timer = setInterval(() => {
       const now = new Date();
@@ -34,7 +35,7 @@ export default function DashboardPage() {
     return () => clearInterval(timer);
   }, []);
 
-  // 2. FETCH DATA CHIẾN THUẬT
+  // 2. FETCH DATA
   const fetchDashboardData = useCallback(async () => {
     setLoading(true);
     try {
@@ -45,7 +46,6 @@ export default function DashboardPage() {
         contactService.getAll()
       ]);
 
-      // Bốc dữ liệu lì lợm chấp mọi tầng lồng res.data.data
       const prods = prodRes?.data?.data || prodRes?.data || prodRes || [];
       const cats = catRes?.data?.data || catRes?.data || catRes || [];
       const posts = postRes?.data?.data || postRes?.data || postRes || [];
@@ -61,11 +61,10 @@ export default function DashboardPage() {
         unreadContacts: unread.length
       });
 
-      // Lấy 3 liên hệ mới nhất để hiển thị
-      setRecentContacts(contacts.slice(0, 3));
+      setRecentContacts(contacts.slice(0, 4)); // Lấy 4 liên hệ cho cân đối layout
 
     } catch (error) {
-      console.error("Lỗi đồng bộ Command Center:", error);
+      console.error("Lỗi đồng bộ Dashboard:", error);
     } finally {
       setLoading(false);
     }
@@ -76,180 +75,212 @@ export default function DashboardPage() {
   }, [fetchDashboardData]);
 
   const stats = [
-    { label: 'SẢN PHẨM TRONG KHO', value: counts.products, icon: MdInventory, href: '/admin/products', color: 'border-black' },
-    { label: 'PHÂN LOẠI HÀNG', value: counts.categories, icon: MdCategory, href: '/admin/categories', color: 'border-black' },
-    { label: 'TỔNG NỘI DUNG', value: counts.totalPosts, icon: MdArticle, href: '/admin/posts', color: 'border-black' },
-    { label: 'YÊU CẦU LIÊN HỆ', value: counts.contacts, icon: MdContactPhone, href: '/admin/contacts', color: counts.unreadContacts > 0 ? 'border-orange-600' : 'border-black' },
+    { label: 'Sản phẩm', value: counts.products, icon: MdInventory, href: '/admin/products', color: 'text-blue-600', bg: 'bg-blue-50' },
+    { label: 'Danh mục', value: counts.categories, icon: MdCategory, href: '/admin/categories', color: 'text-emerald-600', bg: 'bg-emerald-50' },
+    { label: 'Bài viết', value: counts.totalPosts, icon: MdArticle, href: '/admin/posts', color: 'text-purple-600', bg: 'bg-purple-50' },
+    { label: 'Liên hệ', value: counts.contacts, icon: MdContactPhone, href: '/admin/contacts', color: counts.unreadContacts > 0 ? 'text-red-600' : 'text-orange-600', bg: counts.unreadContacts > 0 ? 'bg-red-50' : 'bg-orange-50' },
   ];
 
   if (loading) return (
-    <div className="p-32 flex flex-col items-center justify-center space-y-6">
-      <div className="w-20 h-20 border-[10px] border-black border-t-orange-600 animate-spin shadow-[8px_8px_0_0_#000]"></div>
-      <p className="font-black italic animate-pulse uppercase tracking-[0.4em] text-black">Initialising Command Center Buffer...</p>
+    <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
+      <div className="w-10 h-10 border-4 border-gray-200 border-t-[#0e2188] rounded-full animate-spin"></div>
+      <p className="text-gray-500 font-medium">Đang tải dữ liệu tổng quan...</p>
     </div>
   );
 
   return (
-    <div className="space-y-12 pb-20 font-archivo uppercase">
-      {/* 🔴 HEADER - INDUSTRIAL STYLE */}
-      <header className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-8 border-b-[6px] border-black pb-10 relative">
-        <div className="space-y-4">
-          <div className="flex items-center gap-4 bg-black text-white w-fit px-4 py-1 italic shadow-[4px_4px_0_0_#ea580c]">
-            <MdAccessTime />
-            <span className="text-xs font-black tracking-widest">{currentTime} // SYSTEM_TIME</span>
-          </div>
-
-          {/* 🟢 FIX Ở ĐÂY: Bỏ cái .split(' ')[0] đi để hiện đầy đủ QUẢN TRỊ VIÊN */}
-          <h1 className="text-7xl md:text-8xl font-black tracking-tighter uppercase leading-[0.8] text-black">
-            <span className="text-orange-600">{user?.name || 'ADMIN'}</span>
+    <div className="space-y-8 pb-12 font-sans">
+      
+      {/* 🟢 HEADER - MODERN & CLEAN */}
+      <header className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+        <div className="space-y-1">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+            Xin chào, <span className="text-[#0e2188]">{user?.name || 'Quản trị viên'}</span> 👋
           </h1>
+          <p className="text-gray-500 text-sm">
+            Dưới đây là tổng quan tình hình hoạt động của website hôm nay.
+          </p>
         </div>
 
-        <div className="flex items-center gap-6">
-          <Link href="/admin/contacts" className="relative group">
-            <div className={`p-6 border-4 border-black transition-all shadow-[8px_8px_0_0_#000] group-hover:translate-x-1 group-hover:translate-y-1 group-hover:shadow-none ${counts.unreadContacts > 0 ? 'bg-orange-600 animate-pulse' : 'bg-white'
-              }`}>
-              <MdNotificationsActive size={40} className={counts.unreadContacts > 0 ? 'text-white' : 'text-black'} />
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 bg-white border border-gray-200 text-gray-600 px-4 py-2 rounded-full shadow-sm text-sm font-medium">
+            <MdAccessTime className="text-gray-400" size={18} />
+            <span>{currentTime}</span>
+          </div>
+
+          <Link href="/admin/contacts" className="relative">
+            <div className={`p-2.5 rounded-full border transition-colors ${
+              counts.unreadContacts > 0 
+                ? 'bg-red-50 border-red-100 text-red-600 hover:bg-red-100' 
+                : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+            }`}>
+              <MdNotificationsActive size={20} />
             </div>
             {counts.unreadContacts > 0 && (
-              <div className="absolute -top-4 -right-4 bg-black text-white text-sm font-black w-10 h-10 flex items-center justify-center border-[4px] border-white shadow-[4px_4px_0_0_#ea580c]">
+              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-white">
                 {counts.unreadContacts}
-              </div>
+              </span>
             )}
           </Link>
-          <div className="hidden sm:block bg-black text-white p-6 border-4 border-black shadow-[8px_8px_0_0_#ea580c]">
-            <p className="text-[10px] font-black tracking-[0.3em]">SECURE_CONNECTION: ACTIVE</p>
-            <p className="text-[10px] font-black tracking-[0.3em] text-orange-600">ENCRYPTION: AES-256</p>
-          </div>
         </div>
       </header>
 
-      {/* 🔴 STATS GRID */}
-      {/* 🔴 STATS GRID - ĐÃ THÊM HIỆU ỨNG NHẢY LÌ LỢM */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+      {/* 🟢 STATS GRID - SOFT UI */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat) => {
           const Icon = stat.icon;
           return (
             <Link
               key={stat.label}
               href={stat.href}
-              // 🟢 CHỖ NÀY NÈ: shadow dày 12px, hover thì dịch chuyển đúng 12px và mất shadow
-              className={`group bg-white border-[6px] ${stat.color} p-8 
-                   shadow-[12px_12px_0_0_#000] transition-all duration-200
-                   hover:translate-x-[12px] hover:translate-y-[12px] hover:shadow-none 
-                   relative overflow-hidden cursor-pointer`}
+              className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 group"
             >
-              <div className="flex justify-between items-start mb-10">
-                <p className="text-[10px] font-black text-gray-400 tracking-[0.2em]">{stat.label}</p>
-                <Icon size={32} className="group-hover:text-orange-600 transition-colors" />
-              </div>
-              <div className="flex items-end justify-between">
-                <span className="text-7xl font-black tracking-tighter leading-none text-black">
-                  {stat.value.toString().padStart(2, '0')}
-                </span>
-                <div className="flex flex-col items-end">
-                  <div className="w-12 h-2 bg-black mb-2 shadow-[2px_2px_0_0_#ea580c]"></div>
-                  <span className="text-[9px] font-black italic opacity-30">LIVE_DATA</span>
+              <div className="flex justify-between items-start mb-4">
+                <div className={`p-3 rounded-xl ${stat.bg}`}>
+                  <Icon size={24} className={stat.color} />
                 </div>
+                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-50 text-gray-400 group-hover:bg-[#0e2188] group-hover:text-white transition-colors">
+                  <MdArrowForward size={16} />
+                </div>
+              </div>
+              <div>
+                <h3 className="text-3xl font-bold text-gray-900 mb-1">
+                  {stat.value.toString().padStart(2, '0')}
+                </h3>
+                <p className="text-sm font-medium text-gray-500">{stat.label}</p>
               </div>
             </Link>
           );
         })}
       </div>
 
-      {/* 🔴 MAIN DASHBOARD SECTIONS */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-        {/* LAUNCHER + RECENT ACTIVITY */}
-        <div className="lg:col-span-2 space-y-12">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        {/* 🟢 MAIN LEFT COLUMN */}
+        <div className="lg:col-span-2 space-y-8">
 
-          {/* QUICK LAUNCHER */}
-          <section className="bg-white border-4 border-black p-10 shadow-[15px_15px_0_0_rgba(0,0,0,1)]">
-            <h3 className="text-2xl font-black italic mb-8 border-l-[12px] border-orange-600 pl-6 flex items-center gap-3">
-              MANUAL OVERRIDE <MdSettings className="animate-spin-slow" />
+          {/* LỐI TẮT (QUICK LAUNCHER) */}
+          <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 md:p-8">
+            <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+              <MdSettings className="text-gray-400" /> Thao tác nhanh
             </h3>
-            {/* QUICK LAUNCHER - CŨNG PHẢI NHẢY */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Link href="/admin/products/add"
-                className="flex items-center justify-between p-8 bg-black text-white border-4 border-black 
-                   shadow-[8px_8px_0_0_#ea580c] transition-all duration-200
-                   hover:translate-x-[8px] hover:translate-y-[8px] hover:shadow-none
-                   font-black text-lg group">
-                NHẬP KHO THÉP <MdArrowForward className="group-hover:translate-x-3 transition-transform" />
+                className="flex items-center gap-4 p-4 rounded-xl border border-gray-100 hover:border-[#0e2188]/30 hover:bg-blue-50/50 transition-all group"
+              >
+                <div className="w-12 h-12 rounded-full bg-[#0e2188]/10 text-[#0e2188] flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <MdAddCircleOutline size={24} />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-gray-900">Thêm Sản phẩm</h4>
+                  <p className="text-xs text-gray-500 mt-0.5">Cập nhật kho hàng mới</p>
+                </div>
               </Link>
 
               <Link href="/admin/posts/add"
-                className="flex items-center justify-between p-8 bg-white text-black border-4 border-black 
-                   shadow-[8px_8px_0_0_#000] transition-all duration-200
-                   hover:translate-x-[8px] hover:translate-y-[8px] hover:shadow-none
-                   font-black text-lg group">
-                BIÊN TẬP MỚI <MdArrowForward className="group-hover:translate-x-3 transition-transform" />
+                className="flex items-center gap-4 p-4 rounded-xl border border-gray-100 hover:border-emerald-500/30 hover:bg-emerald-50/50 transition-all group"
+              >
+                <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <MdEditDocument size={22} />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-gray-900">Viết Bài mới</h4>
+                  <p className="text-xs text-gray-500 mt-0.5">Đăng tin tức, dự án</p>
+                </div>
               </Link>
             </div>
           </section>
 
-          {/* RECENT CONTACTS TABLE (Dòng chảy dữ liệu thực tế) */}
-          <section className="border-[6px] border-black bg-white shadow-[15px_15px_0_0_#000] overflow-hidden">
-            <div className="bg-black text-white p-4 font-black italic tracking-widest text-xs flex justify-between">
-              <span>INCOMING_SIGNALS // RECENT_CONTACTS</span>
-              <span className="text-orange-600">LIVE_FEED</span>
+          {/* LIÊN HỆ GẦN ĐÂY */}
+          <section className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+              <h3 className="text-lg font-bold text-gray-900">Liên hệ mới nhất</h3>
+              <Link href="/admin/contacts" className="text-sm font-medium text-[#0e2188] hover:underline">
+                Xem tất cả
+              </Link>
             </div>
-            <div className="divide-y-4 divide-black">
+            
+            <div className="divide-y divide-gray-100">
               {recentContacts.length > 0 ? recentContacts.map((contact) => (
-                <div key={contact.id} className="p-6 flex items-center justify-between hover:bg-orange-50 transition-colors">
-                  <div className="flex flex-col">
-                    <span className="font-black text-xl tracking-tighter uppercase">{contact.name}</span>
-                    <span className="text-[10px] font-bold text-gray-400">{contact.email}</span>
+                <div key={contact.id} className="p-6 flex items-center justify-between hover:bg-gray-50 transition-colors">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 font-bold">
+                      {contact.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900">{contact.name}</h4>
+                      <p className="text-sm text-gray-500">{contact.email}</p>
+                    </div>
                   </div>
-                  <Link href="/admin/contacts" className="p-3 border-2 border-black bg-white shadow-[4px_4px_0_0_#000] hover:shadow-none hover:translate-x-1 hover:translate-y-1 transition-all">
-                    <MdMarkEmailUnread size={20} />
+                  <Link 
+                    href="/admin/contacts" 
+                    className="p-2 text-gray-400 hover:text-[#0e2188] hover:bg-blue-50 rounded-lg transition-colors"
+                    title="Xem chi tiết"
+                  >
+                    <MdArrowForward size={20} />
                   </Link>
                 </div>
               )) : (
-                <div className="p-10 text-center font-black italic text-gray-300">NO RECENT SIGNALS DETECTED.</div>
+                <div className="p-12 text-center text-gray-500">
+                  Chưa có liên hệ nào gần đây.
+                </div>
               )}
             </div>
           </section>
         </div>
 
-        {/* 🟠 SYSTEM LOGS & HEALTH */}
-        <aside className="space-y-8">
-          <div className="border-[6px] border-black p-10 bg-white shadow-[20px_20px_0_0_#ea580c] space-y-10 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-orange-600/10 -rotate-45 translate-x-12 -translate-y-12"></div>
+        {/* 🟢 SIDEBAR (RIGHT COLUMN) */}
+        <aside className="space-y-6">
 
-            <h3 className="text-3xl font-black italic text-black uppercase leading-none border-b-4 border-black pb-4">
-              Core<br /><span className="text-orange-600">Status</span>
+          {/* CẢNH BÁO NẾU CÓ LIÊN HỆ CHƯA ĐỌC */}
+          {counts.unreadContacts > 0 && (
+            <div className="bg-orange-50 border border-orange-100 rounded-2xl p-6 flex gap-4">
+              <div className="text-orange-500 shrink-0">
+                <MdMarkEmailUnread size={28} />
+              </div>
+              <div>
+                <h4 className="font-bold text-orange-800 mb-1">Cần xử lý</h4>
+                <p className="text-sm text-orange-700 leading-relaxed">
+                  Bạn có <strong>{counts.unreadContacts}</strong> yêu cầu liên hệ chưa được xử lý. Vui lòng kiểm tra để hỗ trợ khách hàng kịp thời.
+                </p>
+                <Link href="/admin/contacts" className="inline-block mt-3 text-sm font-bold text-orange-600 hover:text-orange-800">
+                  Xử lý ngay &rarr;
+                </Link>
+              </div>
+            </div>
+          )}
+
+          {/* TRẠNG THÁI HỆ THỐNG */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-6 border-b border-gray-100 pb-4">
+              Trạng thái máy chủ
             </h3>
 
-            <div className="space-y-6">
+            <div className="space-y-5">
               {[
-                { label: 'DATABASE', status: 'STABLE', color: 'text-green-600' },
-                { label: 'STORAGE', status: 'OPTIMIZED', color: 'text-green-600' },
-                { label: 'UPLOADS', status: 'READY', color: 'text-black' },
-                { label: 'LATENCY', status: '0.04ms', color: 'text-orange-600 font-mono' },
+                { label: 'Cơ sở dữ liệu', status: 'Ổn định', color: 'bg-green-500' },
+                { label: 'Lưu trữ (Storage)', status: 'Tối ưu', color: 'bg-green-500' },
+                { label: 'Hệ thống Upload', status: 'Sẵn sàng', color: 'bg-blue-500' },
+                { label: 'Độ trễ (Latency)', status: '0.04ms', color: 'bg-emerald-500' },
               ].map((item) => (
-                <div key={item.label} className="flex justify-between items-end border-b-2 border-black/10 pb-2">
-                  <span className="text-[10px] font-black text-gray-400 tracking-widest">{item.label}:</span>
-                  <span className={`text-xs font-black italic ${item.color} underline decoration-2`}>{item.status}</span>
+                <div key={item.label} className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-gray-600">{item.label}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-gray-900">{item.status}</span>
+                    <span className={`w-2 h-2 rounded-full ${item.color}`}></span>
+                  </div>
                 </div>
               ))}
             </div>
 
             <button
               onClick={fetchDashboardData}
-              className="group relative w-full flex items-center justify-center gap-4 bg-black text-white py-6 font-black text-sm tracking-[0.3em] transition-all hover:bg-orange-600 active:translate-x-1 active:translate-y-1 active:shadow-none"
+              className="mt-8 w-full flex items-center justify-center gap-2 bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200 py-3 rounded-xl font-medium transition-colors group"
             >
-              <MdHistory size={24} className="group-hover:rotate-180 transition-transform duration-700" />
-              RE-SYNC CORE
-              <div className="absolute inset-0 translate-x-2 translate-y-2 border-2 border-black -z-10 bg-white"></div>
+              <MdHistory size={20} className="text-gray-400 group-hover:text-[#0e2188] group-hover:-rotate-180 transition-all duration-500" />
+              Đồng bộ lại dữ liệu
             </button>
-          </div>
-
-          {/* WARNING BLOCK */}
-          <div className="p-8 border-4 border-black border-dashed bg-yellow-50 flex gap-4 shadow-[10px_10px_0_0_#000]">
-            <MdMarkEmailUnread size={40} className="shrink-0 animate-bounce" />
-            <p className="text-[10px] font-black leading-relaxed italic">
-              NOTIFICATION: YOU HAVE {counts.unreadContacts} UNPROCESSED CONTACT REQUESTS. PLEASE VERIFY IMMEDIATELY TO MAINTAIN SYSTEM KPI.
-            </p>
           </div>
         </aside>
       </div>
