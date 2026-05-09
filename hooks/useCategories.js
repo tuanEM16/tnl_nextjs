@@ -3,7 +3,7 @@ import { useRouter } from 'next/navigation';
 import { categoryService } from '@/services/categoryService';
 import { useApi } from './useApi';
 import toast from 'react-hot-toast';
-
+import { getImageUrl } from '@/lib/utils';
 // ==================== HOOK DANH SÁCH CATEGORIES ====================
 export const useCategories = (params = { tree: true }) => {
   const [categories, setCategories] = useState([]);
@@ -67,7 +67,6 @@ export const useCategory = (id) => {
 // ==================== HOOK FORM ADD/EDIT CATEGORY ====================
 export const useCategoryForm = (id = null) => {
   const router = useRouter();
-  const imageUrl = process.env.NEXT_PUBLIC_IMAGE_URL;
 
   const [formData, setFormData] = useState({
     name: '', parent_id: '0', sort_order: 0, description: '', status: 1,
@@ -98,7 +97,7 @@ export const useCategoryForm = (id = null) => {
           description: cat.description || '',
           status: cat.status ?? 1,
         });
-        if (cat.image) setPreview(`${imageUrl}/${cat.image}`);
+        if (cat.image) setPreview(getImageUrl(cat.image));
       } catch (error) {
         toast.error('DỮ LIỆU DANH MỤC BỊ LỖI');
         router.push('/admin/categories');
@@ -107,7 +106,7 @@ export const useCategoryForm = (id = null) => {
       }
     };
     load();
-  }, [id, fetchById, router, imageUrl]);
+  }, [id, fetchById, router]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;

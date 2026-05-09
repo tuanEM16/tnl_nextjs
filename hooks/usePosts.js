@@ -7,6 +7,7 @@ import { postService } from '@/services/postService';
 import { useApi } from './useApi';
 import toast from 'react-hot-toast';
 import { LAYOUT_TYPES, ABOUT_LAYOUTS } from '@/types';
+import { getImageUrl } from '@/lib/utils';
 // ==================== HOOK DANH SÁCH BÀI VIẾT ====================
 export const usePosts = (initialFilters = {
   post_type: 'post',
@@ -126,7 +127,6 @@ export const usePost = (id) => {
 
 export const usePostForm = (id = null) => {
     const router = useRouter();
-    const imageUrl = process.env.NEXT_PUBLIC_IMAGE_URL;
 
     // 1. Khởi tạo State Form
     const [formData, setFormData] = useState({
@@ -198,12 +198,12 @@ export const usePostForm = (id = null) => {
                     layout: post.layout || 'text',
                     meta: parsedMeta, // Đưa dữ liệu đã parse vào meta để UI hiển thị[cite: 1]
                 });
-                if (post.image) setPreview(`${imageUrl}/${post.image}`);
+                if (post.image) setPreview(getImageUrl(post.image));
             } catch (error) { router.push('/admin/posts'); }
             finally { setFetching(false); }
         };
         loadPost();
-    }, [id, fetchById, router, imageUrl]);
+    }, [id, fetchById, router]);
 
     // 5. Hàm cập nhật Meta và đóng gói ngược lại JSON vào content[cite: 1]
     const updateMeta = (newMeta) => {
@@ -408,7 +408,7 @@ export const useEditorTools = (quillRef) => {
 // ==================== HOOK FORM ADD/EDIT CHO TRANG GIỚI THIỆU (ABOUT SECTION) ====================
 export const useSectionForm = (id = null) => {
   const router = useRouter();
-  const imageUrl = process.env.NEXT_PUBLIC_IMAGE_URL;
+ 
 
   // 🟢 State gộp chung cả dữ liệu của bảng `about_section` và `about_section_meta`
   const [formData, setFormData] = useState({
