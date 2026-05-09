@@ -12,7 +12,6 @@ import VideoScrollSection from '@/components/public/home/VideoScrollSection';
 import { postService } from '@/services/postService';
 import { configService } from '@/services/configService';
 import { categoryService } from '@/services/categoryService';
-import ChatBox from '@/components/public/ui/ChatBox';
 import TrackPageView from '@/components/public/home/TrackPageView';
 export default async function HomePage() {
     const [
@@ -110,7 +109,6 @@ export default async function HomePage() {
                     CTA cuối trang — sau khi đã hiểu và tin tưởng */}
                 <Contact config={config} />
 
-                <ChatBox />
 
             </div>
         </>
