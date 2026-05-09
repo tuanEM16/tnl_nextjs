@@ -7,7 +7,7 @@ import {
     MdSave, MdCloudUpload, MdCollections, MdSettings,
     MdDescription, MdAssignment, MdBuild, MdClose, MdSync, MdAdd
 } from 'react-icons/md';
-
+import { getImageUrl } from '@/lib/utils';
 export default function EditProductPage({ params }) {
     const { id } = use(params);
 
@@ -155,7 +155,11 @@ export default function EditProductPage({ params }) {
                                     <input type="file" accept="image/*" onChange={handleThumbnailChange} className="absolute inset-0 opacity-0 cursor-pointer z-20" />
                                     {thumbnailPreview ? (
                                         <div className="relative h-full w-full">
-                                            <img src={thumbnailPreview} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" alt="Thumbnail" />
+                                            <img
+                                                src={thumbnailPreview?.startsWith('blob:')
+                                                    ? thumbnailPreview
+                                                    : getImageUrl(thumbnailPreview)
+                                                } className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" alt="Thumbnail" />
                                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center">
                                                 <MdCloudUpload size={32} className="text-white mb-2" />
                                                 <p className="text-white font-black text-[10px] border-2 border-white p-2 uppercase">Override Image</p>

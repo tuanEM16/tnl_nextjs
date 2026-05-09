@@ -4,80 +4,80 @@ import { productService } from '@/services/productService';
 import { categoryService } from '@/services/categoryService';
 import { useApi } from './useApi';
 import toast from 'react-hot-toast';
-
+import { getImageUrl } from '@/lib/utils';
 // ==================== HOOK DANH SÁCH SẢN PHẨM ====================
 export const useProducts = (initialFilters = { category_id: '', keyword: '' }) => {
-  const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [filters, setFilters] = useState(initialFilters);
+    const [products, setProducts] = useState([]);
+    const [categories, setCategories] = useState([]);
+    const [filters, setFilters] = useState(initialFilters);
 
-  const { loading, request: fetchProductsRequest } = useApi(productService.getAll);
-  const { request: fetchCategoriesRequest } = useApi(categoryService.getAll);
-  const { request: deleteRequest } = useApi(productService.delete);
+    const { loading, request: fetchProductsRequest } = useApi(productService.getAll);
+    const { request: fetchCategoriesRequest } = useApi(categoryService.getAll);
+    const { request: deleteRequest } = useApi(productService.delete);
 
-  // 🟢 Khóa mục tiêu params để chống lặp vô tận
-  const filterKey = JSON.stringify(filters);
+    // 🟢 Khóa mục tiêu params để chống lặp vô tận
+    const filterKey = JSON.stringify(filters);
 
-  const fetchProducts = useCallback(async () => {
-    try {
-      const res = await fetchProductsRequest(JSON.parse(filterKey));
-      setProducts(res?.data?.data || res?.data || res || []);
-    } catch (error) {
-      toast.error('LỖI TRUY XUẤT KHO HÀNG');
-    }
-  }, [fetchProductsRequest, filterKey]);
+    const fetchProducts = useCallback(async () => {
+        try {
+            const res = await fetchProductsRequest(JSON.parse(filterKey));
+            setProducts(res?.data?.data || res?.data || res || []);
+        } catch (error) {
+            toast.error('LỖI TRUY XUẤT KHO HÀNG');
+        }
+    }, [fetchProductsRequest, filterKey]);
 
-  const fetchCategories = useCallback(async () => {
-    try {
-      const res = await fetchCategoriesRequest();
-      setCategories(res?.data || res || []);
-    } catch (error) {
-      console.error('Lỗi tải danh mục');
-    }
-  }, [fetchCategoriesRequest]);
+    const fetchCategories = useCallback(async () => {
+        try {
+            const res = await fetchCategoriesRequest();
+            setCategories(res?.data || res || []);
+        } catch (error) {
+            console.error('Lỗi tải danh mục');
+        }
+    }, [fetchCategoriesRequest]);
 
-  useEffect(() => { fetchCategories(); }, [fetchCategories]);
-  useEffect(() => { fetchProducts(); }, [fetchProducts]);
+    useEffect(() => { fetchCategories(); }, [fetchCategories]);
+    useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
-  const setFilter = (key, value) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
-  };
+    const setFilter = (key, value) => {
+        setFilters(prev => ({ ...prev, [key]: value }));
+    };
 
-  const handleDelete = async (id, name) => {
-    if (!window.confirm(`XÁC NHẬN TIÊU HỦY DỮ LIỆU: ${name.toUpperCase()}?`)) return;
-    try {
-      await deleteRequest(id);
-      toast.success('ĐÃ LOẠI BỎ KHỎI HỆ THỐNG');
-      fetchProducts();
-    } catch (error) {
-      toast.error('THAO TÁC THẤT BẠI - KIỂM TRA RÀNG BUỘC ĐƠN HÀNG');
-    }
-  };
+    const handleDelete = async (id, name) => {
+        if (!window.confirm(`XÁC NHẬN TIÊU HỦY DỮ LIỆU: ${name.toUpperCase()}?`)) return;
+        try {
+            await deleteRequest(id);
+            toast.success('ĐÃ LOẠI BỎ KHỎI HỆ THỐNG');
+            fetchProducts();
+        } catch (error) {
+            toast.error('THAO TÁC THẤT BẠI - KIỂM TRA RÀNG BUỘC ĐƠN HÀNG');
+        }
+    };
 
-  return { products, categories, loading, filters, setFilter, handleDelete, refresh: fetchProducts };
+    return { products, categories, loading, filters, setFilter, handleDelete, refresh: fetchProducts };
 };
 
 // ==================== HOOK CHI TIẾT SẢN PHẨM ====================
 export const useProduct = (id) => {
-  const router = useRouter();
-  const [product, setProduct] = useState(null);
-  const { loading, request: fetchById } = useApi(productService.getById);
+    const router = useRouter();
+    const [product, setProduct] = useState(null);
+    const { loading, request: fetchById } = useApi(productService.getById);
 
-  useEffect(() => {
-    if (!id) return;
-    const load = async () => {
-      try {
-        const res = await fetchById(id);
-        setProduct(res?.data || res);
-      } catch (error) {
-        toast.error('MÃ SẢN PHẨM KHÔNG TỒN TẠI');
-        router.push('/admin/products');
-      }
-    };
-    load();
-  }, [id, fetchById, router]);
+    useEffect(() => {
+        if (!id) return;
+        const load = async () => {
+            try {
+                const res = await fetchById(id);
+                setProduct(res?.data || res);
+            } catch (error) {
+                toast.error('MÃ SẢN PHẨM KHÔNG TỒN TẠI');
+                router.push('/admin/products');
+            }
+        };
+        load();
+    }, [id, fetchById, router]);
 
-  return { product, loading };
+    return { product, loading };
 };
 
 // hooks/useProducts.js
@@ -92,9 +92,9 @@ export const useProductForm = (id = null) => {
     });
     const [thumbnail, setThumbnail] = useState(null);
     const [thumbnailPreview, setThumbnailPreview] = useState('');
-    const [images, setImages] = useState([]); 
-    const [imagesPreviews, setImagesPreviews] = useState([]); 
-    const [deletedImageIds, setDeletedImageIds] = useState([]); 
+    const [images, setImages] = useState([]);
+    const [imagesPreviews, setImagesPreviews] = useState([]);
+    const [deletedImageIds, setDeletedImageIds] = useState([]);
     const [categories, setCategories] = useState([]);
     const [attributes, setAttributes] = useState([]);
     const [productAttributes, setProductAttributes] = useState([{ attribute_id: '', value: '' }]);
@@ -138,16 +138,16 @@ export const useProductForm = (id = null) => {
                     application: p.application || '',
                     status: p.status ?? 1,
                 });
-                if (p.thumbnail) setThumbnailPreview(`${imageUrl}/${p.thumbnail}`);
+                if (p.thumbnail) setThumbnailPreview(getImageUrl(p.thumbnail));
                 if (p.images?.length) {
-                    setImagesPreviews(p.images.map(img => ({ id: img.id, url: `${imageUrl}/${img.image}`, isOld: true })));
+                    setImagesPreviews(p.images.map(img => ({ id: img.id, url: getImageUrl(img.image), isOld: true })));
                 }
                 if (p.attributes?.length) {
                     setProductAttributes(p.attributes.map(attr => ({ attribute_id: attr.attribute_id, value: attr.value })));
                 }
-            } catch (error) { 
+            } catch (error) {
                 toast.error('KHÔNG TÌM THẤY SẢN PHẨM');
-                router.push('/admin/products'); 
+                router.push('/admin/products');
             } finally { setFetching(false); }
         };
         loadProduct();
@@ -155,7 +155,7 @@ export const useProductForm = (id = null) => {
 
     // 5. CÁC HÀM XỬ LÝ (HANDLERS)
     const addAttributeRow = () => setProductAttributes([...productAttributes, { attribute_id: '', value: '' }]);
-    
+
     const removeAttributeRow = (index) => {
         const newRows = productAttributes.filter((_, i) => i !== index);
         setProductAttributes(newRows.length > 0 ? newRows : [{ attribute_id: '', value: '' }]);
@@ -192,9 +192,9 @@ export const useProductForm = (id = null) => {
             if (id) data.append('_method', 'PUT');
             Object.keys(formData).forEach(key => data.append(key, formData[key]));
             if (thumbnail) data.append('thumbnail', thumbnail);
-            images.forEach((file) => data.append('images', file)); 
+            images.forEach((file) => data.append('images', file));
             if (deletedImageIds.length > 0) data.append('deleted_images', JSON.stringify(deletedImageIds));
-            
+
             const cleanAttributes = productAttributes.filter(a => a.attribute_id && a.value.trim() !== '');
             data.append('attributes', JSON.stringify(cleanAttributes));
 
@@ -218,7 +218,7 @@ export const useProductForm = (id = null) => {
             const file = e.target.files?.[0];
             if (file) { setThumbnail(file); setThumbnailPreview(URL.createObjectURL(file)); }
         },
-        handleImagesChange, 
+        handleImagesChange,
         removeImagePreview,
         addAttributeRow,
         removeAttributeRow,
