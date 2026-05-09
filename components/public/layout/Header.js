@@ -14,7 +14,7 @@ export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [isInBanner, setIsInBanner] = useState(true);
-  
+
   const { menus } = usePublicMenus('mainmenu');
   const { config, loading } = usePublicConfig();
   const { scrollY } = useScroll();
@@ -36,8 +36,8 @@ export default function Header() {
 
   const mobileLinks = rootMenus.map((m) => {
     // Tìm con của từng thằng cha
-    const children = (m.children && m.children.length > 0) 
-      ? m.children 
+    const children = (m.children && m.children.length > 0)
+      ? m.children
       : getChildMenus(m.id);
 
     return {
@@ -73,15 +73,15 @@ export default function Header() {
         transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
         className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 font-sans
           ${isInBanner
-            ? 'bg-transparent text-white py-8' 
+            ? 'bg-transparent text-white py-8'
             : 'bg-white text-[#0e2188] py-4 shadow-sm border-b border-zinc-100'} 
         `}
       >
         <Container>
-          <div className="flex justify-between items-center h-full px-4 md:px-0">
+          <div className="flex justify-between items-center h-full">
 
             {/* LOGO AREA */}
-            <Link href="/" className="flex items-center gap-4 group">
+            <Link href="/" className="flex items-center gap-3 group min-w-0 shrink">
               {config?.logo && (
                 <img
                   src={getImageUrl(config.logo)}
@@ -94,7 +94,7 @@ export default function Header() {
                     ${isInBanner ? 'text-white' : 'text-[#0e2188]'}`}>
                   {config?.site_name || 'TÂN NGỌC LỰC'}
                 </span>
-                <span className={`text-[9px] font-bold tracking-[0.3em] uppercase mt-1
+                <span className={`hidden sm:block text-[9px] font-bold tracking-[0.15em] uppercase mt-1
                     ${isInBanner ? 'text-white/70' : 'text-[#e33127]'}`}>
                   {config?.slogan || 'Steel Construction Unit'}
                 </span>
@@ -105,10 +105,10 @@ export default function Header() {
             <nav className="hidden lg:flex items-center gap-8 xl:gap-10">
               {rootMenus.map((menu) => {
                 // Hỗ trợ cả 2 dạng: API trả về Tree (có m.children) HOẶC API trả về List phẳng
-                const children = (menu.children && menu.children.length > 0) 
-                  ? menu.children 
+                const children = (menu.children && menu.children.length > 0)
+                  ? menu.children
                   : getChildMenus(menu.id);
-                
+
                 const hasChildren = children.length > 0;
 
                 return (
@@ -120,7 +120,7 @@ export default function Header() {
                       `}
                     >
                       {menu.name}
-                      
+
                       {hasChildren && (
                         <svg className={`w-3 h-3 transition-transform duration-300 group-hover:-rotate-180 ${isInBanner ? 'text-white/70' : 'text-[#0e2188]/70 group-hover:text-[#e33127]'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
@@ -136,9 +136,9 @@ export default function Header() {
                       <div className="absolute top-[100%] left-0 pt-4 w-56 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300">
                         <div className="bg-white border border-zinc-100 shadow-[0_10px_40px_rgba(14,33,136,0.08)] flex flex-col py-2 rounded-sm overflow-hidden">
                           {children.map(child => (
-                            <Link 
-                              key={child.id} 
-                              href={child.link || '#'} 
+                            <Link
+                              key={child.id}
+                              href={child.link || '#'}
                               className="block px-6 py-3.5 text-[10px] font-bold uppercase tracking-widest text-[#0e2188] hover:bg-zinc-50 hover:text-[#e33127] transition-colors relative group/child"
                             >
                               <span className="relative z-10">{child.name}</span>
@@ -171,8 +171,8 @@ export default function Header() {
               <button
                 onClick={() => setIsMenuOpen(true)}
                 className={`lg:hidden p-2 rounded-full transition-all border
-                  ${isInBanner 
-                    ? 'border-white/30 text-white hover:bg-white hover:text-[#0e2188]' 
+                  ${isInBanner
+                    ? 'border-white/30 text-white hover:bg-white hover:text-[#0e2188]'
                     : 'border-zinc-200 text-[#0e2188] hover:border-[#e33127] hover:text-[#e33127]'}`}
               >
                 <MdMenu size={24} />
