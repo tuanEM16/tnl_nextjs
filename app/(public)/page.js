@@ -59,7 +59,6 @@ export default async function HomePage() {
 
             <div className="space-y-0">
 
-                {/* 1 ── ẤN TƯỢNG ĐẦU TIÊN */}
                 <HeroBanner config={config} />
 
                 {/* 2 ── GIỚI THIỆU CÔNG TY (đẩy lên ngay sau banner)
@@ -108,8 +107,6 @@ export default async function HomePage() {
                 {/* 10 ── LIÊN HỆ
                     CTA cuối trang — sau khi đã hiểu và tin tưởng */}
                 <Contact config={config} />
-
-
             </div>
         </>
     );
